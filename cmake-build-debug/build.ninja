@@ -52,8 +52,14 @@ build CMakeFiles/SciHPC.dir/main.cpp.o: CXX_COMPILER__SciHPC_Debug /Users/leo/CL
   OBJECT_DIR = CMakeFiles/SciHPC.dir
   OBJECT_FILE_DIR = CMakeFiles/SciHPC.dir
 
-build CMakeFiles/SciHPC.dir/Data.cpp.o: CXX_COMPILER__SciHPC_Debug /Users/leo/CLionProjects/SciHPC/Data.cpp || cmake_object_order_depends_target_SciHPC
-  DEP_FILE = CMakeFiles/SciHPC.dir/Data.cpp.o.d
+build CMakeFiles/SciHPC.dir/data_array.cpp.o: CXX_COMPILER__SciHPC_Debug /Users/leo/CLionProjects/SciHPC/data_array.cpp || cmake_object_order_depends_target_SciHPC
+  DEP_FILE = CMakeFiles/SciHPC.dir/data_array.cpp.o.d
+  FLAGS = -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX12.3.sdk -std=gnu++2b
+  OBJECT_DIR = CMakeFiles/SciHPC.dir
+  OBJECT_FILE_DIR = CMakeFiles/SciHPC.dir
+
+build CMakeFiles/SciHPC.dir/structured_grid.cpp.o: CXX_COMPILER__SciHPC_Debug /Users/leo/CLionProjects/SciHPC/structured_grid.cpp || cmake_object_order_depends_target_SciHPC
+  DEP_FILE = CMakeFiles/SciHPC.dir/structured_grid.cpp.o.d
   FLAGS = -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX12.3.sdk -std=gnu++2b
   OBJECT_DIR = CMakeFiles/SciHPC.dir
   OBJECT_FILE_DIR = CMakeFiles/SciHPC.dir
@@ -66,7 +72,7 @@ build CMakeFiles/SciHPC.dir/Data.cpp.o: CXX_COMPILER__SciHPC_Debug /Users/leo/CL
 #############################################
 # Link the executable SciHPC
 
-build SciHPC: CXX_EXECUTABLE_LINKER__SciHPC_Debug CMakeFiles/SciHPC.dir/main.cpp.o CMakeFiles/SciHPC.dir/Data.cpp.o
+build SciHPC: CXX_EXECUTABLE_LINKER__SciHPC_Debug CMakeFiles/SciHPC.dir/main.cpp.o CMakeFiles/SciHPC.dir/data_array.cpp.o CMakeFiles/SciHPC.dir/structured_grid.cpp.o
   FLAGS = -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX12.3.sdk
   OBJECT_DIR = CMakeFiles/SciHPC.dir
   POST_BUILD = :

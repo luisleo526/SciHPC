@@ -6,7 +6,12 @@
 #define SCIHPC_GLOBAL_H
 typedef long double DataType;
 
-struct MapIndex {
-    unsigned int i, j, k;
+struct indices {
+    long i, j, k;
+};
+
+struct axis {
+    float start, end;
+    int n;
 };
 #endif //SCIHPC_GLOBAL_H
