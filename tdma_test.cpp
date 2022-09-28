@@ -3,7 +3,7 @@
 //
 
 #include <iostream>
-#include "data_array.h"
+#include "scalar_data.h"
 #include "matrix_solver.h"
 #include <random>
 #include <ctime>

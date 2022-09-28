@@ -4,6 +4,7 @@
 
 #ifndef SCIHPC_GLOBAL_H
 #define SCIHPC_GLOBAL_H
+
 typedef long double DataType;
 
 struct indices {
@@ -14,4 +15,8 @@ struct axis {
     float start, end;
     int n;
 };
+
+DataType ***init_array(int Nx, int Ny, int Nz);
+
+
 #endif //SCIHPC_GLOBAL_H
