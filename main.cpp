@@ -1,8 +1,8 @@
 #include <iostream>
-#include "scalar_data.h"
-#include "boundary_condition.h"
-#include "global.h"
-#include "structured_grid.h"
+#include "scihpc/scalar_data.h"
+#include "scihpc/boundary_condition.h"
+#include "scihpc/global.h"
+#include "scihpc/structured_grid.h"
 #include <cmath>
 #include <fstream>
 
