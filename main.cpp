@@ -13,9 +13,10 @@ int main() {
     auto phi = scalar_data(100);
     auto geo = structured_grid(axis{-1.0, 1.0, phi.nx});
 
-    for (int i = 1; i < phi.nx + 1; ++i) {
-        indices index = phi.index_mapping(i, 1, 1);
-        phi.data[index.i][index.j][index.k] = sin(pi * (geo.x[i] + geo.x[i - 1]) / 2.0);
+    //init phi
+    for (int i = 0; i < phi.nx; ++i) {
+        indices index = phi.index_mapping(i + 1, 1, 1);
+        phi.data[index.i][index.j][index.k] = sinl(pi * geo.xc[i]);
     }
 
     periodic(&phi, &geo);
@@ -28,6 +29,7 @@ int main() {
 //        file << (geo.x[i] + geo.x[i - 1]) / 2.0 << "," << phi.data[index.i][index.j][index.k] << std::endl;
         file << phi.data[i][0][0] << std::endl;
     }
+
 
     file.close();
 
