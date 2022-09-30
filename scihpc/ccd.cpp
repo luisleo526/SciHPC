@@ -48,6 +48,7 @@ DataType ***ccd_coefficient_matrix(const int n, const DataType h) {
         }
     }
 
+#pragma omp parallel for
     for (int i = 0; i < n; ++i) {
         coeff[0][0][i] = 7.0 / 16.0;
         coeff[0][1][i] = 1.0;
@@ -73,6 +74,8 @@ DataType ***ccd_coefficient_matrix(const int n, const DataType h) {
 }
 
 void ccd_find_fx(scalar_data *f, structured_grid *geo) {
+
+#pragma omp parallel for
     for (int j = 1; j <= f->Ny; ++j) {
         for (int k = 1; k <= f->Nz; ++k) {
 
@@ -125,6 +128,8 @@ void ccd_find_fx(scalar_data *f, structured_grid *geo) {
 }
 
 void ccd_find_fy(scalar_data *f, structured_grid *geo) {
+
+#pragma omp parallel for
     for (int i = 1; i <= f->Nx; ++i) {
         for (int k = 1; k <= f->Nz; ++k) {
 
@@ -176,6 +181,8 @@ void ccd_find_fy(scalar_data *f, structured_grid *geo) {
 }
 
 void ccd_find_fz(scalar_data *f, structured_grid *geo) {
+
+#pragma omp parallel for
     for (int i = 1; i <= f->Nx; ++i) {
         for (int j = 1; j <= f->Ny; ++j) {
 
@@ -257,7 +264,7 @@ DataType ****uccd_coefficient_matrix(const int n, const DataType h) {
     b2 = -0.2487176584009104;
     b3 = 0.0001282341599089;
 
-
+#pragma omp parallel for
     for (int i = 0; i < n; ++i) {
 
         coeff[0][0][0][i] = a1;
@@ -307,6 +314,7 @@ void uccd_find_fx(scalar_data *f, structured_grid *geo, vector_data *vel) {
     c2 = 1.99692238016218;
     c1 = -1.93596119008109;
 
+#pragma omp parallel for
     for (int j = 1; j <= f->Ny; ++j) {
         for (int k = 1; k <= f->Nz; ++k) {
             auto index = f->index_mapping(-2, j, k);
@@ -384,6 +392,7 @@ void uccd_find_fy(scalar_data *f, structured_grid *geo, vector_data *vel) {
     c2 = 1.99692238016218;
     c1 = -1.93596119008109;
 
+#pragma omp parallel for
     for (int i = 1; i <= f->Nx; ++i) {
         for (int k = 1; k <= f->Nz; ++k) {
             auto index = f->index_mapping(i, 1, k);
@@ -460,6 +469,7 @@ void uccd_find_fz(scalar_data *f, structured_grid *geo, vector_data *vel) {
     c2 = 1.99692238016218;
     c1 = -1.93596119008109;
 
+#pragma omp parallel for
     for (int i = 0; i < f->Nx; ++i) {
         for (int j = 0; j < f->Ny; ++j) {
             auto index = f->index_mapping(i, j, 1);

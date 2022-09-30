@@ -17,6 +17,7 @@ runge_kutta::tvd_rk3(DataType dt, scalar_data *f, vector_data *vel, structured_g
                      void (*rhs)(scalar_data *, vector_data *, structured_grid *, DataType ***,
                                  void (*)(scalar_data *, vector_data *))) {
     (*rhs)(f, vel, geo, s1, flux);
+#pragma omp parallel for
     for (int i = 0; i < f->Nx; ++i) {
         for (int j = 0; j < f->Ny; ++j) {
             for (int k = 0; k < f->Nz; ++k) {
@@ -27,6 +28,7 @@ runge_kutta::tvd_rk3(DataType dt, scalar_data *f, vector_data *vel, structured_g
     (*bc)(f);
 
     (*rhs)(f, vel, geo, s2, flux);
+#pragma omp parallel for
     for (int i = 0; i < f->Nx; ++i) {
         for (int j = 0; j < f->Ny; ++j) {
             for (int k = 0; k < f->Nz; ++k) {
@@ -37,6 +39,7 @@ runge_kutta::tvd_rk3(DataType dt, scalar_data *f, vector_data *vel, structured_g
     (*bc)(f);
 
     (*rhs)(f, vel, geo, s3, flux);
+#pragma omp parallel for
     for (int i = 0; i < f->Nx; ++i) {
         for (int j = 0; j < f->Ny; ++j) {
             for (int k = 0; k < f->Nz; ++k) {

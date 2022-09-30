@@ -8,6 +8,7 @@ void convection(scalar_data *f, vector_data *vel, structured_grid *geo, DataType
                 void(*flux)(scalar_data *,vector_data *)) {
     flux(f, vel);
     uccd_find_derivatives(f, geo, vel);
+#pragma omp parallel for
     for (int i = 0; i < f->Nx; ++i) {
         for (int j = 0; j < f->Ny; ++j) {
             for (int k = 0; k < f->Nz; ++k) {
@@ -16,6 +17,7 @@ void convection(scalar_data *f, vector_data *vel, structured_grid *geo, DataType
         }
     }
     if (f->ndim > 1) {
+#pragma omp parallel for
         for (int i = 0; i < f->Nx; ++i) {
             for (int j = 0; j < f->Ny; ++j) {
                 for (int k = 0; k < f->Nz; ++k) {
@@ -25,6 +27,7 @@ void convection(scalar_data *f, vector_data *vel, structured_grid *geo, DataType
         }
     }
     if (f->ndim > 2) {
+#pragma omp parallel for
         for (int i = 0; i < f->Nx; ++i) {
             for (int j = 0; j < f->Ny; ++j) {
                 for (int k = 0; k < f->Nz; ++k) {
@@ -39,6 +42,7 @@ void Hamilton_Jacobi(scalar_data *f, vector_data *vel, structured_grid *geo, Dat
                      void (*flux)(scalar_data *, vector_data *)) {
     flux(f, vel);
     uccd_find_derivatives(f, geo, vel);
+#pragma omp parallel for
     for (int i = 0; i < f->Nx; ++i) {
         for (int j = 0; j < f->Ny; ++j) {
             for (int k = 0; k < f->Nz; ++k) {
@@ -47,6 +51,7 @@ void Hamilton_Jacobi(scalar_data *f, vector_data *vel, structured_grid *geo, Dat
         }
     }
     if (f->ndim > 1) {
+#pragma omp parallel for
         for (int i = 0; i < f->Nx; ++i) {
             for (int j = 0; j < f->Ny; ++j) {
                 for (int k = 0; k < f->Nz; ++k) {
@@ -56,6 +61,7 @@ void Hamilton_Jacobi(scalar_data *f, vector_data *vel, structured_grid *geo, Dat
         }
     }
     if (f->ndim > 2) {
+#pragma omp parallel for
         for (int i = 0; i < f->Nx; ++i) {
             for (int j = 0; j < f->Ny; ++j) {
                 for (int k = 0; k < f->Nz; ++k) {
