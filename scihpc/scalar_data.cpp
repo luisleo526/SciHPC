@@ -16,6 +16,7 @@ scalar_data::scalar_data(const int _nx) {
     Nz = 1;
 
     data = init_array(Nx, Ny, Nz);
+    flux = init_array(Nx, Ny, Nz);
 
     fx = init_array(Nx, Ny, Nz);
     fy = init_array(Nx, Ny, Nz);
@@ -42,6 +43,7 @@ scalar_data::scalar_data(const int _nx, const int _ny) {
     Nz = 1;
 
     data = init_array(Nx, Ny, Nz);
+    flux = init_array(Nx, Ny, Nz);
 
     fx = init_array(Nx, Ny, Nz);
     fy = init_array(Nx, Ny, Nz);
@@ -68,6 +70,7 @@ scalar_data::scalar_data(const int _nx, const int _ny, const int _nz) {
     Nz = _nz + 2 * ghc;
 
     data = init_array(Nx, Ny, Nz);
+    flux = init_array(Nx, Ny, Nz);
 
     fx = init_array(Nx, Ny, Nz);
     fy = init_array(Nx, Ny, Nz);

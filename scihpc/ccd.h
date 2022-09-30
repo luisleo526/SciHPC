@@ -10,6 +10,7 @@
 #include "scalar_data.h"
 #include "structured_grid.h"
 #include "vector_data.h"
+#include "flux.h"
 
 void ccd_coefficient_boundary_condition(DataType ***coeff, int n, DataType dx);
 
@@ -21,8 +22,10 @@ void ccd_find_fy(scalar_data *f, structured_grid *geo);
 void ccd_find_fz(scalar_data *f, structured_grid *geo);
 void ccd_find_derivatives(scalar_data *f, structured_grid *geo);
 
-void uccd_find_fx(scalar_data *f, structured_grid *geo, vector_data *nvel);
-void uccd_find_fy(scalar_data *f, structured_grid *geo, vector_data *nvel);
-void uccd_find_fz(scalar_data *f, structured_grid *geo, vector_data *nvel);
+void uccd_find_fx(scalar_data *f, structured_grid *geo, vector_data *vel);
+void uccd_find_fy(scalar_data *f, structured_grid *geo, vector_data *vel);
+void uccd_find_fz(scalar_data *f, structured_grid *geo, vector_data *vel);
+void
+uccd_find_derivatives(scalar_data *f, structured_grid *geo, vector_data *vel);
 
 #endif //SCIHPC_CCD_H
