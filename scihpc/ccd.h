@@ -8,17 +8,21 @@
 #include "global.h"
 #include "matrix_solver.h"
 #include "scalar_data.h"
+#include "structured_grid.h"
+#include "vector_data.h"
 
 void ccd_coefficient_boundary_condition(DataType ***coeff, int n, DataType dx);
 
-DataType*** ccd_coefficient_matrix(int n, DataType dx);
+DataType ***ccd_coefficient_matrix(int n, DataType h);
+DataType ****uccd_coefficient_matrix(int n, DataType h);
 
-DataType** ccd_src_matrix(const DataType *f, long d, int n, DataType dx);
+void ccd_find_fx(scalar_data *f, structured_grid *geo);
+void ccd_find_fy(scalar_data *f, structured_grid *geo);
+void ccd_find_fz(scalar_data *f, structured_grid *geo);
+void ccd_find_derivatives(scalar_data *f, structured_grid *geo);
 
-void ccd_find_fx(scalar_data* f, DataType dx);
-
-void ccd_find_fy(scalar_data* f, DataType dy);
-
-void ccd_find_fz(scalar_data* f, DataType dz);
+void uccd_find_fx(scalar_data *f, structured_grid *geo, vector_data *nvel);
+void uccd_find_fy(scalar_data *f, structured_grid *geo, vector_data *nvel);
+void uccd_find_fz(scalar_data *f, structured_grid *geo, vector_data *nvel);
 
 #endif //SCIHPC_CCD_H

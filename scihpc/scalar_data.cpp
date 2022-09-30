@@ -3,7 +3,6 @@
 //
 
 #include "scalar_data.h"
-#include "global.h"
 #include <cassert>
 
 scalar_data::scalar_data(const int _nx) {

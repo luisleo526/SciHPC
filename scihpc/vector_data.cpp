@@ -16,7 +16,6 @@ vector_data::vector_data(const int _nx, const int _ny) :
     x = scalar_data(_nx, _ny);
     y = scalar_data(_nx, _ny);
     z = scalar_data(_nx, _ny);
-
 }
 
 vector_data::vector_data(const int _nx, const int _ny, const int _nz) :
