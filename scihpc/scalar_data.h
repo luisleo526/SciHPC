@@ -19,13 +19,11 @@ public:
     DataType ***fxx, ***fyy, ***fzz;
     DataType ***fxy, ***fyz, ***fxz;
 
-    indices dis;
+    scalar_data(int _nx);
 
-    scalar_data(const int _nx);
+    scalar_data(int _nx, int _ny);
 
-    scalar_data(const int _nx, const int _ny);
-
-    scalar_data(const int _nx, const int _ny, const int _nz);
+    scalar_data(int _nx, int _ny, int _nz);
 
     indices index_mapping(int i, int j, int k);
 

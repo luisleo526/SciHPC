@@ -30,8 +30,6 @@ scalar_data::scalar_data(const int _nx) {
     fyz = init_array(Nx, Ny, Nz);
     fxz = init_array(Nx, Ny, Nz);
 
-    dis = indices{&data[1][0][0] - &data[0][0][0], 0, 0};
-
 }
 
 scalar_data::scalar_data(const int _nx, const int _ny) {
@@ -58,9 +56,6 @@ scalar_data::scalar_data(const int _nx, const int _ny) {
     fyz = init_array(Nx, Ny, Nz);
     fxz = init_array(Nx, Ny, Nz);
 
-    dis = indices{&data[1][0][0] - &data[0][0][0],
-                  &data[0][1][0] - &data[0][0][0],
-                  0};
 }
 
 scalar_data::scalar_data(const int _nx, const int _ny, const int _nz) {
@@ -86,10 +81,6 @@ scalar_data::scalar_data(const int _nx, const int _ny, const int _nz) {
     fxy = init_array(Nx, Ny, Nz);
     fyz = init_array(Nx, Ny, Nz);
     fxz = init_array(Nx, Ny, Nz);
-
-    dis = indices{&data[1][0][0] - &data[0][0][0],
-                  &data[0][1][0] - &data[0][0][0],
-                  &data[0][0][1] - &data[0][0][0]};
 }
 
 indices scalar_data::index_mapping(int i, int j, int k) {
@@ -119,6 +110,5 @@ indices scalar_data::index_mapping(int i, int j, int k) {
         K = K + ghc;
     }
 
-    auto mapped_index = indices{I, J, K};
-    return mapped_index;
+    return indices{I, J, K};
 }

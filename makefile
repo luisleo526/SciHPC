@@ -26,7 +26,7 @@ PROGRAM                = RUN
 #CC                    = gcc
 CXX                   = g++
 # Un-comment the following line to compile C programs as C++ ones.
-#CC                    = $(CXX)
+CC                    = $(CXX)
 
 # The extra pre-processor and compiler options; applies to both C and C++ compiling as well as LD. 
 EXTRA_CFLAGS           = 
