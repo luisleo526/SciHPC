@@ -10,5 +10,6 @@
 #include "vector_data.h"
 
 void identity_flux(scalar_data *f, vector_data *vel);
+void burgers_flux(scalar_data *f, vector_data *vel);
 
 #endif //SCIHPC_FLUX_H

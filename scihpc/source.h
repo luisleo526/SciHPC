@@ -13,4 +13,7 @@
 void convection(scalar_data *f, vector_data *vel, structured_grid *geo, DataType ***s,
                 void(*flux)(scalar_data *,vector_data *pData));
 
+void Hamilton_Jacobi(scalar_data *f, vector_data *vel, structured_grid *geo, DataType ***s,
+                     void(*flux)(scalar_data *,vector_data *pData));
+
 #endif //SCIHPC_SOURCE_H

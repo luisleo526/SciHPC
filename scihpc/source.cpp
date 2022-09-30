@@ -34,3 +34,35 @@ void convection(scalar_data *f, vector_data *vel, structured_grid *geo, DataType
         }
     }
 }
+
+void Hamilton_Jacobi(scalar_data *f, vector_data *vel, structured_grid *geo, DataType ***s,
+                     void (*flux)(scalar_data *, vector_data *)) {
+    flux(f, vel);
+    uccd_find_derivatives(f, geo, vel);
+    for (int i = 0; i < f->Nx; ++i) {
+        for (int j = 0; j < f->Ny; ++j) {
+            for (int k = 0; k < f->Nz; ++k) {
+                s[i][j][k] = -f->fx[i][j][k];
+            }
+        }
+    }
+    if (f->ndim > 1) {
+        for (int i = 0; i < f->Nx; ++i) {
+            for (int j = 0; j < f->Ny; ++j) {
+                for (int k = 0; k < f->Nz; ++k) {
+                    s[i][j][k] -= f->fy[i][j][k];
+                }
+            }
+        }
+    }
+    if (f->ndim > 2) {
+        for (int i = 0; i < f->Nx; ++i) {
+            for (int j = 0; j < f->Ny; ++j) {
+                for (int k = 0; k < f->Nz; ++k) {
+                    s[i][j][k] -= f->fz[i][j][k];
+                }
+            }
+        }
+    }
+
+}
