@@ -23,6 +23,15 @@ structured_grid::structured_grid(axis x_data) {
             xc[i] = x[i] + static_cast<DataType>(0.5 * dx);
         }
     }
+
+    vtk_info.nx = x_data.n + 1;
+    vtk_info.ny = 1;
+    vtk_info.nz = 1;
+
+    vtk_info.xstart = x_data.start;
+    vtk_info.ystart = 0.0;
+    vtk_info.zstart = 0.0;
+
 }
 
 structured_grid::structured_grid(axis x_data, axis y_data) {
@@ -50,6 +59,15 @@ structured_grid::structured_grid(axis x_data, axis y_data) {
             yc[j] = y[j] + static_cast<DataType>(0.5 * dy);
         }
     }
+
+    vtk_info.nx = x_data.n + 1;
+    vtk_info.ny = y_data.n + 1;
+    vtk_info.nz = 1;
+
+    vtk_info.xstart = x_data.start;
+    vtk_info.ystart = y_data.start;
+    vtk_info.zstart = 0.0;
+
 }
 
 structured_grid::structured_grid(axis x_data, axis y_data, axis z_data) {
@@ -83,4 +101,13 @@ structured_grid::structured_grid(axis x_data, axis y_data, axis z_data) {
             zc[k] = z[k] + static_cast<DataType>(0.5 * dz);
         }
     }
+
+    vtk_info.nx = x_data.n + 1;
+    vtk_info.ny = y_data.n + 1;
+    vtk_info.nz = z_data.n + 1;
+
+    vtk_info.xstart = x_data.start;
+    vtk_info.ystart = y_data.start;
+    vtk_info.zstart = z_data.start;
+
 }

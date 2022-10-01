@@ -19,6 +19,10 @@ public:
     DataType *y, *yc;
     DataType *z, *zc;
     DataType dx, dy, dz;
+    struct {
+        DataType xstart, ystart, zstart;
+        int nx, ny, nz;
+    } vtk_info;
 };
 
 
