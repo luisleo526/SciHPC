@@ -18,7 +18,7 @@ const DataType aaa = 1.0;
 
 int main() {
 
-    auto phi = scalar_data(64, 64);
+    auto phi = scalar_data(128, 64);
     auto vel = vector_data(phi.nx, phi.ny);
     auto geo = structured_grid(axis{0.0, 1.0, phi.nx},
                                axis{0.0, 1.0, phi.ny});

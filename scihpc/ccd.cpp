@@ -315,9 +315,8 @@ void uccd_find_fx(scalar_data *f, structured_grid *geo, vector_data *vel) {
     c1 = -1.93596119008109;
 
 #pragma omp parallel for
-    for (int j = 1; j <= f->ny; ++j) {
-        for (int k = 1; k <= f->nz; ++k) {
-            auto index = f->index_mapping(-2, j, k);
+    for (int j = 0; j < f->Ny; ++j) {
+        for (int k = 0; k < f->Nz; ++k) {
             auto coeff = uccd_coefficient_matrix(f->Nx, geo->dx);
 
             DataType **su, **sd;
@@ -328,40 +327,37 @@ void uccd_find_fx(scalar_data *f, structured_grid *geo, vector_data *vel) {
                 sd[i] = new DataType[f->Nx];
             }
 
-            su[0][0] = (-3.5 * f->flux[index.i][index.j][index.k]
-                        + 4.0 * f->flux[index.i + 1][index.j][index.k]
-                        - 0.5 * f->flux[index.i + 2][index.j][index.k]) / geo->dx;
+            su[0][0] = (-3.5 * f->flux[0][j][k]
+                        + 4.0 * f->flux[1][j][k]
+                        - 0.5 * f->flux[2][j][k]) / geo->dx;
+            su[1][0] = (34.0 / 3.0 * f->flux[0][j][k]
+                        - 83.0 / 4.0 * f->flux[1][j][k]
+                        + 10.0 * f->flux[2][j][k]
+                        - 7.0 / 12.0 * f->flux[3][j][k]) / geo->dx / geo->dx;
+
+            su[0][f->Nx - 1] = -(-3.5 * f->flux[f->Nx - 1][j][k]
+                                 + 4.0 * f->flux[f->Nx - 2][j][k]
+                                 - 0.5 * f->flux[f->Nx - 3][j][k]) / geo->dx;
+            su[1][f->Nx - 1] = (34.0 / 3.0 * f->flux[f->Nx - 1][j][k]
+                                - 83.0 / 4.0 * f->flux[f->Nx - 2][j][k]
+                                + 10.0 * f->flux[f->Nx - 3][j][k]
+                                - 7.0 / 12.0 * f->flux[f->Nx - 4][j][k]) / geo->dx / geo->dx;
+
             sd[0][0] = su[0][0];
-
-            su[1][0] = (34.0 / 3.0 * f->flux[index.i][index.j][index.k]
-                        - 83.0 / 4.0 * f->flux[index.i + 1][index.j][index.k]
-                        + 10.0 * f->flux[index.i + 2][index.j][index.k]
-                        - 7.0 / 12.0 * f->flux[index.i + 3][index.j][index.k]) / geo->dx / geo->dx;
             sd[1][0] = su[1][0];
-
-            su[0][f->Nx - 1] = -(-3.5 * f->flux[index.i + f->Nx - 1][index.j][index.k]
-                                 + 4.0 * f->flux[index.i + f->Nx - 2][index.j][index.k]
-                                 - 0.5 * f->flux[index.i + f->Nx - 3][index.j][index.k]) / geo->dx;
             sd[0][f->Nx - 1] = su[0][f->Nx - 1];
-
-            su[1][f->Nx - 1] = (34.0 / 3.0 * f->flux[index.i + f->Nx - 1][index.j][index.k]
-                                - 83.0 / 4.0 * f->flux[index.i + f->Nx - 2][index.j][index.k]
-                                + 10.0 * f->flux[index.i + f->Nx - 3][index.j][index.k]
-                                - 7.0 / 12.0 * f->flux[index.i + f->Nx - 4][index.j][index.k]) / geo->dx / geo->dx;
             sd[1][f->Nx - 1] = su[1][f->Nx - 1];
 
             for (int i = 1; i < f->Nx - 1; ++i) {
-                su[0][i] = (c1 * f->flux[index.i + i - 1][index.j][index.k]
-                            + c2 * f->flux[index.i + i][index.j][index.k]
-                            + c3 * f->flux[index.i + i + 1][index.j][index.k]) / geo->dx;
+                su[0][i] = (c1 * f->flux[i - 1][j][k]
+                            + c2 * f->flux[i][j][k]
+                            + c3 * f->flux[i + 1][j][k]) / geo->dx;
+                su[1][i] = (3.0 * f->flux[i - 1][j][k] - 6.0 * f->flux[i][j][k]
+                            + 3.0 * f->flux[i + 1][j][k]) / geo->dx / geo->dx;
 
-                sd[0][i] = -(c3 * f->flux[index.i + i - 1][index.j][index.k]
-                             + c2 * f->flux[index.i + i][index.j][index.k]
-                             + c1 * f->flux[index.i + i + 1][index.j][index.k]) / geo->dx;
-
-                su[1][i] = (3.0 * f->flux[index.i + i - 1][index.j][index.k]
-                            - 6.0 * f->flux[index.i + i][index.j][index.k]
-                            + 3.0 * f->flux[index.i + i + 1][index.j][index.k]) / geo->dx / geo->dx;
+                sd[0][i] = -(c3 * f->flux[i - 1][j][k]
+                             + c2 * f->flux[i][j][k]
+                             + c1 * f->flux[i + 1][j][k]) / geo->dx;
                 sd[1][i] = su[1][i];
             }
 
@@ -369,12 +365,12 @@ void uccd_find_fx(scalar_data *f, structured_grid *geo, vector_data *vel) {
             twin_bks(coeff[1][0], coeff[1][1], coeff[1][2], coeff[1][3], sd[0], sd[1], f->Nx);
 
             for (int i = 0; i < f->Nx; ++i) {
-                if (vel->x.data[index.i + i][index.j][index.k] > 0.0) {
-                    f->fx[index.i + i][index.j][index.k] = su[0][i];
+                if (vel->x.data[i][j][k] > 0.0) {
+                    f->fx[i][j][k] = su[0][i];
                 } else {
-                    f->fx[index.i + i][index.j][index.k] = sd[0][i];
+                    f->fx[i][j][k] = sd[0][i];
                 }
-                f->fxx[index.i + i][index.j][index.k] = 0.5 * (su[1][i] + sd[1][i]);
+                f->fxx[i][j][k] = 0.5 * (su[1][i] + sd[1][i]);
             }
 
             delete4d(coeff, 2, 4, 3);
@@ -393,53 +389,50 @@ void uccd_find_fy(scalar_data *f, structured_grid *geo, vector_data *vel) {
     c1 = -1.93596119008109;
 
 #pragma omp parallel for
-    for (int i = 1; i <= f->nx; ++i) {
-        for (int k = 1; k <= f->nz; ++k) {
-            auto index = f->index_mapping(i, 1, k);
+    for (int i = 0; i < f->Nx; ++i) {
+        for (int k = 0; k < f->Nz; ++k) {
             auto coeff = uccd_coefficient_matrix(f->Ny, geo->dy);
 
             DataType **su, **sd;
             su = new DataType *[2];
             sd = new DataType *[2];
-            for (int j = 0; j < 2; ++j) {
-                su[j] = new DataType[f->Ny];
-                sd[j] = new DataType[f->Ny];
+            for (int i = 0; i < 2; ++i) {
+                su[i] = new DataType[f->Ny];
+                sd[i] = new DataType[f->Ny];
             }
 
-            su[0][0] = (-3.5 * f->flux[index.i][index.j][index.k]
-                        + 4.0 * f->flux[index.i][index.j + 1][index.k]
-                        - 0.5 * f->flux[index.i][index.j + 2][index.k]) / geo->dy;
-            sd[0][0] = su[0][0];
+            su[0][0] = (-3.5 * f->flux[i][0][k]
+                        + 4.0 * f->flux[i][1][k]
+                        - 0.5 * f->flux[i][2][k]) / geo->dy;
+            su[1][0] = (34.0 / 3.0 * f->flux[i][0][k]
+                        - 83.0 / 4.0 * f->flux[i][1][k]
+                        + 10.0 * f->flux[i][2][k]
+                        - 7.0 / 12.0 * f->flux[i][3][k]) / geo->dy / geo->dy;
 
-            su[1][0] = (34.0 / 3.0 * f->flux[index.i][index.j][index.k]
-                        - 83.0 / 4.0 * f->flux[index.i][index.j + 1][index.k]
-                        + 10.0 * f->flux[index.i][index.j + 2][index.k]
-                        - 7.0 / 12.0 * f->flux[index.i][index.j + 3][index.k]) / geo->dy / geo->dy;
+            su[0][f->Ny - 1] = -(-3.5 * f->flux[i][f->Ny - 1][k]
+                                 + 4.0 * f->flux[i][f->Ny - 2][k]
+                                 - 0.5 * f->flux[i][f->Ny - 3][k]) / geo->dy;
+            su[1][f->Ny - 1] = (34.0 / 3.0 * f->flux[i][f->Ny - 1][k]
+                                - 83.0 / 4.0 * f->flux[i][f->Ny - 2][k]
+                                + 10.0 * f->flux[i][f->Ny - 3][k]
+                                - 7.0 / 12.0 * f->flux[i][f->Ny - 4][k]) / geo->dy / geo->dy;
+
+            sd[0][0] = su[0][0];
             sd[1][0] = su[1][0];
 
-            su[0][f->Ny - 1] = -(-3.5 * f->flux[index.i][index.j + f->Ny - 1][index.k]
-                                 + 4.0 * f->flux[index.i][index.j + f->Ny - 2][index.k]
-                                 - 0.5 * f->flux[index.i][index.j + f->Ny - 3][index.k]) / geo->dy;
             sd[0][f->Ny - 1] = su[0][f->Ny - 1];
-
-            su[1][f->Ny - 1] = (34.0 / 3.0 * f->flux[index.i][index.j + f->Ny - 1][index.k]
-                                - 83.0 / 4.0 * f->flux[index.i][index.j + f->Ny - 2][index.k]
-                                + 10.0 * f->flux[index.i][index.j + f->Ny - 3][index.k]
-                                - 7.0 / 12.0 * f->flux[index.i][index.j + f->Ny - 4][index.k]) / geo->dy / geo->dy;
             sd[1][f->Ny - 1] = su[1][f->Ny - 1];
 
             for (int j = 1; j < f->Ny - 1; ++j) {
-                su[0][j] = (c1 * f->flux[index.i][index.j + j - 1][index.k]
-                            + c2 * f->flux[index.i][index.j + j][index.k]
-                            + c3 * f->flux[index.i][index.j + j + 1][index.k]) / geo->dy;
+                su[0][j] = (c1 * f->flux[i][j - 1][k]
+                            + c2 * f->flux[i][j][k]
+                            + c3 * f->flux[i][j + 1][k]) / geo->dy;
+                su[1][j] = (3.0 * f->flux[i][j - 1][k] - 6.0 * f->flux[i][j][k]
+                            + 3.0 * f->flux[i][j + 1][k]) / geo->dy / geo->dy;
 
-                sd[0][j] = -(c3 * f->flux[index.i][index.j + j - 1][index.k]
-                             + c2 * f->flux[index.i][index.j + j][index.k]
-                             + c1 * f->flux[index.i][index.j + j + 1][index.k]) / geo->dy;
-
-                su[1][j] = (3.0 * f->flux[index.i][index.j + j - 1][index.k]
-                            - 6.0 * f->flux[index.i][index.j + j][index.k]
-                            + 3.0 * f->flux[index.i][index.j + j + 1][index.k]) / geo->dy / geo->dy;
+                sd[0][j] = -(c3 * f->flux[i][j - 1][k]
+                             + c2 * f->flux[i][j][k]
+                             + c1 * f->flux[i][j + 1][k]) / geo->dy;
                 sd[1][j] = su[1][j];
             }
 
@@ -447,12 +440,12 @@ void uccd_find_fy(scalar_data *f, structured_grid *geo, vector_data *vel) {
             twin_bks(coeff[1][0], coeff[1][1], coeff[1][2], coeff[1][3], sd[0], sd[1], f->Ny);
 
             for (int j = 0; j < f->Ny; ++j) {
-                if (vel->y.data[index.i][index.j + j][index.k] > 0.0) {
-                    f->fy[index.i][index.j + j][index.k] = su[0][j];
+                if (vel->y.data[i][j][k] > 0.0) {
+                    f->fy[i][j][k] = su[0][j];
                 } else {
-                    f->fy[index.i][index.j + j][index.k] = sd[0][j];
+                    f->fy[i][j][k] = sd[0][j];
                 }
-                f->fyy[index.i][index.j + j][index.k] = 0.5 * (su[1][j] + sd[1][j]);
+                f->fyy[i][j][k] = 0.5 * (su[1][j] + sd[1][j]);
             }
 
             delete4d(coeff, 2, 4, 3);
@@ -464,60 +457,57 @@ void uccd_find_fy(scalar_data *f, structured_grid *geo, vector_data *vel) {
 }
 
 void uccd_find_fz(scalar_data *f, structured_grid *geo, vector_data *vel) {
+
     DataType c1, c2, c3;
     c3 = -0.06096119008109;
     c2 = 1.99692238016218;
     c1 = -1.93596119008109;
 
 #pragma omp parallel for
-    for (int i = 0; i < f->nx; ++i) {
-        for (int j = 0; j < f->ny; ++j) {
-            auto index = f->index_mapping(i, j, 1);
+    for (int i = 0; i < f->Nx; ++i) {
+        for (int j = 0; j < f->Ny; ++j) {
             auto coeff = uccd_coefficient_matrix(f->Nz, geo->dz);
 
             DataType **su, **sd;
             su = new DataType *[2];
             sd = new DataType *[2];
-            for (int k = 0; k < 2; ++k) {
-                su[k] = new DataType[f->Nz];
-                sd[k] = new DataType[f->Nz];
+            for (int i = 0; i < 2; ++i) {
+                su[i] = new DataType[f->Nz];
+                sd[i] = new DataType[f->Nz];
             }
 
-            su[0][0] = (-3.5 * f->flux[index.i][index.j][index.k]
-                        + 4.0 * f->flux[index.i][index.j][index.k + 1]
-                        - 0.5 * f->flux[index.i][index.j][index.k + 2]) / geo->dz;
-            sd[0][0] = su[0][0];
+            su[0][0] = (-3.5 * f->flux[i][j][0]
+                        + 4.0 * f->flux[i][j][1]
+                        - 0.5 * f->flux[i][j][2]) / geo->dz;
+            su[1][0] = (34.0 / 3.0 * f->flux[i][j][0]
+                        - 83.0 / 4.0 * f->flux[i][j][1]
+                        + 10.0 * f->flux[i][j][2]
+                        - 7.0 / 12.0 * f->flux[i][j][3]) / geo->dz / geo->dz;
 
-            su[1][0] = (34.0 / 3.0 * f->flux[index.i][index.j][index.k]
-                        - 83.0 / 4.0 * f->flux[index.i][index.j][index.k + 1]
-                        + 10.0 * f->flux[index.i][index.j][index.k + 2]
-                        - 7.0 / 12.0 * f->flux[index.i][index.j][index.k + 3]) / geo->dz / geo->dz;
+            su[0][f->Nz - 1] = -(-3.5 * f->flux[i][j][f->Nz - 1]
+                                 + 4.0 * f->flux[i][j][f->Nz - 2]
+                                 - 0.5 * f->flux[i][j][f->Nz - 3]) / geo->dz;
+            su[1][f->Nz - 1] = (34.0 / 3.0 * f->flux[i][j][f->Nz - 1]
+                                - 83.0 / 4.0 * f->flux[i][j][f->Nz - 2]
+                                + 10.0 * f->flux[i][j][f->Nz - 3]
+                                - 7.0 / 12.0 * f->flux[i][j][f->Nz - 4]) / geo->dz / geo->dz;
+
+            sd[0][0] = su[0][0];
             sd[1][0] = su[1][0];
 
-            su[0][f->Nz - 1] = -(-3.5 * f->flux[index.i][index.j][index.k + f->Nz - 1]
-                                 + 4.0 * f->flux[index.i][index.j][index.k + f->Nz - 2]
-                                 - 0.5 * f->flux[index.i][index.j][index.k + f->Nz - 3]) / geo->dz;
             sd[0][f->Nz - 1] = su[0][f->Nz - 1];
-
-            su[1][f->Nz - 1] = (34.0 / 3.0 * f->flux[index.i][index.j][index.k + f->Nz - 1]
-                                - 83.0 / 4.0 * f->flux[index.i][index.j][index.k + f->Nz - 2]
-                                + 10.0 * f->flux[index.i][index.j][index.k + f->Nz - 3]
-                                - 7.0 / 12.0 * f->flux[index.i][index.j][index.k + f->Nz - 4]) / geo->dz / geo->dz;
-
             sd[1][f->Nz - 1] = su[1][f->Nz - 1];
 
             for (int k = 1; k < f->Nz - 1; ++k) {
-                su[0][k] = (c1 * f->flux[index.i][index.j][index.k + k - 1]
-                            + c2 * f->flux[index.i][index.j][index.k + k]
-                            + c3 * f->flux[index.i][index.j][index.k + k + 1]) / geo->dz;
+                su[0][k] = (c1 * f->flux[i][j][k - 1]
+                            + c2 * f->flux[i][j][k]
+                            + c3 * f->flux[i][j][k + 1]) / geo->dz;
+                su[1][k] = (3.0 * f->flux[i][j][k - 1] - 6.0 * f->flux[i][j][k]
+                            + 3.0 * f->flux[i][j][k + 1]) / geo->dz / geo->dz;
 
-                sd[0][k] = -(c3 * f->flux[index.i][index.j][index.k + k - 1]
-                             + c2 * f->flux[index.i][index.j][index.k + k]
-                             + c1 * f->flux[index.i][index.j][index.k + k + 1]) / geo->dz;
-
-                su[1][k] = (3.0 * f->flux[index.i][index.j][index.k + k - 1]
-                            - 6.0 * f->flux[index.i][index.j][index.k + k]
-                            + 3.0 * f->flux[index.i][index.j][index.k + k + 1]) / geo->dz / geo->dz;
+                sd[0][k] = -(c3 * f->flux[i][j][k - 1]
+                             + c2 * f->flux[i][j][k]
+                             + c1 * f->flux[i][j][k + 1]) / geo->dz;
                 sd[1][k] = su[1][k];
             }
 
@@ -525,12 +515,12 @@ void uccd_find_fz(scalar_data *f, structured_grid *geo, vector_data *vel) {
             twin_bks(coeff[1][0], coeff[1][1], coeff[1][2], coeff[1][3], sd[0], sd[1], f->Nz);
 
             for (int k = 0; k < f->Nz; ++k) {
-                if (vel->z.data[index.i][index.j][index.k + k] > 0.0) {
-                    f->fz[index.i][index.j][index.k + k] = su[0][k];
+                if (vel->z.data[i][j][k] > 0.0) {
+                    f->fz[i][j][k] = su[0][k];
                 } else {
-                    f->fz[index.i][index.j][index.k + k] = sd[0][k];
+                    f->fz[i][j][k] = sd[0][k];
                 }
-                f->fzz[index.i][index.j][index.k + k] = 0.5 * (su[1][k] + sd[1][k]);
+                f->fzz[i][j][k] = 0.5 * (su[1][k] + sd[1][k]);
             }
 
             delete4d(coeff, 2, 4, 3);
@@ -539,6 +529,7 @@ void uccd_find_fz(scalar_data *f, structured_grid *geo, vector_data *vel) {
 
         }
     }
+
 }
 
 void
