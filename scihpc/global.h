@@ -20,6 +20,12 @@ struct axis {
     int n;
 };
 
+struct params{
+    DataType density_ratio;
+    DataType viscosity_ratio;
+    DataType ls_width;
+};
+
 DataType ***init_array(int Nx, int Ny, int Nz);
 
 void delete4d(DataType ****arr, int Nx, int Ny, int Nz);

@@ -76,8 +76,8 @@ DataType ***ccd_coefficient_matrix(const int n, const DataType h) {
 void ccd_find_fx(scalar_data *f, structured_grid *geo) {
 
 #pragma omp parallel for
-    for (int j = 1; j <= f->Ny; ++j) {
-        for (int k = 1; k <= f->Nz; ++k) {
+    for (int j = 1; j <= f->ny; ++j) {
+        for (int k = 1; k <= f->nz; ++k) {
 
             auto index = f->index_mapping(1, j, k);
             auto coeff = ccd_coefficient_matrix(f->Nx, geo->dx);
@@ -130,8 +130,8 @@ void ccd_find_fx(scalar_data *f, structured_grid *geo) {
 void ccd_find_fy(scalar_data *f, structured_grid *geo) {
 
 #pragma omp parallel for
-    for (int i = 1; i <= f->Nx; ++i) {
-        for (int k = 1; k <= f->Nz; ++k) {
+    for (int i = 1; i <= f->nx; ++i) {
+        for (int k = 1; k <= f->nz; ++k) {
 
             auto index = f->index_mapping(i, 1, k);
             auto coeff = ccd_coefficient_matrix(f->Ny, geo->dy);
@@ -183,8 +183,8 @@ void ccd_find_fy(scalar_data *f, structured_grid *geo) {
 void ccd_find_fz(scalar_data *f, structured_grid *geo) {
 
 #pragma omp parallel for
-    for (int i = 1; i <= f->Nx; ++i) {
-        for (int j = 1; j <= f->Ny; ++j) {
+    for (int i = 1; i <= f->nx; ++i) {
+        for (int j = 1; j <= f->ny; ++j) {
 
             auto index = f->index_mapping(i, j, 1);
             auto coeff = ccd_coefficient_matrix(f->Nz, geo->dz);
@@ -315,8 +315,8 @@ void uccd_find_fx(scalar_data *f, structured_grid *geo, vector_data *vel) {
     c1 = -1.93596119008109;
 
 #pragma omp parallel for
-    for (int j = 1; j <= f->Ny; ++j) {
-        for (int k = 1; k <= f->Nz; ++k) {
+    for (int j = 1; j <= f->ny; ++j) {
+        for (int k = 1; k <= f->nz; ++k) {
             auto index = f->index_mapping(-2, j, k);
             auto coeff = uccd_coefficient_matrix(f->Nx, geo->dx);
 
@@ -393,8 +393,8 @@ void uccd_find_fy(scalar_data *f, structured_grid *geo, vector_data *vel) {
     c1 = -1.93596119008109;
 
 #pragma omp parallel for
-    for (int i = 1; i <= f->Nx; ++i) {
-        for (int k = 1; k <= f->Nz; ++k) {
+    for (int i = 1; i <= f->nx; ++i) {
+        for (int k = 1; k <= f->nz; ++k) {
             auto index = f->index_mapping(i, 1, k);
             auto coeff = uccd_coefficient_matrix(f->Ny, geo->dy);
 
@@ -470,8 +470,8 @@ void uccd_find_fz(scalar_data *f, structured_grid *geo, vector_data *vel) {
     c1 = -1.93596119008109;
 
 #pragma omp parallel for
-    for (int i = 0; i < f->Nx; ++i) {
-        for (int j = 0; j < f->Ny; ++j) {
+    for (int i = 0; i < f->nx; ++i) {
+        for (int j = 0; j < f->ny; ++j) {
             auto index = f->index_mapping(i, j, 1);
             auto coeff = uccd_coefficient_matrix(f->Nz, geo->dz);
 

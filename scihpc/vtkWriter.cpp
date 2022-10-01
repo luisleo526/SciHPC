@@ -4,17 +4,15 @@
 
 #include "vtkWriter.h"
 
-void SwapEnd(DataType &var)
-{
-    char* varArray = reinterpret_cast<char*>(&var);
-    for(long i = 0; i < static_cast<long>(sizeof(var)/2); i++)
-        std::swap(varArray[sizeof(var) - 1 - i],varArray[i]);
+void SwapEnd(DataType &var) {
+    char *varArray = reinterpret_cast<char *>(&var);
+    for (long i = 0; i < static_cast<long>(sizeof(var) / 2); i++)
+        std::swap(varArray[sizeof(var) - 1 - i], varArray[i]);
 }
 
 vtkWriter::vtkWriter(structured_grid *_geo, std::string _filename) {
     grid = _geo;
     filename = std::move(_filename);
-
 }
 
 void vtkWriter::create(unsigned int id) {
@@ -29,13 +27,13 @@ void vtkWriter::create(unsigned int id) {
     file << "SPACING " << grid->dx << " " << grid->dy << " " << grid->dz << std::endl;
 }
 
-void vtkWriter::add_scalar_data(scalar_data *data, const std::string& name) {
+void vtkWriter::add_scalar_data(scalar_data *data, const std::string &name) {
     file << "CELL_DATA " << data->nx * data->ny * data->nz << std::endl;
     file << "SCALARS " << name << " double 1" << std::endl;
     file << "LOOKUP_TABLE default" << std::endl;
-    for (int i = 0; i < data->nx; ++i) {
+    for (int k = 0; k < data->nz; ++k) {
         for (int j = 0; j < data->ny; ++j) {
-            for (int k = 0; k < data->nz; ++k) {
+            for (int i = 0; i < data->nx; ++i) {
                 auto index = data->index_mapping(i + 1, j + 1, k + 1);
                 auto value = data->data[index.i][index.j][index.k];
                 SwapEnd(value);
@@ -45,12 +43,12 @@ void vtkWriter::add_scalar_data(scalar_data *data, const std::string& name) {
     }
 }
 
-void vtkWriter::add_vector_data(vector_data *data, const std::string& name) {
+void vtkWriter::add_vector_data(vector_data *data, const std::string &name) {
 
     file << "VECTORS " << name << " double" << std::endl;
-    for (int i = 0; i < data->x.nx; ++i) {
+    for (int k = 0; k < data->x.nz; ++k) {
         for (int j = 0; j < data->x.ny; ++j) {
-            for (int k = 0; k < data->x.nz; ++k) {
+            for (int i = 0; i < data->x.nx; ++i) {
                 auto index = data->x.index_mapping(i + 1, j + 1, k + 1);
                 auto value = data->x.data[index.i][index.j][index.k];
                 SwapEnd(value);
@@ -64,7 +62,6 @@ void vtkWriter::add_vector_data(vector_data *data, const std::string& name) {
             }
         }
     }
-
 }
 
 void vtkWriter::close() {

@@ -18,7 +18,7 @@ public:
     DataType *x, *xc;
     DataType *y, *yc;
     DataType *z, *zc;
-    DataType dx, dy, dz;
+    DataType dx, dy, dz, h, dv;
     struct {
         DataType xstart, ystart, zstart;
         int nx, ny, nz;

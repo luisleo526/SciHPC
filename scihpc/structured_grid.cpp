@@ -17,6 +17,9 @@ structured_grid::structured_grid(axis x_data) {
     dy = static_cast<DataType>(0.0);
     dz = static_cast<DataType>(0.0);
 
+    h = dx;
+    dv = dx;
+
     for (int i = 0; i < x_data.n + 1; ++i) {
         x[i] = x_data.start + static_cast<DataType>(i * dx);
         if (i < x_data.n) {
@@ -46,6 +49,9 @@ structured_grid::structured_grid(axis x_data, axis y_data) {
     dx = (x_data.end - x_data.start) / static_cast<DataType>(x_data.n);
     dy = (y_data.end - y_data.start) / static_cast<DataType>(y_data.n);
     dz = static_cast<DataType>(0.0);
+
+    h = fmin(dx, dy);
+    dv = dx * dy;
 
     for (int i = 0; i < x_data.n + 1; ++i) {
         x[i] = x_data.start + static_cast<DataType>(i * dx);
@@ -82,6 +88,9 @@ structured_grid::structured_grid(axis x_data, axis y_data, axis z_data) {
     dx = (x_data.end - x_data.start) / static_cast<DataType>(x_data.n);
     dy = (y_data.end - y_data.start) / static_cast<DataType>(y_data.n);
     dz = (z_data.end - z_data.start) / static_cast<DataType>(z_data.n);
+
+    h = fmin(fmin(dx, dy), dz);
+    dv = dx * dy * dz;
 
     for (int i = 0; i < x_data.n + 1; ++i) {
         x[i] = x_data.start + static_cast<DataType>(i * dx);
