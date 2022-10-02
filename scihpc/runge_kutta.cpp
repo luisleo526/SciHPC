@@ -11,7 +11,7 @@ runge_kutta::runge_kutta(int nx, int ny, int nz) {
 }
 
 void
-runge_kutta::tvd_rk3(DataType dt, scalar_data *f, vector_data *vel, structured_grid *geo,
+runge_kutta::tvd_rk3(scalar_data *f, vector_data *vel, structured_grid *geo,
                      void(*flux)(scalar_data *, vector_data *pData),
                      void (*bc)(scalar_data *),
                      void (*rhs)(scalar_data *, vector_data *, structured_grid *, DataType ***,
@@ -21,7 +21,7 @@ runge_kutta::tvd_rk3(DataType dt, scalar_data *f, vector_data *vel, structured_g
     for (int i = 0; i < f->Nx; ++i) {
         for (int j = 0; j < f->Ny; ++j) {
             for (int k = 0; k < f->Nz; ++k) {
-                f->data[i][j][k] += dt * s1[i][j][k];
+                f->data[i][j][k] += f->params->dt * s1[i][j][k];
             }
         }
     }
@@ -32,7 +32,7 @@ runge_kutta::tvd_rk3(DataType dt, scalar_data *f, vector_data *vel, structured_g
     for (int i = 0; i < f->Nx; ++i) {
         for (int j = 0; j < f->Ny; ++j) {
             for (int k = 0; k < f->Nz; ++k) {
-                f->data[i][j][k] += dt * (s2[i][j][k] - 3.0 * s1[i][j][k]) / 4.0;
+                f->data[i][j][k] += f->params->dt * (s2[i][j][k] - 3.0 * s1[i][j][k]) / 4.0;
             }
         }
     }
@@ -43,7 +43,7 @@ runge_kutta::tvd_rk3(DataType dt, scalar_data *f, vector_data *vel, structured_g
     for (int i = 0; i < f->Nx; ++i) {
         for (int j = 0; j < f->Ny; ++j) {
             for (int k = 0; k < f->Nz; ++k) {
-                f->data[i][j][k] += dt * (-s1[i][j][k] - s2[i][j][k] + 8.0 * s3[i][j][k]) / 12.0;
+                f->data[i][j][k] += f->params->dt * (-s1[i][j][k] - s2[i][j][k] + 8.0 * s3[i][j][k]) / 12.0;
             }
         }
     }

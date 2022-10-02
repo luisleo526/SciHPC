@@ -96,6 +96,42 @@ DataType lsf_volume(scalar_data *f) {
     return volume;
 }
 
+DataType ***rho(scalar_data *f) {
+    auto density = init_array(f->Nx, f->Ny, f->Nz);
+    auto h = Heaviside(f);
+#pragma omp parallel for
+    for (int i = 0; i < f->Nx; ++i) {
+        for (int j = 0; j < f->Ny; ++j) {
+            for (int k = 0; k < f->Nz; ++k) {
+                density[i][j][k] = h[i][j][k] + (1.0-h[i][j][k]) * f->params->density_ratio;
+            }
+        }
+    }
+    delete3d(h, f->Nx, f->Ny);
+    return density;
+}
+
+DataType ***mu(scalar_data *f) {
+    auto viscosity = init_array(f->Nx, f->Ny, f->Nz);
+    auto h = Heaviside(f);
+
+#pragma omp parallel for
+    for (int i = 0; i < f->Nx; ++i) {
+        for (int j = 0; j < f->Ny; ++j) {
+            for (int k = 0; k < f->Nz; ++k) {
+                viscosity[i][j][k] = h[i][j][k] + (1.0-h[i][j][k]) * f->params->viscosity_ratio;
+            }
+        }
+    }
+    delete3d(h, f->Nx, f->Ny);
+    return viscosity;
+
+}
+
+
+
+
+
 
 
 

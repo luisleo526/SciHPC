@@ -12,6 +12,8 @@
 DataType ***Heaviside(scalar_data *f);
 DataType ***Delta(scalar_data *f);
 DataType ***Sign(scalar_data *f);
+DataType ***rho(scalar_data *f);
+DataType ***mu(scalar_data *f);
 
 DataType lsf_mass(scalar_data *f);
 DataType lsf_volume(scalar_data *f);

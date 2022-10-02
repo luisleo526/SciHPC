@@ -21,9 +21,11 @@ struct axis {
 };
 
 struct problem_parameters{
+    DataType dt;
     DataType density_ratio;
     DataType viscosity_ratio;
     DataType ls_width;
+    DataType lsf_mass0;
 };
 
 DataType ***init_array(int Nx, int Ny, int Nz);

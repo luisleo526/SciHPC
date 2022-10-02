@@ -11,6 +11,7 @@
 #include "structured_grid.h"
 #include "vector_data.h"
 #include "flux.h"
+#include "lsm.h"
 
 void ccd_coefficient_boundary_condition(DataType ***coeff, int n, DataType dx);
 
