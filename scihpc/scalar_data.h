@@ -19,6 +19,8 @@ public:
     DataType ***fxx, ***fyy, ***fzz;
     DataType ***fxy, ***fyz, ***fxz;
 
+    problem_parameters* params;
+
     scalar_data(int _nx);
 
     scalar_data(int _nx, int _ny);
@@ -26,6 +28,8 @@ public:
     scalar_data(int _nx, int _ny, int _nz);
 
     indices index_mapping(int i, int j, int k);
+
+    void link(problem_parameters* _params);
 
 };
 

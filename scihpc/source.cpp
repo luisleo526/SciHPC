@@ -72,3 +72,8 @@ void Hamilton_Jacobi(scalar_data *f, vector_data *vel, structured_grid *geo, Dat
     }
 
 }
+
+void mpls(scalar_data *phi, vector_data *vel, structured_grid *geo, DataType ***s,
+          void (*flux)(scalar_data *, vector_data *)) {
+
+}

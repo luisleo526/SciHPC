@@ -20,7 +20,7 @@ struct axis {
     int n;
 };
 
-struct params{
+struct problem_parameters{
     DataType density_ratio;
     DataType viscosity_ratio;
     DataType ls_width;

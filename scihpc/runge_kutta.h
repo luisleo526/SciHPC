@@ -13,13 +13,15 @@
 class runge_kutta {
 public:
     runge_kutta(int nx, int ny, int nz);
+
     DataType ***s1, ***s2, ***s3;
 
     void tvd_rk3(DataType dt, scalar_data *f, vector_data *vel, structured_grid *geo,
-                 void(*flux)(scalar_data *,vector_data *pData),
+                 void(*flux)(scalar_data *, vector_data *),
                  void (*bc)(scalar_data *),
                  void (*rhs)(scalar_data *, vector_data *, structured_grid *, DataType ***,
                              void (*)(scalar_data *, vector_data *)));
+
 };
 
 

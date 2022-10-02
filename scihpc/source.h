@@ -4,6 +4,7 @@
 
 #ifndef SCIHPC_SOURCE_H
 #define SCIHPC_SOURCE_H
+
 #include "global.h"
 #include "scalar_data.h"
 #include "structured_grid.h"
@@ -11,9 +12,12 @@
 #include "ccd.h"
 
 void convection(scalar_data *f, vector_data *vel, structured_grid *geo, DataType ***s,
-                void(*flux)(scalar_data *,vector_data *pData));
+                void(*flux)(scalar_data *, vector_data *pData));
 
 void Hamilton_Jacobi(scalar_data *f, vector_data *vel, structured_grid *geo, DataType ***s,
-                     void(*flux)(scalar_data *,vector_data *pData));
+                     void(*flux)(scalar_data *, vector_data *pData));
+
+void mpls(scalar_data *phi, vector_data *vel, structured_grid *geo, DataType ***s,
+          void(*flux)(scalar_data *, vector_data *pData));
 
 #endif //SCIHPC_SOURCE_H

@@ -14,8 +14,6 @@
 #include "scihpc/vtkWriter.h"
 #include "scihpc/lsm.h"
 
-const DataType aaa = 1.0;
-
 int main() {
 
     auto phi = scalar_data(128, 64);
@@ -24,7 +22,9 @@ int main() {
                                axis{0.0, 1.0, phi.ny});
 
     auto solver = runge_kutta(phi.Nx, phi.Ny, phi.Nz);
-    auto param = new params{1.0, 1.0, 1.5 * geo.h};
+    auto param = new problem_parameters{};
+    param->ls_width = 1.5 * geo.h;
+    phi.link(param);
 
     for (int i = 0; i < phi.nx; ++i) {
         for (int j = 0; j < phi.ny; ++j) {
@@ -47,7 +47,7 @@ int main() {
     vtk.add_vector_data(&vel, "vel");
     vtk.close();
 
-    auto mass0 = lsf_mass(&phi, param);
+    auto mass0 = lsf_mass(&phi);
     DataType period = 4.0;
     auto dt = 0.1 * geo.h;
     int cnt = 0;
@@ -82,7 +82,7 @@ int main() {
             plt_id++;
         }
 
-        auto mass = lsf_mass(&phi, param);
+        auto mass = lsf_mass(&phi);
 
         if (cnt % 5 == 0) {
             std::cout << "Time: " << cnt * dt << " Mass Error: " << (mass0 - mass) / mass0 * 100.0 << "%" << std::endl;

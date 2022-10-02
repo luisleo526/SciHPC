@@ -9,11 +9,11 @@
 #include "scalar_data.h"
 #include <cmath>
 
-DataType ***Heaviside(scalar_data* f,params* param);
-DataType ***Delta(scalar_data* f,params* param);
-DataType ***Sign(scalar_data* f,params* param);
+DataType ***Heaviside(scalar_data *f);
+DataType ***Delta(scalar_data *f);
+DataType ***Sign(scalar_data *f);
 
-DataType lsf_mass(scalar_data* f,params* param);
-DataType lsf_volume(scalar_data* f,params* param);
+DataType lsf_mass(scalar_data *f);
+DataType lsf_volume(scalar_data *f);
 
 #endif //SCIHPC_LSM_H
