@@ -376,9 +376,9 @@ void uccd_find_fy(scalar_data *f, structured_grid *geo, vector_data *vel) {
             DataType **su, **sd;
             su = new DataType *[2];
             sd = new DataType *[2];
-            for (int i = 0; i < 2; ++i) {
-                su[i] = new DataType[f->Ny];
-                sd[i] = new DataType[f->Ny];
+            for (int j = 0; j < 2; ++j) {
+                su[j] = new DataType[f->Ny];
+                sd[j] = new DataType[f->Ny];
             }
 
             su[0][0] = (-3.5 * f->flux[i][0][k]
@@ -451,9 +451,9 @@ void uccd_find_fz(scalar_data *f, structured_grid *geo, vector_data *vel) {
             DataType **su, **sd;
             su = new DataType *[2];
             sd = new DataType *[2];
-            for (int i = 0; i < 2; ++i) {
-                su[i] = new DataType[f->Nz];
-                sd[i] = new DataType[f->Nz];
+            for (int k = 0; k < 2; ++k) {
+                su[k] = new DataType[f->Nz];
+                sd[k] = new DataType[f->Nz];
             }
 
             su[0][0] = (-3.5 * f->flux[i][j][0]
