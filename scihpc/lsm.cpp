@@ -29,7 +29,7 @@ DataType Delta(DataType x, DataType ls_width) {
 }
 
 
-DataType Sign(DataType x, DataType ls_width) {
+DataType Sign(const DataType& x, const DataType& ls_width) {
 
     if (x < -ls_width) {
         return -1;
@@ -42,7 +42,7 @@ DataType Sign(DataType x, DataType ls_width) {
 }
 
 DataType lsf_mass(wrapper *f) {
-    DataType mass = 0;
+    DataType mass = 0.0;
 
 #pragma omp parallel for default(none) shared(f) reduction(+:mass)
     for (int i = 0; i < f->scalar->nx; ++i) {

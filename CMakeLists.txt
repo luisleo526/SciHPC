@@ -7,6 +7,10 @@ set(CMAKE_CXX_STANDARD 23)
 include_directories(scihpc)
 
 add_executable(SciHPC
+#        main.cpp
+        benchmarks_convergence.cpp
+#        benchmarks_inviscid_Burger's_equation.cpp
+#        benchmark_2d_vortex.cpp
         scihpc/boundary_condition.cpp
         scihpc/boundary_condition.h
         scihpc/flux.cpp
@@ -29,7 +33,14 @@ add_executable(SciHPC
         scihpc/vector_data.h
         scihpc/vtkWriter.cpp
         scihpc/vtkWriter.h
-#        benchmarks_convergence.cpp
-#        benchmarks_inviscid_Burger's_equation.cpp
-        main.cpp
-        scihpc/ccd_base.cpp scihpc/ccd_base.h scihpc/ccd_solver.cpp scihpc/ccd_solver.h scihpc/uccd_base.cpp scihpc/uccd_base.h scihpc/uccd_solver.cpp scihpc/uccd_solver.h scihpc/derivatives_solver.h scihpc/wrapper.cpp scihpc/wrapper.h)
+        scihpc/ccd_base.cpp
+        scihpc/ccd_base.h
+        scihpc/ccd_solver.cpp
+        scihpc/ccd_solver.h
+        scihpc/uccd_base.cpp
+        scihpc/uccd_base.h
+        scihpc/uccd_solver.cpp
+        scihpc/uccd_solver.h
+        scihpc/derivatives_solver.h
+        scihpc/wrapper.cpp
+        scihpc/wrapper.h)

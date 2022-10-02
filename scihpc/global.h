@@ -6,8 +6,10 @@
 #define SCIHPC_GLOBAL_H
 
 #include <cmath>
+//#include <boost/multiprecision/cpp_bin_float.hpp>
+//typedef boost::multiprecision::cpp_bin_float_50 DataType;
 
-typedef double DataType;
+typedef long double DataType;
 
 const DataType pi = acos(static_cast<DataType>(-1.0));
 
@@ -30,10 +32,6 @@ struct problem_parameters{
 
 DataType ***init_array(int Nx, int Ny, int Nz);
 
-void delete4d(DataType ****arr, int Nx, int Ny, int Nz);
-
 void delete3d(DataType ***arr, int Nx, int Ny);
-
-void delete2d(DataType **arr, int Nx);
 
 #endif //SCIHPC_GLOBAL_H

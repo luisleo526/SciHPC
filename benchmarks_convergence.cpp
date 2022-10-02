@@ -1,19 +1,17 @@
 #include <iostream>
 #include <iomanip>
-#include <cmath>
 #include <fstream>
 #include <chrono>
 
-#include "scalar_data.h"
+#include "scihpc/scalar_data.h"
 #include "scihpc/global.h"
-#include "structured_grid.h"
-#include "vector_data.h"
+#include "scihpc/structured_grid.h"
+#include "scihpc/vector_data.h"
 #include "scihpc/runge_kutta.h"
 #include "scihpc/source.h"
 #include "scihpc/boundary_condition.h"
 #include "scihpc/flux.h"
 #include "scihpc/derivatives_solver.h"
-
 
 int main() {
 
@@ -21,7 +19,7 @@ int main() {
     DataType prev_error = 0.0;
     DataType prev_h = 0.0;
 
-    for (int cnt = 0; cnt < 5; ++cnt) {
+    for (int cnt = 0; cnt < 8; ++cnt) {
 
         auto phi = wrapper(new scalar_data(16 * static_cast<int>(pow(2, cnt))));
         auto vel = wrapper(new vector_data(phi.scalar->nx));

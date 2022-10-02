@@ -6,8 +6,8 @@
 
 #include "scalar_data.h"
 #include "scihpc/global.h"
-#include "structured_grid.h"
-#include "vector_data.h"
+#include "scihpc/structured_grid.h"
+#include "scihpc/vector_data.h"
 #include "scihpc/runge_kutta.h"
 #include "scihpc/source.h"
 #include "scihpc/boundary_condition.h"
@@ -37,8 +37,6 @@ int main() {
         }
 
         periodic(phi.scalar);
-
-
 
         auto params = new problem_parameters;
         params->dt = 0.01 * geo.h;
