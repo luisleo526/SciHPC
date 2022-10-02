@@ -126,4 +126,7 @@ void mpls(scalar_data *phi, vector_data *vel, structured_grid *geo, DataType ***
         }
     }
 
+    delete3d(heavy, phi->nx, phi->ny);
+    delete3d(delta, phi->nx, phi->ny);
+
 }
