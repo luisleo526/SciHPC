@@ -6,16 +6,14 @@
 #define SCIHPC_LSM_H
 
 #include "global.h"
-#include "scalar_data.h"
 #include <cmath>
+#include "wrapper.h"
 
-DataType ***Heaviside(scalar_data *f);
-DataType ***Delta(scalar_data *f);
-DataType ***Sign(scalar_data *f);
-DataType ***rho(scalar_data *f);
-DataType ***mu(scalar_data *f);
+DataType Heaviside(DataType x, DataType ls_width);
+DataType Delta(DataType x, DataType ls_width);
+DataType Sign(DataType x, DataType ls_width);
 
-DataType lsf_mass(scalar_data *f);
-DataType lsf_volume(scalar_data *f);
+DataType lsf_mass(wrapper *f);
+DataType lsf_volume(wrapper *f);
 
 #endif //SCIHPC_LSM_H

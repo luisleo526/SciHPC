@@ -4,68 +4,68 @@
 
 #include "source.h"
 
-void convection(scalar_data *f, vector_data *vel, structured_grid *geo, DataType ***s,
-                void(*flux)(scalar_data *, vector_data *)) {
-    flux(f, vel);
-    uccd_find_derivatives(f, geo, vel);
-#pragma omp parallel for
-    for (int i = 0; i < f->Nx; ++i) {
-        for (int j = 0; j < f->Ny; ++j) {
-            for (int k = 0; k < f->Nz; ++k) {
-                s[i][j][k] = -vel->x.data[i][j][k] * f->fx[i][j][k];
+void convection(wrapper *f, wrapper *vel, structured_grid *geo, DataType ***s,
+                void (*flux)(scalar_data *, vector_data *)) {
+    flux(f->scalar, vel->vector);
+    f->solvers->uccd->find_derivatives(f->scalar, vel->vector);
+#pragma omp parallel for default(none) shared(f, vel, geo, s)
+    for (int i = 0; i < f->scalar->Nx; ++i) {
+        for (int j = 0; j < f->scalar->Ny; ++j) {
+            for (int k = 0; k < f->scalar->Nz; ++k) {
+                s[i][j][k] = -vel->vector->x.data[i][j][k] * f->scalar->fx[i][j][k];
             }
         }
     }
-    if (f->ndim > 1) {
-#pragma omp parallel for
-        for (int i = 0; i < f->Nx; ++i) {
-            for (int j = 0; j < f->Ny; ++j) {
-                for (int k = 0; k < f->Nz; ++k) {
-                    s[i][j][k] -= vel->y.data[i][j][k] * f->fy[i][j][k];
+    if (f->scalar->ndim > 1) {
+#pragma omp parallel for default(none) shared(f, vel, geo, s)
+        for (int i = 0; i < f->scalar->Nx; ++i) {
+            for (int j = 0; j < f->scalar->Ny; ++j) {
+                for (int k = 0; k < f->scalar->Nz; ++k) {
+                    s[i][j][k] -= vel->vector->y.data[i][j][k] * f->scalar->fy[i][j][k];
                 }
             }
         }
     }
-    if (f->ndim > 2) {
-#pragma omp parallel for
-        for (int i = 0; i < f->Nx; ++i) {
-            for (int j = 0; j < f->Ny; ++j) {
-                for (int k = 0; k < f->Nz; ++k) {
-                    s[i][j][k] -= vel->z.data[i][j][k] * f->fz[i][j][k];
+    if (f->scalar->ndim > 2) {
+#pragma omp parallel for default(none) shared(f, vel, geo, s)
+        for (int i = 0; i < f->scalar->Nx; ++i) {
+            for (int j = 0; j < f->scalar->Ny; ++j) {
+                for (int k = 0; k < f->scalar->Nz; ++k) {
+                    s[i][j][k] -= vel->vector->z.data[i][j][k] * f->scalar->fz[i][j][k];
                 }
             }
         }
     }
 }
 
-void Hamilton_Jacobi(scalar_data *f, vector_data *vel, structured_grid *geo, DataType ***s,
+void Hamilton_Jacobi(wrapper *f, wrapper *vel, structured_grid *geo, DataType ***s,
                      void (*flux)(scalar_data *, vector_data *)) {
-    flux(f, vel);
-    uccd_find_derivatives(f, geo, vel);
-#pragma omp parallel for
-    for (int i = 0; i < f->Nx; ++i) {
-        for (int j = 0; j < f->Ny; ++j) {
-            for (int k = 0; k < f->Nz; ++k) {
-                s[i][j][k] = -f->fx[i][j][k];
+    flux(f->scalar, vel->vector);
+    f->solvers->uccd->find_derivatives(f->scalar, vel->vector);
+#pragma omp parallel for default(none) shared(f, vel, geo, s)
+    for (int i = 0; i < f->scalar->Nx; ++i) {
+        for (int j = 0; j < f->scalar->Ny; ++j) {
+            for (int k = 0; k < f->scalar->Nz; ++k) {
+                s[i][j][k] = -f->scalar->fx[i][j][k];
             }
         }
     }
-    if (f->ndim > 1) {
-#pragma omp parallel for
-        for (int i = 0; i < f->Nx; ++i) {
-            for (int j = 0; j < f->Ny; ++j) {
-                for (int k = 0; k < f->Nz; ++k) {
-                    s[i][j][k] -= f->fy[i][j][k];
+    if (f->scalar->ndim > 1) {
+#pragma omp parallel for default(none) shared(f, vel, geo, s)
+        for (int i = 0; i < f->scalar->Nx; ++i) {
+            for (int j = 0; j < f->scalar->Ny; ++j) {
+                for (int k = 0; k < f->scalar->Nz; ++k) {
+                    s[i][j][k] -= f->scalar->fy[i][j][k];
                 }
             }
         }
     }
-    if (f->ndim > 2) {
-#pragma omp parallel for
-        for (int i = 0; i < f->Nx; ++i) {
-            for (int j = 0; j < f->Ny; ++j) {
-                for (int k = 0; k < f->Nz; ++k) {
-                    s[i][j][k] -= f->fz[i][j][k];
+    if (f->scalar->ndim > 2) {
+#pragma omp parallel for default(none) shared(f, vel, geo, s)
+        for (int i = 0; i < f->scalar->Nx; ++i) {
+            for (int j = 0; j < f->scalar->Ny; ++j) {
+                for (int k = 0; k < f->scalar->Nz; ++k) {
+                    s[i][j][k] -= f->scalar->fz[i][j][k];
                 }
             }
         }
@@ -73,35 +73,34 @@ void Hamilton_Jacobi(scalar_data *f, vector_data *vel, structured_grid *geo, Dat
 
 }
 
-void mpls(scalar_data *phi, vector_data *vel, structured_grid *geo, DataType ***s,
+void mpls(wrapper *phi, wrapper *vel, structured_grid *geo, DataType ***s,
           void (*flux)(scalar_data *, vector_data *)) {
 
-    flux(phi, vel);
-    ccd_find_derivatives(phi, geo);
+    flux(phi->scalar, vel->vector);
+    phi->solvers->ccd->find_derivatives(phi->scalar);
     auto mass = lsf_mass(phi);
-    auto heavy = Heaviside(phi);
-    auto delta = Delta(phi);
 
     DataType eta = 0.0;
 
-#pragma omp parallel for reduction(+:eta)
-    for (int i = 0; i < phi->nx; ++i) {
-        for (int j = 0; j < phi->ny; ++j) {
-            for (int k = 0; k < phi->nz; ++k) {
+#pragma omp parallel for default(none) shared(phi) reduction(+:eta)
+    for (int i = 0; i < phi->scalar->nx; ++i) {
+        for (int j = 0; j < phi->scalar->ny; ++j) {
+            for (int k = 0; k < phi->scalar->nz; ++k) {
 
-                auto index = phi->index_mapping(i + 1, j + 1, k + 1);
+                auto index = phi->scalar->index_mapping(i + 1, j + 1, k + 1);
 
-                auto gradient = pow(phi->fx[index.i][index.j][index.k], 2)
-                                     + pow(phi->fy[index.i][index.j][index.k], 2);
-                if (phi->ndim > 2) {
-                    gradient += pow(phi->fz[index.i][index.j][index.k], 2);
+                auto gradient = pow(phi->scalar->fx[index.i][index.j][index.k], 2)
+                                + pow(phi->scalar->fy[index.i][index.j][index.k], 2);
+                if (phi->scalar->ndim > 2) {
+                    gradient += pow(phi->scalar->fz[index.i][index.j][index.k], 2);
                 }
                 gradient = sqrt(gradient);
 
-                auto g = delta[index.i][index.j][index.k] *
-                         (2.0 * (1.0 - phi->params->density_ratio) * heavy[index.i][index.j][index.k] + phi->params->density_ratio);
+                auto heavy = Heaviside(phi->scalar->data[index.i][index.j][index.k], phi->params->ls_width);
+                auto delta = Delta(phi->scalar->data[index.i][index.j][index.k], phi->params->ls_width);
+                auto g = delta * (2.0 * (1.0 - phi->params->density_ratio) * heavy + phi->params->density_ratio);
 
-                eta += g * delta[index.i][index.j][index.k] * gradient;
+                eta += g * delta * gradient;
 
             }
         }
@@ -109,24 +108,23 @@ void mpls(scalar_data *phi, vector_data *vel, structured_grid *geo, DataType ***
 
     eta = (phi->params->lsf_mass0 - mass) / (eta * phi->params->dt);
 
-#pragma omp parallel for
-    for (int i = 0; i < phi->Nx; ++i) {
-        for (int j = 0; j < phi->Ny; ++j) {
-            for (int k = 0; k < phi->Nz; ++k) {
+#pragma omp parallel for default(none) shared(s, phi, eta)
+    for (int i = 0; i < phi->scalar->nx; ++i) {
+        for (int j = 0; j < phi->scalar->ny; ++j) {
+            for (int k = 0; k < phi->scalar->nz; ++k) {
 
-                auto gradient = pow(phi->fx[i][j][k], 2)
-                                      + pow(phi->fy[i][j][k], 2);
-                if (phi->ndim > 2) {
-                    gradient += pow(phi->fz[i][j][k], 2);
+                auto gradient = pow(phi->scalar->fx[i][j][k], 2)
+                                + pow(phi->scalar->fy[i][j][k], 2);
+                if (phi->scalar->ndim > 2) {
+                    gradient += pow(phi->scalar->fz[i][j][k], 2);
                 }
                 gradient = sqrt(gradient);
 
-                s[i][j][k] = eta * delta[i][j][k] * gradient;
+                auto delta = Delta(phi->scalar->data[i][j][k], phi->params->ls_width);
+
+                s[i][j][k] = eta * delta * gradient;
             }
         }
     }
-
-    delete3d(heavy, phi->nx, phi->ny);
-    delete3d(delta, phi->nx, phi->ny);
 
 }

@@ -6,18 +6,18 @@
 #define SCIHPC_SOURCE_H
 
 #include "global.h"
-#include "scalar_data.h"
 #include "structured_grid.h"
-#include "vector_data.h"
-#include "ccd.h"
+#include "derivatives_solver.h"
+#include "wrapper.h"
+#include "lsm.h"
 
-void convection(scalar_data *f, vector_data *vel, structured_grid *geo, DataType ***s,
-                void(*flux)(scalar_data *, vector_data *pData));
+void convection(wrapper *f, wrapper *vel, structured_grid *geo, DataType ***s,
+                void (*flux)(scalar_data *, vector_data *));
 
-void Hamilton_Jacobi(scalar_data *f, vector_data *vel, structured_grid *geo, DataType ***s,
-                     void(*flux)(scalar_data *, vector_data *pData));
+void Hamilton_Jacobi(wrapper *f, wrapper *vel, structured_grid *geo, DataType ***s,
+                     void (*flux)(scalar_data *, vector_data *));
 
-void mpls(scalar_data *phi, vector_data *vel, structured_grid *geo, DataType ***s,
-          void(*flux)(scalar_data *, vector_data *pData));
+void mpls(wrapper *phi, wrapper *vel, structured_grid *geo, DataType ***s,
+          void (*flux)(scalar_data *, vector_data *));
 
 #endif //SCIHPC_SOURCE_H

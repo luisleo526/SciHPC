@@ -114,8 +114,3 @@ indices scalar_data::index_mapping(int i, int j, int k) {
 
     return indices{I, J, K};
 }
-
-void scalar_data::link(problem_parameters *_params) {
-    params = _params;
-}
-

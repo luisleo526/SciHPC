@@ -4,14 +4,16 @@
 #include <fstream>
 #include <chrono>
 
-#include "scihpc/scalar_data.h"
+#include "scalar_data.h"
 #include "scihpc/global.h"
-#include "scihpc/structured_grid.h"
-#include "scihpc/vector_data.h"
+#include "structured_grid.h"
+#include "vector_data.h"
 #include "scihpc/runge_kutta.h"
 #include "scihpc/source.h"
 #include "scihpc/boundary_condition.h"
 #include "scihpc/flux.h"
+#include "scihpc/derivatives_solver.h"
+
 
 int main() {
 
@@ -21,25 +23,31 @@ int main() {
 
     for (int cnt = 0; cnt < 5; ++cnt) {
 
-        auto phi = scalar_data(16 * static_cast<int>(pow(2, cnt)));
-        auto vel = vector_data(phi.nx);
-        auto geo = structured_grid(axis{-1.0, 1.0, phi.nx});
-        auto solver = runge_kutta(phi.Nx, phi.Ny, phi.Nz);
-        for (int i = 0; i < phi.nx; ++i) {
-            auto index = phi.index_mapping(i + 1, 1, 1);
-            phi.data[index.i][index.j][index.k] = sin(pi * geo.xc[i]);
-            vel.x.data[index.i][index.j][index.k] = 1.0;
+        auto phi = wrapper(new scalar_data(16 * static_cast<int>(pow(2, cnt))));
+        auto vel = wrapper(new vector_data(phi.scalar->nx));
+        auto geo = structured_grid(axis{-1.0, 1.0, phi.scalar->nx});
+        auto solver = runge_kutta(phi.scalar->Nx, phi.scalar->Ny, phi.scalar->Nz);
+        for (int i = 0; i < phi.scalar->nx; ++i) {
+            auto index = phi.scalar->index_mapping(i + 1, 1, 1);
+            phi.scalar->data[index.i][index.j][index.k] = sin(pi * geo.xc[i]);
+            vel.vector->x.data[index.i][index.j][index.k] = 1.0;
         }
+        periodic(phi.scalar);
 
-        periodic(&phi);
+        auto params = new problem_parameters;
+        params->dt = 0.01 * geo.h;
+
+        auto deri_solvers = new solvers_ptr;
+        deri_solvers->ccd = new ccd_solver(phi.scalar, &geo);
+        deri_solvers->uccd = new uccd_solver(phi.scalar, &geo);
+
+        phi.link_solvers(deri_solvers);
+        phi.link_params(params);
 
         int tcnt = 0;
-        DataType cfl = 0.01;
-        auto dt = cfl * geo.dx;
-
         auto begin = std::chrono::high_resolution_clock::now();
-        while (tcnt * dt < 2.0) {
-            solver.tvd_rk3(dt, &phi, &vel, &geo, &identity_flux, &periodic, &convection);
+        while (tcnt * params->dt < 2.0) {
+            solver.tvd_rk3(&phi, &vel, &geo, &identity_flux, &periodic, &convection);
             tcnt++;
         }
         auto end = std::chrono::high_resolution_clock::now();
@@ -47,14 +55,14 @@ int main() {
 
         // calculate l2 norm
         DataType error = 0.0;
-        for (int i = 0; i < phi.nx; ++i) {
-            auto index = phi.index_mapping(i + 1, 1, 1);
-            error += pow(phi.data[index.i][index.j][index.k] - sin(pi * (geo.xc[i] - tcnt * dt)), 2);
+        for (int i = 0; i < phi.scalar->nx; ++i) {
+            auto index = phi.scalar->index_mapping(i + 1, 1, 1);
+            error += pow(phi.scalar->data[index.i][index.j][index.k] - sin(pi * (geo.xc[i] - tcnt * params->dt)), 2);
         }
-        error = sqrt(error / phi.nx);
+        error = sqrt(error / phi.scalar->nx);
 
         // output
-        std::cout << std::setw(5) << phi.nx << " | " << std::scientific << error;
+        std::cout << std::setw(5) << phi.scalar->nx << " | " << std::scientific << error;
         if (cnt > 0) {
             std::cout << " | " << std::fixed << std::setw(7)
                       << (log10(error) - log10(prev_error)) / (log10(geo.dx) - log10(prev_h));

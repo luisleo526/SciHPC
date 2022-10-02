@@ -7,8 +7,7 @@
 
 #include "global.h"
 #include "scalar_data.h"
-#include "vector_data.h"
-#include "structured_grid.h"
+#include "wrapper.h"
 
 class runge_kutta {
 public:
@@ -16,12 +15,12 @@ public:
 
     DataType ***s1, ***s2, ***s3;
 
-    void tvd_rk3(scalar_data *f, vector_data *vel, structured_grid *geo,
-                 void(*flux)(scalar_data *, vector_data *),
-                 void (*bc)(scalar_data *),
-                 void (*rhs)(scalar_data *, vector_data *, structured_grid *, DataType ***,
-                             void (*)(scalar_data *, vector_data *)));
-
+    void tvd_rk3(wrapper *f, wrapper *vel, structured_grid *geo, void (*flux)(scalar_data *, vector_data *),
+                 void (*bc)(scalar_data *), void (*rhs)(wrapper *, wrapper *, structured_grid *, DataType ***,
+                                                        void (*)(scalar_data *, vector_data *)));
+    void euler(wrapper *f, wrapper *vel, structured_grid *geo, void (*flux)(scalar_data *, vector_data *),
+               void (*bc)(scalar_data *), void (*rhs)(wrapper *, wrapper *, structured_grid *, DataType ***,
+                                                      void (*)(scalar_data *, vector_data *)));
 };
 
 

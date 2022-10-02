@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.23)
 project(SciHPC)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 set(CMAKE_CXX_STANDARD 23)
 
 include_directories(scihpc)
@@ -8,8 +9,6 @@ include_directories(scihpc)
 add_executable(SciHPC
         scihpc/boundary_condition.cpp
         scihpc/boundary_condition.h
-        scihpc/ccd.cpp
-        scihpc/ccd.h
         scihpc/flux.cpp
         scihpc/flux.h
         scihpc/global.cpp
@@ -32,4 +31,5 @@ add_executable(SciHPC
         scihpc/vtkWriter.h
 #        benchmarks_convergence.cpp
 #        benchmarks_inviscid_Burger's_equation.cpp
-        main.cpp)
+        main.cpp
+        scihpc/ccd_base.cpp scihpc/ccd_base.h scihpc/ccd_solver.cpp scihpc/ccd_solver.h scihpc/uccd_base.cpp scihpc/uccd_base.h scihpc/uccd_solver.cpp scihpc/uccd_solver.h scihpc/derivatives_solver.h scihpc/wrapper.cpp scihpc/wrapper.h)

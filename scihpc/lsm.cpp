@@ -4,128 +4,74 @@
 
 #include "lsm.h"
 
-DataType ***Heaviside(scalar_data *f) {
-    auto heaviside = init_array(f->Nx, f->Ny, f->Nz);
-#pragma omp parallel for
-    for (int i = 0; i < f->Nx; ++i) {
-        for (int j = 0; j < f->Ny; ++j) {
-            for (int k = 0; k < f->Nz; ++k) {
-                if (f->data[i][j][k] < -f->params->ls_width) {
-                    heaviside[i][j][k] = 0;
-                } else if (f->data[i][j][k] > f->params->ls_width) {
-                    heaviside[i][j][k] = 1;
-                } else {
-                    heaviside[i][j][k] = 0.5 * (1 + f->data[i][j][k] / f->params->ls_width +
-                                        sin(pi * f->data[i][j][k] / f->params->ls_width) / pi);
-                }
-            }
-        }
+DataType Heaviside(DataType x, DataType ls_width) {
+
+    if (x < -ls_width) {
+        return 0;
+    } else if (x > ls_width) {
+        return 1;
+    } else {
+        return 0.5 * (1 + x / ls_width + sin(pi * x / ls_width) / pi);
     }
-    return heaviside;
+
 }
 
-DataType ***Delta(scalar_data *f) {
-    auto delta = init_array(f->Nx, f->Ny, f->Nz);
-#pragma omp parallel for
-    for (int i = 0; i < f->Nx; ++i) {
-        for (int j = 0; j < f->Ny; ++j) {
-            for (int k = 0; k < f->Nz; ++k) {
-                if (f->data[i][j][k] < -f->params->ls_width) {
-                    delta[i][j][k] = 0;
-                } else if (f->data[i][j][k] > f->params->ls_width) {
-                    delta[i][j][k] = 0;
-                } else {
-                    delta[i][j][k] = 0.5 * (1 + cos(pi * f->data[i][j][k] / f->params->ls_width)) / f->params->ls_width;
-                }
-            }
-        }
+DataType Delta(DataType x, DataType ls_width) {
+
+    if (x < -ls_width) {
+        return 0;
+    } else if (x > ls_width) {
+        return 0;
+    } else {
+        return 0.5 * (1 + cos(pi * x / ls_width)) / ls_width;
     }
-    return delta;
+
 }
 
-DataType ***Sign(scalar_data *f) {
-    auto sign = init_array(f->Nx, f->Ny, f->Nz);
-#pragma omp parallel for
-    for (int i = 0; i < f->Nx; ++i) {
-        for (int j = 0; j < f->Ny; ++j) {
-            for (int k = 0; k < f->Nz; ++k) {
-                if (f->data[i][j][k] < -f->params->ls_width) {
-                    sign[i][j][k] = -1;
-                } else if (f->data[i][j][k] > f->params->ls_width) {
-                    sign[i][j][k] = 1;
-                } else {
-                    sign[i][j][k] = f->data[i][j][k] /
-                            sqrt(f->data[i][j][k] * f->data[i][j][k] + f->params->ls_width * f->params->ls_width);
-                }
-            }
-        }
+
+DataType Sign(DataType x, DataType ls_width) {
+
+    if (x < -ls_width) {
+        return -1;
+    } else if (x > ls_width) {
+        return 1;
+    } else {
+        return x / sqrt(x * x + ls_width * ls_width);
     }
-    return sign;
+
 }
 
-DataType lsf_mass(scalar_data *f) {
+DataType lsf_mass(wrapper *f) {
     DataType mass = 0;
-    auto h = Heaviside(f);
-#pragma omp parallel for reduction(+:mass)
-    for (int i = 0; i < f->nx; ++i) {
-        for (int j = 0; j < f->ny; ++j) {
-            for (int k = 0; k < f->nz; ++k) {
-                auto index = f->index_mapping(i+1, j+1, k+1);
-                auto rho = h[index.i][index.j][index.k] + (1.0-h[index.i][index.j][index.k]) * f->params->density_ratio;
-                mass += rho * h[index.i][index.j][index.k];
+
+#pragma omp parallel for default(none) shared(f) reduction(+:mass)
+    for (int i = 0; i < f->scalar->nx; ++i) {
+        for (int j = 0; j < f->scalar->ny; ++j) {
+            for (int k = 0; k < f->scalar->nz; ++k) {
+                auto index = f->scalar->index_mapping(i + 1, j + 1, k + 1);
+                auto h = Heaviside(f->scalar->data[index.i][index.j][index.k], f->params->ls_width);
+                auto rho = h + (1.0-h)*f->params->density_ratio;
+                mass += rho * h;
             }
         }
     }
-    delete3d(h, f->Nx, f->Ny);
     return mass;
 }
 
-DataType lsf_volume(scalar_data *f) {
+DataType lsf_volume(wrapper *f) {
     DataType volume = 0;
-    auto h = Heaviside(f);
-#pragma omp parallel for reduction(+:volume)
-    for (int i = 0; i < f->nx; ++i) {
-        for (int j = 0; j < f->ny; ++j) {
-            for (int k = 0; k < f->nz; ++k) {
-                auto index = f->index_mapping(i+1, j+1, k+1);
-                volume += h[index.i][index.j][index.k];
+
+#pragma omp parallel for default(none) shared(f) reduction(+:volume)
+    for (int i = 0; i < f->scalar->nx; ++i) {
+        for (int j = 0; j < f->scalar->ny; ++j) {
+            for (int k = 0; k < f->scalar->nz; ++k) {
+                auto index = f->scalar->index_mapping(i + 1, j + 1, k + 1);
+                auto h = Heaviside(f->scalar->data[index.i][index.j][index.k], f->params->ls_width);
+                volume += h;
             }
         }
     }
-    delete3d(h, f->Nx, f->Ny);
     return volume;
-}
-
-DataType ***rho(scalar_data *f) {
-    auto density = init_array(f->Nx, f->Ny, f->Nz);
-    auto h = Heaviside(f);
-#pragma omp parallel for
-    for (int i = 0; i < f->Nx; ++i) {
-        for (int j = 0; j < f->Ny; ++j) {
-            for (int k = 0; k < f->Nz; ++k) {
-                density[i][j][k] = h[i][j][k] + (1.0-h[i][j][k]) * f->params->density_ratio;
-            }
-        }
-    }
-    delete3d(h, f->Nx, f->Ny);
-    return density;
-}
-
-DataType ***mu(scalar_data *f) {
-    auto viscosity = init_array(f->Nx, f->Ny, f->Nz);
-    auto h = Heaviside(f);
-
-#pragma omp parallel for
-    for (int i = 0; i < f->Nx; ++i) {
-        for (int j = 0; j < f->Ny; ++j) {
-            for (int k = 0; k < f->Nz; ++k) {
-                viscosity[i][j][k] = h[i][j][k] + (1.0-h[i][j][k]) * f->params->viscosity_ratio;
-            }
-        }
-    }
-    delete3d(h, f->Nx, f->Ny);
-    return viscosity;
-
 }
 
 
