@@ -9,9 +9,10 @@
 //#include <boost/multiprecision/cpp_bin_float.hpp>
 //typedef boost::multiprecision::cpp_bin_float_50 DataType;
 
-typedef long double DataType;
+typedef double DataType;
 
 const DataType pi = acos(static_cast<DataType>(-1.0));
+const DataType epsilon = 1e-8;
 
 struct indices {
     int i, j, k;

@@ -9,19 +9,21 @@
 #include "derivatives_solver.h"
 #include "scalar_data.h"
 #include "vector_data.h"
+#include "dummy_data.h"
 
 class wrapper {
 public:
     scalar_data* scalar;
     vector_data* vector;
-    bool is_scalar;
     explicit wrapper(scalar_data* _scalar);
     explicit wrapper(vector_data* _vector);
-    solvers_ptr* solvers;
+    derivatives_solver* solvers;
     problem_parameters* params;
+    dummy_data* dummy;
 
-    void link_solvers(solvers_ptr* _solvers);
+    void link_solvers(derivatives_solver* _solvers);
     void link_params(problem_parameters* _params);
+    void link_dummy(dummy_data* _dummy);
 };
 
 

@@ -8,7 +8,8 @@ void convection(wrapper *f, wrapper *vel, structured_grid *geo, DataType ***s,
                 void (*flux)(scalar_data *, vector_data *)) {
     flux(f->scalar, vel->vector);
     f->solvers->uccd->find_derivatives(f->scalar, vel->vector);
-#pragma omp parallel for default(none) shared(f, vel, geo, s)
+//    f->solvers->weno->wenojs_find_derivatives(f->scalar, vel->vector);
+#pragma omp parallel for default(none) shared(f, vel, geo, s) collapse(3)
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
             for (int k = 0; k < f->scalar->Nz; ++k) {
@@ -17,7 +18,7 @@ void convection(wrapper *f, wrapper *vel, structured_grid *geo, DataType ***s,
         }
     }
     if (f->scalar->ndim > 1) {
-#pragma omp parallel for default(none) shared(f, vel, geo, s)
+#pragma omp parallel for default(none) shared(f, vel, geo, s) collapse(3)
         for (int i = 0; i < f->scalar->Nx; ++i) {
             for (int j = 0; j < f->scalar->Ny; ++j) {
                 for (int k = 0; k < f->scalar->Nz; ++k) {
@@ -27,7 +28,7 @@ void convection(wrapper *f, wrapper *vel, structured_grid *geo, DataType ***s,
         }
     }
     if (f->scalar->ndim > 2) {
-#pragma omp parallel for default(none) shared(f, vel, geo, s)
+#pragma omp parallel for default(none) shared(f, vel, geo, s) collapse(3)
         for (int i = 0; i < f->scalar->Nx; ++i) {
             for (int j = 0; j < f->scalar->Ny; ++j) {
                 for (int k = 0; k < f->scalar->Nz; ++k) {
@@ -42,7 +43,8 @@ void Hamilton_Jacobi(wrapper *f, wrapper *vel, structured_grid *geo, DataType **
                      void (*flux)(scalar_data *, vector_data *)) {
     flux(f->scalar, vel->vector);
     f->solvers->uccd->find_derivatives(f->scalar, vel->vector);
-#pragma omp parallel for default(none) shared(f, vel, geo, s)
+//    f->solvers->weno->wenojs_find_derivatives(f->scalar, vel->vector);
+#pragma omp parallel for default(none) shared(f, vel, geo, s) collapse(3)
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
             for (int k = 0; k < f->scalar->Nz; ++k) {
@@ -51,7 +53,7 @@ void Hamilton_Jacobi(wrapper *f, wrapper *vel, structured_grid *geo, DataType **
         }
     }
     if (f->scalar->ndim > 1) {
-#pragma omp parallel for default(none) shared(f, vel, geo, s)
+#pragma omp parallel for default(none) shared(f, vel, geo, s) collapse(3)
         for (int i = 0; i < f->scalar->Nx; ++i) {
             for (int j = 0; j < f->scalar->Ny; ++j) {
                 for (int k = 0; k < f->scalar->Nz; ++k) {
@@ -61,7 +63,7 @@ void Hamilton_Jacobi(wrapper *f, wrapper *vel, structured_grid *geo, DataType **
         }
     }
     if (f->scalar->ndim > 2) {
-#pragma omp parallel for default(none) shared(f, vel, geo, s)
+#pragma omp parallel for default(none) shared(f, vel, geo, s) collapse(3)
         for (int i = 0; i < f->scalar->Nx; ++i) {
             for (int j = 0; j < f->scalar->Ny; ++j) {
                 for (int k = 0; k < f->scalar->Nz; ++k) {
@@ -82,7 +84,7 @@ void mpls(wrapper *phi, wrapper *vel, structured_grid *geo, DataType ***s,
 
     DataType eta = 0.0;
 
-#pragma omp parallel for default(none) shared(phi) reduction(+:eta)
+#pragma omp parallel for default(none) shared(phi) reduction(+:eta) collapse(3)
     for (int i = 0; i < phi->scalar->nx; ++i) {
         for (int j = 0; j < phi->scalar->ny; ++j) {
             for (int k = 0; k < phi->scalar->nz; ++k) {
@@ -108,7 +110,7 @@ void mpls(wrapper *phi, wrapper *vel, structured_grid *geo, DataType ***s,
 
     eta = (phi->params->lsf_mass0 - mass) / (eta * phi->params->dt);
 
-#pragma omp parallel for default(none) shared(s, phi, eta)
+#pragma omp parallel for default(none) shared(s, phi, eta) collapse(3)
     for (int i = 0; i < phi->scalar->nx; ++i) {
         for (int j = 0; j < phi->scalar->ny; ++j) {
             for (int k = 0; k < phi->scalar->nz; ++k) {
@@ -126,5 +128,10 @@ void mpls(wrapper *phi, wrapper *vel, structured_grid *geo, DataType ***s,
             }
         }
     }
+
+}
+
+void
+lsf_init(wrapper *phi, wrapper *vel, structured_grid *geo, DataType ***s, void (*flux)(scalar_data *, vector_data *)) {
 
 }

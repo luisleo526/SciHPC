@@ -8,8 +8,8 @@ include_directories(scihpc)
 
 add_executable(SciHPC
 #        main.cpp
-        benchmarks_convergence.cpp
-#        benchmarks_inviscid_Burger's_equation.cpp
+#        benchmarks_convergence.cpp
+        benchmarks_inviscid_Burger's_equation.cpp
 #        benchmark_2d_vortex.cpp
         scihpc/boundary_condition.cpp
         scihpc/boundary_condition.h
@@ -43,4 +43,4 @@ add_executable(SciHPC
         scihpc/uccd_solver.h
         scihpc/derivatives_solver.h
         scihpc/wrapper.cpp
-        scihpc/wrapper.h)
+        scihpc/wrapper.h scihpc/dummy_data.h scihpc/dummy_data.cpp scihpc/weno_solver.cpp scihpc/weno_solver.h scihpc/derivatives_solver.cpp)

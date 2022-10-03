@@ -4,11 +4,6 @@
 
 #include "ccd_solver.h"
 #include <iostream>
-ccd_solver::ccd_solver(int _nx, int _ny, int _nz, DataType _dx, DataType _dy, DataType _dz) {
-    x = new ccd_base(_nx, _dx);
-    y = new ccd_base(_ny, _dy);
-    z = new ccd_base(_nz, _dz);
-}
 
 ccd_solver::ccd_solver(scalar_data *f, structured_grid *geo) {
     x = new ccd_base(f->Nx, geo->dx);

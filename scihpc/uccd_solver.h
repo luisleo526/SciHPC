@@ -14,7 +14,6 @@
 
 class uccd_solver {
 public:
-    uccd_solver(int _nx, int _ny, int _nz, DataType _dx, DataType _dy, DataType _dz);
     uccd_solver(scalar_data* f, structured_grid* geo);
     uccd_base *x, *y, *z;
 

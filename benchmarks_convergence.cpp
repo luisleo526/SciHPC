@@ -31,13 +31,12 @@ int main() {
             vel.vector->x.data[index.i][index.j][index.k] = 1.0;
         }
         periodic(phi.scalar);
+        zero_order_extrapolation(vel.vector);
 
         auto params = new problem_parameters;
         params->dt = 0.01 * geo.h;
 
-        auto deri_solvers = new solvers_ptr;
-        deri_solvers->ccd = new ccd_solver(phi.scalar, &geo);
-        deri_solvers->uccd = new uccd_solver(phi.scalar, &geo);
+        auto deri_solvers = derivatives_solver_alloc(phi.scalar, &geo);
 
         phi.link_solvers(deri_solvers);
         phi.link_params(params);

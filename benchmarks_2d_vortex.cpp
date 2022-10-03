@@ -55,7 +55,7 @@ int main() {
     param->ls_width = 1.5 * geo.h;
     param->dt = 0.1 * geo.h;
 
-    auto deri_solvers = new solvers_ptr;
+    auto deri_solvers = new derivatives_solver;
     deri_solvers->ccd = new ccd_solver(phi.scalar, &geo);
     deri_solvers->uccd = new uccd_solver(phi.scalar, &geo);
 

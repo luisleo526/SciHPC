@@ -5,7 +5,7 @@
 #include "boundary_condition.h"
 
 void periodic_x(scalar_data *f) {
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(f)
     for (int j = 1; j < f->ny + 1; ++j) {
         for (int k = 1; k < f->nz + 1; ++k) {
             indices index_l = f->index_mapping(1, j, k);
@@ -19,7 +19,7 @@ void periodic_x(scalar_data *f) {
 }
 
 void periodic_y(scalar_data *f) {
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(f)
     for (int i = 1; i < f->nx + 1; ++i) {
         for (int k = 1; k < f->nz + 1; ++k) {
             indices index_l = f->index_mapping(i, 1, k);
@@ -33,7 +33,7 @@ void periodic_y(scalar_data *f) {
 }
 
 void periodic_z(scalar_data *f) {
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(f)
     for (int i = 1; i < f->nx + 1; ++i) {
         for (int j = 1; j < f->ny + 1; ++j) {
             indices index_l = f->index_mapping(i, j, 1);
@@ -73,7 +73,7 @@ void periodic(vector_data *f) {
 }
 
 void first_order_extrapolation_x(scalar_data *f) {
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(f)
     for (int j = 1; j < f->ny + 1; ++j) {
         for (int k = 1; k < f->nz + 1; ++k) {
             indices index_l = f->index_mapping(1, j, k);
@@ -91,7 +91,7 @@ void first_order_extrapolation_x(scalar_data *f) {
 }
 
 void first_order_extrapolation_y(scalar_data *f) {
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(f)
     for (int i = 1; i < f->nx + 1; ++i) {
         for (int k = 1; k < f->nz + 1; ++k) {
             indices index_l = f->index_mapping(i, 1, k);
@@ -109,7 +109,7 @@ void first_order_extrapolation_y(scalar_data *f) {
 }
 
 void first_order_extrapolation_z(scalar_data *f) {
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(f)
     for (int i = 1; i < f->nx + 1; ++i) {
         for (int j = 1; j < f->ny + 1; ++j) {
             indices index_l = f->index_mapping(i, j, 1);
@@ -153,7 +153,7 @@ void first_order_extrapolation(vector_data *f) {
 }
 
 void zero_order_extrapolation_x(scalar_data *f) {
-#pragma omp parallel for
+#pragma omp parallel for  default(none) shared(f)
     for (int j = 0; j < f->ny; ++j) {
         for (int k = 0; k < f->nz; ++k) {
             indices index_l = f->index_mapping(1, j+1, k+1);
@@ -167,7 +167,7 @@ void zero_order_extrapolation_x(scalar_data *f) {
 }
 
 void zero_order_extrapolation_y(scalar_data *f) {
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(f)
     for (int i = 0; i < f->nx; ++i) {
         for (int k = 0; k < f->nz; ++k) {
             indices index_l = f->index_mapping(i+1, 1, k+1);
@@ -181,7 +181,7 @@ void zero_order_extrapolation_y(scalar_data *f) {
 }
 
 void zero_order_extrapolation_z(scalar_data *f) {
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(f)
     for (int i = 0; i < f->nx; ++i) {
         for (int j = 0; j < f->ny; ++j) {
             indices index_l = f->index_mapping(i+1, j+1, 1);

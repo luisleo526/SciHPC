@@ -9,7 +9,7 @@
 
 class structured_grid {
 public:
-    structured_grid(axis x_data);
+    explicit structured_grid(axis x_data);
 
     structured_grid(axis x_data, axis y_data);
 

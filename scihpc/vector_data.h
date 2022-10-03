@@ -9,12 +9,9 @@
 
 class vector_data {
 public:
-    vector_data(int _nx);
-
+    explicit vector_data(int _nx);
     vector_data(int _nx, int _ny);
-
     vector_data(int _nx, int _ny, int _nz);
-
     scalar_data x, y, z;
 };
 

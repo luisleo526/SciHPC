@@ -13,7 +13,6 @@
 
 class ccd_solver {
 public:
-    ccd_solver(int _nx, int _ny, int _nz, DataType _dx, DataType _dy, DataType _dz);
     ccd_solver(scalar_data* f, structured_grid* geo);
 
     ccd_base *x, *y, *z;

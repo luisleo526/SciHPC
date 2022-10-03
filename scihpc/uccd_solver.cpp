@@ -4,12 +4,6 @@
 
 #include "uccd_solver.h"
 
-uccd_solver::uccd_solver(int _nx, int _ny, int _nz, DataType _dx, DataType _dy, DataType _dz) {
-    x = new uccd_base(_nx, _dx);
-    y = new uccd_base(_ny, _dy);
-    z = new uccd_base(_nz, _dz);
-}
-
 uccd_solver::uccd_solver(scalar_data *f, structured_grid *geo) {
     x = new uccd_base(f->Nx, geo->dx);
     y = new uccd_base(f->Ny, geo->dy);

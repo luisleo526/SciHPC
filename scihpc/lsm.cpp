@@ -44,7 +44,7 @@ DataType Sign(const DataType& x, const DataType& ls_width) {
 DataType lsf_mass(wrapper *f) {
     DataType mass = 0.0;
 
-#pragma omp parallel for default(none) shared(f) reduction(+:mass)
+#pragma omp parallel for default(none) shared(f) reduction(+:mass) collapse(3)
     for (int i = 0; i < f->scalar->nx; ++i) {
         for (int j = 0; j < f->scalar->ny; ++j) {
             for (int k = 0; k < f->scalar->nz; ++k) {
@@ -61,7 +61,7 @@ DataType lsf_mass(wrapper *f) {
 DataType lsf_volume(wrapper *f) {
     DataType volume = 0;
 
-#pragma omp parallel for default(none) shared(f) reduction(+:volume)
+#pragma omp parallel for default(none) shared(f) reduction(+:volume) collapse(3)
     for (int i = 0; i < f->scalar->nx; ++i) {
         for (int j = 0; j < f->scalar->ny; ++j) {
             for (int k = 0; k < f->scalar->nz; ++k) {

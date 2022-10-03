@@ -20,4 +20,7 @@ void Hamilton_Jacobi(wrapper *f, wrapper *vel, structured_grid *geo, DataType **
 void mpls(wrapper *phi, wrapper *vel, structured_grid *geo, DataType ***s,
           void (*flux)(scalar_data *, vector_data *));
 
+void lsf_init(wrapper *phi, wrapper *vel, structured_grid *geo, DataType ***s,
+              void (*flux)(scalar_data *, vector_data *));
+
 #endif //SCIHPC_SOURCE_H
