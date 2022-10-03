@@ -13,9 +13,9 @@
 #include "scihpc/boundary_condition.h"
 #include "scihpc/flux.h"
 #include "scihpc/vtkWriter.h"
-#include "scihpc/lsm.h"
 #include "scihpc/derivatives_solver.h"
 #include "scihpc/wrapper.h"
+#include "scihpc/lsm.h"
 
 int main() {
 
@@ -54,13 +54,12 @@ int main() {
     param->viscosity_ratio = 1.0;
     param->ls_width = 1.5 * geo.h;
     param->dt = 0.1 * geo.h;
-
-    auto deri_solvers = new derivatives_solver;
-    deri_solvers->ccd = new ccd_solver(phi.scalar, &geo);
-    deri_solvers->uccd = new uccd_solver(phi.scalar, &geo);
-
+    auto deri_solvers = derivatives_solver_alloc(phi.scalar, &geo);
+    auto dummy = dummy_data_alloc(phi.scalar);
     phi.link_params(param);
     phi.link_solvers(deri_solvers);
+    phi.link_dummy(dummy);
+
 
     param->lsf_mass0 = lsf_mass(&phi);
 
@@ -99,7 +98,7 @@ int main() {
             plt_id++;
         }
 
-        auto mass = lsf_mass(&phi);
+        DataType mass = lsf_mass(&phi);
 
         if (cnt % 5 == 0) {
             std::cout << "Time: " << cnt * param->dt << " Mass Error: " << (1.0 - mass / param->lsf_mass0) * 100.0

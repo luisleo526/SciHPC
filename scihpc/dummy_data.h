@@ -6,16 +6,18 @@
 #define SCIHPC_DUMMY_DATA_H
 
 #include "global.h"
+#include "scalar_data.h"
 
 struct dummy_data {
     DataType ***heaviside;
     DataType ***sign;
     DataType ***delta;
+    DataType ***grad;
     DataType ***tmp;
     DataType ***u_tmp, ***v_tmp, ***w_tmp;
     DataType ***a, ***b, ***c;
 };
 
-dummy_data* dummy_data_alloc(int nx, int ny, int nz);
+dummy_data* dummy_data_alloc(scalar_data* f);
 
 #endif //SCIHPC_DUMMY_DATA_H

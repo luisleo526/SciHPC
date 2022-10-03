@@ -82,6 +82,10 @@ void mpls(wrapper *phi, wrapper *vel, structured_grid *geo, DataType ***s,
     phi->solvers->ccd->find_derivatives(phi->scalar);
     auto mass = lsf_mass(phi);
 
+    find_heavyside(phi);
+    find_delta(phi);
+    find_gradient(phi);
+
     DataType eta = 0.0;
 
 #pragma omp parallel for default(none) shared(phi) reduction(+:eta) collapse(3)
@@ -91,15 +95,9 @@ void mpls(wrapper *phi, wrapper *vel, structured_grid *geo, DataType ***s,
 
                 auto index = phi->scalar->index_mapping(i + 1, j + 1, k + 1);
 
-                auto gradient = pow(phi->scalar->fx[index.i][index.j][index.k], 2)
-                                + pow(phi->scalar->fy[index.i][index.j][index.k], 2);
-                if (phi->scalar->ndim > 2) {
-                    gradient += pow(phi->scalar->fz[index.i][index.j][index.k], 2);
-                }
-                gradient = sqrt(gradient);
-
-                auto heavy = Heaviside(phi->scalar->data[index.i][index.j][index.k], phi->params->ls_width);
-                auto delta = Delta(phi->scalar->data[index.i][index.j][index.k], phi->params->ls_width);
+                auto gradient = phi->dummy->grad[index.i][index.j][index.k];
+                auto heavy = phi->dummy->heaviside[index.i][index.j][index.k];
+                auto delta = phi->dummy->delta[index.i][index.j][index.k];
                 auto g = delta * (2.0 * (1.0 - phi->params->density_ratio) * heavy + phi->params->density_ratio);
 
                 eta += g * delta * gradient;
@@ -111,19 +109,11 @@ void mpls(wrapper *phi, wrapper *vel, structured_grid *geo, DataType ***s,
     eta = (phi->params->lsf_mass0 - mass) / (eta * phi->params->dt);
 
 #pragma omp parallel for default(none) shared(s, phi, eta) collapse(3)
-    for (int i = 0; i < phi->scalar->nx; ++i) {
-        for (int j = 0; j < phi->scalar->ny; ++j) {
-            for (int k = 0; k < phi->scalar->nz; ++k) {
-
-                auto gradient = pow(phi->scalar->fx[i][j][k], 2)
-                                + pow(phi->scalar->fy[i][j][k], 2);
-                if (phi->scalar->ndim > 2) {
-                    gradient += pow(phi->scalar->fz[i][j][k], 2);
-                }
-                gradient = sqrt(gradient);
-
-                auto delta = Delta(phi->scalar->data[i][j][k], phi->params->ls_width);
-
+    for (int i = 0; i < phi->scalar->Nx; ++i) {
+        for (int j = 0; j < phi->scalar->Ny; ++j) {
+            for (int k = 0; k < phi->scalar->Nz; ++k) {
+                auto gradient = phi->dummy->grad[i][j][k];
+                auto delta = phi->dummy->delta[i][j][k];
                 s[i][j][k] = eta * delta * gradient;
             }
         }
@@ -132,6 +122,16 @@ void mpls(wrapper *phi, wrapper *vel, structured_grid *geo, DataType ***s,
 }
 
 void
-lsf_init(wrapper *phi, wrapper *vel, structured_grid *geo, DataType ***s, void (*flux)(scalar_data *, vector_data *)) {
+lsf_redistance_no_lambda(wrapper *phi, wrapper *vel, structured_grid *geo, DataType ***s,
+                         void (*flux)(scalar_data *, vector_data *)) {
 
+    godunov_gradient(phi, geo);
+    for (int i = 0; i < phi->scalar->Nx; ++i) {
+        for (int j = 0; j < phi->scalar->Ny; ++j) {
+            for (int k = 0; k < phi->scalar->Nz; ++k) {
+                s[i][j][k] = -phi->dummy->sign[i][j][k] * (phi->dummy->grad[i][j][k] - 1.0) * phi->params->rdt /
+                             phi->params->dt;
+            }
+        }
+    }
 }

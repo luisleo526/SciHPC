@@ -25,6 +25,7 @@ struct axis {
 
 struct problem_parameters{
     DataType dt;
+    DataType rdt;
     DataType density_ratio;
     DataType viscosity_ratio;
     DataType ls_width;

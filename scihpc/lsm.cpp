@@ -3,6 +3,7 @@
 //
 
 #include "lsm.h"
+#include "wrapper_func.h"
 
 DataType Heaviside(DataType x, DataType ls_width) {
 
@@ -29,7 +30,7 @@ DataType Delta(DataType x, DataType ls_width) {
 }
 
 
-DataType Sign(const DataType& x, const DataType& ls_width) {
+DataType Sign(const DataType &x, const DataType &ls_width) {
 
     if (x < -ls_width) {
         return -1;
@@ -50,7 +51,7 @@ DataType lsf_mass(wrapper *f) {
             for (int k = 0; k < f->scalar->nz; ++k) {
                 auto index = f->scalar->index_mapping(i + 1, j + 1, k + 1);
                 auto h = Heaviside(f->scalar->data[index.i][index.j][index.k], f->params->ls_width);
-                auto rho = h + (1.0-h)*f->params->density_ratio;
+                auto rho = h + (1.0 - h) * f->params->density_ratio;
                 mass += rho * h;
             }
         }

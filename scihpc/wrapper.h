@@ -13,6 +13,7 @@
 
 class wrapper {
 public:
+    bool is_scalar;
     scalar_data* scalar;
     vector_data* vector;
     explicit wrapper(scalar_data* _scalar);
@@ -24,6 +25,7 @@ public:
     void link_solvers(derivatives_solver* _solvers);
     void link_params(problem_parameters* _params);
     void link_dummy(dummy_data* _dummy);
+
 };
 
 
