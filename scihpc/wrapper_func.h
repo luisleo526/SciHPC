@@ -13,5 +13,6 @@ void find_delta(wrapper* lsf);
 void find_sign(wrapper* lsf);
 void find_gradient(wrapper* lsf);
 void store(wrapper* f);
+DataType l2nrom(wrapper* f);
 
 #endif //SCIHPC_WRAPPER_FUNC_H

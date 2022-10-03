@@ -5,11 +5,11 @@
 #include "godunov_gradient.h"
 
 DataType godunov_limiter_p(DataType fp, DataType fm) {
-    return std::pow(std::max(-std::min(fp, 0.0), std::max(fm, 0.0)), 2);
+    return std::pow(fmax(-fmin(fp, 0.0), fmax(fm, 0.0)), 2);
 }
 
 DataType godunov_limiter_m(DataType fp, DataType fm) {
-    return std::pow(std::max(std::max(fp, 0.0), -std::min(fm, 0.0)), 2);
+    return std::pow(fmax(fmax(fp, 0.0), -fmin(fm, 0.0)), 2);
 }
 
 void godunov_gradient(wrapper *f, structured_grid *geo) {
@@ -177,7 +177,7 @@ void stabilized_upon_gradient(wrapper *f, structured_grid *geo) {
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
             for (int k = 0; k < f->scalar->Nz; ++k) {
-                max_grad = std::max(max_grad, f->dummy->grad[i][j][k]);
+                max_grad = fmax(max_grad, f->dummy->grad[i][j][k]);
             }
         }
     }

@@ -46,7 +46,7 @@ void find_gradient(wrapper *lsf) {
                 if (lsf->scalar->ndim > 1) {
                     gradient += pow(lsf->scalar->fy[i][j][k], 2);
                 }
-                if (lsf->scalar->ndim > 2){
+                if (lsf->scalar->ndim > 2) {
                     gradient += pow(lsf->scalar->fz[i][j][k], 2);
                 }
                 lsf->dummy->grad[i][j][k] = sqrt(gradient);
@@ -56,7 +56,7 @@ void find_gradient(wrapper *lsf) {
 }
 
 void store(wrapper *f) {
-    if (f->is_scalar){
+    if (f->is_scalar) {
         for (int i = 0; i < f->scalar->Nx; ++i) {
             for (int j = 0; j < f->scalar->Ny; ++j) {
                 for (int k = 0; k < f->scalar->Nz; ++k) {
@@ -64,7 +64,7 @@ void store(wrapper *f) {
                 }
             }
         }
-    }else{
+    } else {
         for (int i = 0; i < f->vector->x.Nx; ++i) {
             for (int j = 0; j < f->vector->x.Ny; ++j) {
                 for (int k = 0; k < f->vector->x.Nz; ++k) {
@@ -75,4 +75,35 @@ void store(wrapper *f) {
             }
         }
     }
+}
+
+DataType l2nrom(wrapper *f) {
+
+    DataType error = 0.0;
+
+    if (f->is_scalar) {
+#pragma omp parallel for default(none) shared(f) reduction(+:error) collapse(3)
+        for (int i = 0; i < f->scalar->Nx; ++i) {
+            for (int j = 0; j < f->scalar->Ny; ++j) {
+                for (int k = 0; k < f->scalar->Nz; ++k) {
+                    error += pow(f->dummy->tmp[i][j][k] - f->scalar->data[i][j][k], 2);
+                }
+            }
+        }
+        error = sqrt(error / (f->scalar->Nx * f->scalar->Ny * f->scalar->Nz));
+    } else {
+#pragma omp parallel for default(none) shared(f) reduction(+:error) collapse(3)
+        for (int i = 0; i < f->vector->x.Nx; ++i) {
+            for (int j = 0; j < f->vector->x.Ny; ++j) {
+                for (int k = 0; k < f->vector->x.Nz; ++k) {
+                    error += pow(f->dummy->u_tmp[i][j][k] - f->vector->x.data[i][j][k], 2);
+                    error += pow(f->dummy->v_tmp[i][j][k] - f->vector->y.data[i][j][k], 2);
+                    error += pow(f->dummy->w_tmp[i][j][k] - f->vector->z.data[i][j][k], 2);
+                }
+            }
+        }
+        error = sqrt(error / (f->vector->x.Nx * f->vector->x.Ny * f->vector->x.Nz));
+    }
+
+    return error;
 }

@@ -19,8 +19,6 @@
 
 int main() {
 
-    omp_set_num_threads(8);
-
     auto phi = wrapper(new scalar_data(64, 64));
     auto vel = wrapper(new vector_data(phi.scalar->nx, phi.scalar->ny));
     auto geo = structured_grid(axis{0.0, 1.0, phi.scalar->nx},

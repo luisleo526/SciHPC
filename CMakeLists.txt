@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.23)
 project(SciHPC)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -openmp")
 set(CMAKE_CXX_STANDARD 23)
 
 include_directories(scihpc)
@@ -43,4 +43,13 @@ add_executable(SciHPC
         scihpc/uccd_solver.h
         scihpc/derivatives_solver.h
         scihpc/wrapper.cpp
-        scihpc/wrapper.h scihpc/dummy_data.h scihpc/dummy_data.cpp scihpc/weno_solver.cpp scihpc/weno_solver.h scihpc/derivatives_solver.cpp scihpc/godunov_gradient.cpp scihpc/godunov_gradient.h scihpc/wrapper_func.cpp scihpc/wrapper_func.h)
+        scihpc/wrapper.h
+        scihpc/dummy_data.h
+        scihpc/dummy_data.cpp
+        scihpc/weno_solver.cpp
+        scihpc/weno_solver.h
+        scihpc/derivatives_solver.cpp
+        scihpc/godunov_gradient.cpp
+        scihpc/godunov_gradient.h
+        scihpc/wrapper_func.cpp
+        scihpc/wrapper_func.h)

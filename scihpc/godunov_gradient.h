@@ -8,7 +8,6 @@
 #include "global.h"
 #include "wrapper.h"
 #include "structured_grid.h"
-#include <cmath>
 
 DataType godunov_limiter_p(DataType fp, DataType fm);
 DataType godunov_limiter_m(DataType fp, DataType fm);
