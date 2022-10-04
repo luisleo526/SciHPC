@@ -17,7 +17,9 @@ public:
     DataType ***data, ***flux;
     DataType ***fx, ***fy, ***fz;
     DataType ***fxx, ***fyy, ***fzz;
-    DataType ***fxy, ***fyz, ***fxz;
+    DataType ***fxy, ***fxyy;
+    DataType ***fyz, ***fyzz;
+    DataType ***fzx, ***fzxx;
 
     explicit scalar_data(int _nx);
 

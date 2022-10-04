@@ -21,7 +21,7 @@ int main() {
     auto geo = structured_grid(axis{-1.1, 1.1, phi.scalar->nx},
                                axis{-1.1, 1.1, phi.scalar->ny});
     auto solver = runge_kutta(phi.scalar->Nx, phi.scalar->Ny, phi.scalar->Nz);
-    auto vtk = vtkWriter(&geo, "lsf_initialization_clean");
+    auto vtk = vtkWriter(&geo, "lsf_iris");
     auto param = new problem_parameters{};
     auto deri_solvers = derivatives_solver_alloc(phi.scalar, &geo);
     auto dummy = dummy_data_alloc(phi.scalar);

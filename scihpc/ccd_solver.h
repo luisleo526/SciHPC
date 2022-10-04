@@ -9,6 +9,7 @@
 #include "matrix_solver.h"
 #include "structured_grid.h"
 #include "scalar_data.h"
+#include "vector_data.h"
 #include "ccd_base.h"
 
 class ccd_solver {
@@ -20,7 +21,17 @@ public:
     void find_fx(scalar_data *f) const;
     void find_fy(scalar_data *f) const;
     void find_fz(scalar_data *f) const;
+
+    void mixed_xy(scalar_data *f) const;
+    void mixed_yz(scalar_data *f) const;
+    void mixed_zx(scalar_data *f) const;
+
     void find_derivatives(scalar_data *f) const;
+    void find_derivatives(vector_data *f) const;
+
+    void find_derivatives_all(scalar_data *f) const;
+    void find_derivatives_all(vector_data *f) const;
+
 };
 
 

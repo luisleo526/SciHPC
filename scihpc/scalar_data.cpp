@@ -27,8 +27,13 @@ scalar_data::scalar_data(const int _nx) {
     fzz = init_array(Nx, Ny, Nz);
 
     fxy = init_array(Nx, Ny, Nz);
+    fxyy = init_array(Nx, Ny, Nz);
+
     fyz = init_array(Nx, Ny, Nz);
-    fxz = init_array(Nx, Ny, Nz);
+    fyzz = init_array(Nx, Ny, Nz);
+
+    fzx = init_array(Nx, Ny, Nz);
+    fzxx = init_array(Nx, Ny, Nz);
 
 }
 
@@ -54,8 +59,13 @@ scalar_data::scalar_data(const int _nx, const int _ny) {
     fzz = init_array(Nx, Ny, Nz);
 
     fxy = init_array(Nx, Ny, Nz);
+    fxyy = init_array(Nx, Ny, Nz);
+
     fyz = init_array(Nx, Ny, Nz);
-    fxz = init_array(Nx, Ny, Nz);
+    fyzz = init_array(Nx, Ny, Nz);
+
+    fzx = init_array(Nx, Ny, Nz);
+    fzxx = init_array(Nx, Ny, Nz);
 
 }
 
@@ -81,8 +91,13 @@ scalar_data::scalar_data(const int _nx, const int _ny, const int _nz) {
     fzz = init_array(Nx, Ny, Nz);
 
     fxy = init_array(Nx, Ny, Nz);
+    fxyy = init_array(Nx, Ny, Nz);
+
     fyz = init_array(Nx, Ny, Nz);
-    fxz = init_array(Nx, Ny, Nz);
+    fyzz = init_array(Nx, Ny, Nz);
+
+    fzx = init_array(Nx, Ny, Nz);
+    fzxx = init_array(Nx, Ny, Nz);
 }
 
 indices scalar_data::index_mapping(int i, int j, int k) {

@@ -12,10 +12,19 @@ dummy_data *dummy_data_alloc(scalar_data* f) {
     dummy->delta = init_array(f->Nx, f->Ny, f->Nz);
     dummy->heaviside = init_array(f->Nx, f->Ny, f->Nz);
     dummy->sign = init_array(f->Nx, f->Ny, f->Nz);
+    dummy->curvature = init_array(f->Nx, f->Ny, f->Nz);
+
     dummy->tmp = init_array(f->Nx, f->Ny, f->Nz);
+    dummy->old = init_array(f->Nx, f->Ny, f->Nz);
+
     dummy->u_tmp = init_array(f->Nx, f->Ny, f->Nz);
     dummy->v_tmp = init_array(f->Nx, f->Ny, f->Nz);
     dummy->w_tmp = init_array(f->Nx, f->Ny, f->Nz);
+
+    dummy->u_old = init_array(f->Nx, f->Ny, f->Nz);
+    dummy->v_old = init_array(f->Nx, f->Ny, f->Nz);
+    dummy->w_old = init_array(f->Nx, f->Ny, f->Nz);
+
     dummy->a = init_array(f->Nx, f->Ny, f->Nz);
     dummy->b = init_array(f->Nx, f->Ny, f->Nz);
     dummy->a_int = init_array(f->Nx, f->Ny, f->Nz);
