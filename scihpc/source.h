@@ -21,4 +21,7 @@ void mpls(wrapper *phi, wrapper *vel, structured_grid *geo, DataType ***s,
 void lsf_redistance_no_lambda(wrapper *phi, wrapper *vel, structured_grid *geo, DataType ***s,
                               void (*flux)(scalar_data *, vector_data *));
 
+void lsf_redistance_lambda(wrapper *phi, wrapper *vel, structured_grid *geo, DataType ***s,
+                              void (*flux)(scalar_data *, vector_data *));
+
 #endif //SCIHPC_SOURCE_H

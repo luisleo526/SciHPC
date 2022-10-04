@@ -21,7 +21,7 @@ int main() {
     auto geo = structured_grid(axis{-1.1, 1.1, phi.scalar->nx},
                                axis{-1.1, 1.1, phi.scalar->ny});
     auto solver = runge_kutta(phi.scalar->Nx, phi.scalar->Ny, phi.scalar->Nz);
-    auto vtk = vtkWriter(&geo, "lsf_initialization");
+    auto vtk = vtkWriter(&geo, "lsf_initialization_clean");
     auto param = new problem_parameters{};
     auto deri_solvers = derivatives_solver_alloc(phi.scalar, &geo);
     auto dummy = dummy_data_alloc(phi.scalar);
@@ -35,7 +35,8 @@ int main() {
 
     std::default_random_engine generator(time(NULL));
     // noise
-    std::uniform_real_distribution<DataType> unif(-0.01, 0.01);
+    std::uniform_real_distribution<DataType> unif(-0.00, 0.00);
+    std::uniform_real_distribution<DataType> unif2(0, 0.0);
 
     // Initialize phi
     for (int i = 0; i < phi.scalar->nx; ++i) {
@@ -45,15 +46,15 @@ int main() {
                 if (geo.yc[j] > -0.85 * cos(0.5 * pi * geo.xc[i]) - unif(generator) and
                     geo.yc[j] < 0.85 * cos(0.5 * pi * geo.xc[i]) + unif(generator)) {
                     if (pow(geo.xc[i], 2) + pow(geo.yc[j], 2) < 0.25 * (1.0 + unif(generator))) {
-                        phi.scalar->data[index.i][index.j][index.k] = 255.0 * (1.0 + unif(generator));
+                        phi.scalar->data[index.i][index.j][index.k] = 255.0 - unif2(generator);
                     } else {
-                        phi.scalar->data[index.i][index.j][index.k] = -255.0 * (1.0 + unif(generator));
+                        phi.scalar->data[index.i][index.j][index.k] = -255.0 + unif2(generator);
                     }
                 } else {
-                    phi.scalar->data[index.i][index.j][index.k] = 255.0 * (1.0 + unif(generator));
+                    phi.scalar->data[index.i][index.j][index.k] = 255.0 - unif2(generator);
                 }
             } else {
-                phi.scalar->data[index.i][index.j][index.k] = 255.0 * (1.0 + unif(generator));
+                phi.scalar->data[index.i][index.j][index.k] = 255.0 + unif2(generator);
             }
 
             phi.scalar->data[index.i][index.j][index.k] /= 255.0;
@@ -70,15 +71,13 @@ int main() {
     int step = 0;
     do {
         store(&phi);
-        if (step % 50 == 0 and step < 300) {
+        if (step % 100 == 0 and step < 500) {
             find_sign(&phi);
             stabilized_upon_gradient(&phi, &geo);
         }
-        solver.tvd_rk3(&phi, &vel, &geo, &identity_flux, &zero_order_extrapolation, &lsf_redistance_no_lambda);
-        step++;
-        std::cout << l2nrom(&phi) << std::endl;
-    } while (step * param->rdt < 3.0 and l2nrom(&phi) > 1e-5);
-
+        solver.tvd_rk3(&phi, &vel, &geo, &identity_flux, &zero_order_extrapolation, &lsf_redistance_lambda);
+        std::cout << l2norm(&phi) << std::endl;
+    } while (++step < 1500 and l2norm(&phi) > 1e-6);
 
     vtk.create(1);
     vtk.add_scalar_data(phi.scalar, "phi");

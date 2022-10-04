@@ -11,6 +11,7 @@ add_executable(SciHPC
 #        benchmarks_convergence.cpp
 #        benchmarks_inviscid_Burger's_equation.cpp
 #        benchmarks_2d_vortex.cpp
+#        benchmarks_lsf_initialization.cpp
         scihpc/boundary_condition.cpp
         scihpc/boundary_condition.h
         scihpc/flux.cpp

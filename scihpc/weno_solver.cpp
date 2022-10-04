@@ -49,9 +49,15 @@ weno_data weno_solver::interpolation_m(DataType a, DataType b, DataType c, DataT
 
 weno_data weno_solver::wenojs_ceofficients(DataType b0, DataType b1, DataType b2) {
 
-    auto a0 = 1.0 / (epsilon + b0) / (epsilon + b0);
-    auto a1 = 6.0 / (epsilon + b1) / (epsilon + b1);
-    auto a2 = 3.0 / (epsilon + b2) / (epsilon + b2);
+// WENO-JS
+//    auto a0 = 1.0 / (epsilon + b0) / (epsilon + b0);
+//    auto a1 = 6.0 / (epsilon + b1) / (epsilon + b1);
+//    auto a2 = 3.0 / (epsilon + b2) / (epsilon + b2);
+
+// WENO-Z
+    auto a0 = 1.0 * (1.0 + abs(b0 - b2) / (epsilon + b0));
+    auto a1 = 6.0 * (1.0 + abs(b0 - b2) / (epsilon + b1));
+    auto a2 = 3.0 * (1.0 + abs(b0 - b2) / (epsilon + b2));
 
     auto w1 = a0 / (a0 + a1 + a2);
     auto w2 = a1 / (a0 + a1 + a2);
@@ -59,7 +65,7 @@ weno_data weno_solver::wenojs_ceofficients(DataType b0, DataType b1, DataType b2
     return weno_data{w1, w2, w3};
 }
 
-void weno_solver::wenojs_flux_x(scalar_data *f) {
+void weno_solver::weno5_flux_x(scalar_data *f) {
 #pragma omp parallel for default(none) shared(f) collapse(3)
     for (int i = -1; i < f->nx; ++i) {
         for (int j = 0; j < f->ny; ++j) {
@@ -98,7 +104,7 @@ void weno_solver::wenojs_flux_x(scalar_data *f) {
     }
 }
 
-void weno_solver::wenojs_flux_y(scalar_data *f) {
+void weno_solver::weno5_flux_y(scalar_data *f) {
 #pragma omp parallel for default(none) shared(f) collapse(3)
     for (int i = 0; i < f->nx; ++i) {
         for (int j = -1; j < f->ny; ++j) {
@@ -137,7 +143,7 @@ void weno_solver::wenojs_flux_y(scalar_data *f) {
     }
 }
 
-void weno_solver::wenojs_flux_z(scalar_data *f) {
+void weno_solver::weno5_flux_z(scalar_data *f) {
 #pragma omp parallel for default(none) shared(f) collapse(3)
     for (int i = 0; i < f->nx; ++i) {
         for (int j = 0; j < f->ny; ++j) {
@@ -176,8 +182,8 @@ void weno_solver::wenojs_flux_z(scalar_data *f) {
     }
 }
 
-void weno_solver::wenojs_find_fx(scalar_data *f, vector_data *vel) {
-    wenojs_flux_x(f);
+void weno_solver::weno5_find_fx(scalar_data *f, vector_data *vel) {
+    weno5_flux_x(f);
 #pragma omp parallel for default(none) shared(f, vel) collapse(3)
     for (int i = -1; i < f->nx; ++i) {
         for (int j = 0; j < f->ny; ++j) {
@@ -203,9 +209,9 @@ void weno_solver::wenojs_find_fx(scalar_data *f, vector_data *vel) {
     }
 }
 
-void weno_solver::wenojs_find_fy(scalar_data *f, vector_data *vel) {
+void weno_solver::weno5_find_fy(scalar_data *f, vector_data *vel) {
 
-    wenojs_flux_y(f);
+    weno5_flux_y(f);
 #pragma omp parallel for default(none) shared(f, vel) collapse(3)
     for (int i = 0; i < f->nx; ++i) {
         for (int j = -1; j < f->ny; ++j) {
@@ -232,9 +238,9 @@ void weno_solver::wenojs_find_fy(scalar_data *f, vector_data *vel) {
 
 }
 
-void weno_solver::wenojs_find_fz(scalar_data *f, vector_data *vel) {
+void weno_solver::weno5_find_fz(scalar_data *f, vector_data *vel) {
 
-    wenojs_flux_z(f);
+    weno5_flux_z(f);
 #pragma omp parallel for default(none) shared(f, vel) collapse(3)
     for (int i = 0; i < f->nx; ++i) {
         for (int j = 0; j < f->ny; ++j) {
@@ -261,12 +267,12 @@ void weno_solver::wenojs_find_fz(scalar_data *f, vector_data *vel) {
 
 }
 
-void weno_solver::wenojs_find_derivatives(scalar_data *f, vector_data *vel) {
-    wenojs_find_fx(f, vel);
+void weno_solver::weno5_find_derivatives(scalar_data *f, vector_data *vel) {
+    weno5_find_fx(f, vel);
     if (f->ndim > 1) {
-        wenojs_find_fy(f, vel);
+        weno5_find_fy(f, vel);
     }
     if (f->ndim > 2) {
-        wenojs_find_fz(f, vel);
+        weno5_find_fz(f, vel);
     }
 }

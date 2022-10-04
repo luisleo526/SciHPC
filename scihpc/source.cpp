@@ -7,8 +7,8 @@
 void convection(wrapper *f, wrapper *vel, structured_grid *geo, DataType ***s,
                 void (*flux)(scalar_data *, vector_data *)) {
     flux(f->scalar, vel->vector);
-    f->solvers->uccd->find_derivatives(f->scalar, vel->vector);
-//    f->solvers->weno->wenojs_find_derivatives(f->scalar, vel->vector);
+//    f->solvers->uccd->find_derivatives(f->scalar, vel->vector);
+    f->solvers->weno->weno5_find_derivatives(f->scalar, vel->vector);
 #pragma omp parallel for default(none) shared(f, vel, geo, s) collapse(3)
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
@@ -42,8 +42,8 @@ void convection(wrapper *f, wrapper *vel, structured_grid *geo, DataType ***s,
 void Hamilton_Jacobi(wrapper *f, wrapper *vel, structured_grid *geo, DataType ***s,
                      void (*flux)(scalar_data *, vector_data *)) {
     flux(f->scalar, vel->vector);
-    f->solvers->uccd->find_derivatives(f->scalar, vel->vector);
-//    f->solvers->weno->wenojs_find_derivatives(f->scalar, vel->vector);
+//    f->solvers->uccd->find_derivatives(f->scalar, vel->vector);
+    f->solvers->weno->weno5_find_derivatives(f->scalar, vel->vector);
 #pragma omp parallel for default(none) shared(f, vel, geo, s) collapse(3)
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
@@ -126,11 +126,45 @@ lsf_redistance_no_lambda(wrapper *phi, wrapper *vel, structured_grid *geo, DataT
                          void (*flux)(scalar_data *, vector_data *)) {
 
     godunov_gradient(phi, geo);
+#pragma omp parallel for default(none) shared(phi, s) collapse(3)
     for (int i = 0; i < phi->scalar->Nx; ++i) {
         for (int j = 0; j < phi->scalar->Ny; ++j) {
             for (int k = 0; k < phi->scalar->Nz; ++k) {
                 s[i][j][k] = -phi->dummy->sign[i][j][k] * (phi->dummy->grad[i][j][k] - 1.0) * phi->params->rdt /
                              phi->params->dt;
+            }
+        }
+    }
+}
+
+void lsf_redistance_lambda(wrapper *phi, wrapper *vel, structured_grid *geo, DataType ***s,
+                           void (*flux)(scalar_data *, vector_data *)) {
+
+    lsf_redistance_no_lambda(phi, vel, geo, s, flux);
+
+#pragma omp parallel for default(none) shared(phi) collapse(3)
+    for (int i = 0; i < phi->scalar->Nx; ++i) {
+        for (int j = 0; j < phi->scalar->Ny; ++j) {
+            for (int k = 0; k < phi->scalar->Nz; ++k) {
+                phi->dummy->a[i][j][k] =
+                        phi->dummy->sign[i][j][k] * phi->dummy->delta[i][j][k] * (phi->dummy->grad[i][j][k] - 1.0);
+                phi->dummy->b[i][j][k] =
+                        phi->dummy->grad[i][j][k] * phi->dummy->delta[i][j][k] * phi->dummy->delta[i][j][k];
+            }
+        }
+    }
+
+    integrate_a(phi);
+    integrate_b(phi);
+
+    for (int i = 0; i < phi->scalar->Nx; ++i) {
+        for (int j = 0; j < phi->scalar->Ny; ++j) {
+            for (int k = 0; k < phi->scalar->Nz; ++k) {
+                if (fabs(phi->dummy->b_int[i][j][k]) > epsilon) {
+                    s[i][j][k] += phi->dummy->a_int[i][j][k] / phi->dummy->b_int[i][j][k] *
+                                  phi->dummy->delta[i][j][k] * phi->dummy->grad[i][j][k] * phi->params->rdt /
+                                  phi->params->dt;
+                }
             }
         }
     }

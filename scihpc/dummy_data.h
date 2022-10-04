@@ -9,13 +9,17 @@
 #include "scalar_data.h"
 
 struct dummy_data {
+    // for lsf
     DataType ***heaviside;
     DataType ***sign;
     DataType ***delta;
     DataType ***grad;
+    // for l2 norm
     DataType ***tmp;
     DataType ***u_tmp, ***v_tmp, ***w_tmp;
-    DataType ***a, ***b, ***c;
+    // for domain integration
+    DataType ***a, ***b;
+    DataType ***a_int, ***b_int;
 };
 
 dummy_data* dummy_data_alloc(scalar_data* f);

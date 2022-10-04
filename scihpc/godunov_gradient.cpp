@@ -47,7 +47,7 @@ void godunov_gradient(wrapper *f, structured_grid *geo) {
         }
     }
     // find fluxes in x direction
-    f->solvers->weno->wenojs_flux_x(f->scalar);
+    f->solvers->weno->weno5_flux_x(f->scalar);
 #pragma omp parallel for default(none) shared(f, geo) collapse(3)
     for (int i = 0; i < f->scalar->nx; ++i) {
         for (int j = 0; j < f->scalar->ny; ++j) {
@@ -92,7 +92,7 @@ void godunov_gradient(wrapper *f, structured_grid *geo) {
         }
 
         // find fluxes in y direction
-        f->solvers->weno->wenojs_flux_y(f->scalar);
+        f->solvers->weno->weno5_flux_y(f->scalar);
 #pragma omp parallel for default(none) shared(f, geo) collapse(3)
         for (int i = 0; i < f->scalar->nx; ++i) {
             for (int j = 0; j < f->scalar->ny; ++j) {
@@ -138,7 +138,7 @@ void godunov_gradient(wrapper *f, structured_grid *geo) {
         }
 
         // find fluxes in z direction
-        f->solvers->weno->wenojs_flux_z(f->scalar);
+        f->solvers->weno->weno5_flux_z(f->scalar);
 #pragma omp parallel for default(none) shared(f, geo) collapse(3)
         for (int i = 0; i < f->scalar->nx; ++i) {
             for (int j = 0; j < f->scalar->ny; ++j) {

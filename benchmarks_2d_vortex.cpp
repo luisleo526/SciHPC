@@ -2,7 +2,6 @@
 #include <cmath>
 #include <fstream>
 #include <chrono>
-#include <omp.h>
 
 #include "scalar_data.h"
 #include "scihpc/global.h"
@@ -88,7 +87,7 @@ int main() {
         }
         zero_order_extrapolation(vel.vector);
 
-        if (cnt * param->dt >= plt_id * period / 4.0) {
+        if (cnt * param->dt >= plt_id * period / 8.0) {
             vtk.create(plt_id);
             vtk.add_scalar_data(phi.scalar, "phi");
             vtk.add_vector_data(vel.vector, "vel");

@@ -25,14 +25,14 @@ public:
     weno_solver(scalar_data* f, structured_grid* geo);
     DataType dx, dy, dz;
     DataType ***fp, ***fm, ***fh;
-    void wenojs_flux_x(scalar_data* f);
-    void wenojs_flux_y(scalar_data* f);
-    void wenojs_flux_z(scalar_data* f);
+    void weno5_flux_x(scalar_data* f);
+    void weno5_flux_y(scalar_data* f);
+    void weno5_flux_z(scalar_data* f);
 
-    void wenojs_find_fx(scalar_data* f, vector_data* vel);
-    void wenojs_find_fy(scalar_data* f, vector_data* vel);
-    void wenojs_find_fz(scalar_data* f, vector_data* vel);
-    void wenojs_find_derivatives(scalar_data*f, vector_data* vel);
+    void weno5_find_fx(scalar_data* f, vector_data* vel);
+    void weno5_find_fy(scalar_data* f, vector_data* vel);
+    void weno5_find_fz(scalar_data* f, vector_data* vel);
+    void weno5_find_derivatives(scalar_data*f, vector_data* vel);
 };
 
 

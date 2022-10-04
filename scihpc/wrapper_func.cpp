@@ -77,7 +77,7 @@ void store(wrapper *f) {
     }
 }
 
-DataType l2nrom(wrapper *f) {
+DataType l2norm(wrapper *f) {
 
     DataType error = 0.0;
 
@@ -106,4 +106,135 @@ DataType l2nrom(wrapper *f) {
     }
 
     return error;
+}
+
+void integrate_a(wrapper *f) {
+
+    for (int i = 0; i < f->scalar->Nx; ++i) {
+        for (int j = 0; j < f->scalar->Ny; ++j) {
+            for (int k = 0; k < f->scalar->Nz; ++k) {
+                f->dummy->a_int[i][j][k] = 0.0;
+            }
+        }
+    }
+
+    if (f->scalar->ndim == 1) {
+#pragma omp parallel for default(none) shared(f) collapse(3)
+        for (int i = 0; i < f->scalar->nx; ++i) {
+            for (int j = 0; j < f->scalar->ny; ++j) {
+                for (int k = 0; k < f->scalar->nz; ++k) {
+                    auto index = f->scalar->index_mapping(i + 1, j + 1, k + 1);
+                    // Simplson's rule
+                    auto f0 =
+                            0.5 * (f->dummy->a[index.i][index.j][index.k] + f->dummy->a[index.i - 1][index.j][index.k]);
+                    auto f1 = f->dummy->a[index.i][index.j][index.k];
+                    auto f2 =
+                            0.5 * (f->dummy->a[index.i][index.j][index.k] + f->dummy->a[index.i + 1][index.j][index.k]);
+                    f->dummy->a_int[index.i][index.j][index.k] = (f0 + 4.0 * f1 + f2) / 6.0;
+                }
+            }
+        }
+    } else if (f->scalar->ndim == 2) {
+#pragma omp parallel for default(none) shared(f) collapse(3)
+        for (int i = 0; i < f->scalar->nx; ++i) {
+            for (int j = 0; j < f->scalar->ny; ++j) {
+                for (int k = 0; k < f->scalar->nz; ++k) {
+                    auto index = f->scalar->index_mapping(i + 1, j + 1, k + 1);
+                    // Simplson's rule
+                    f->dummy->a_int[index.i][index.j][index.k] = 16.0 * f->dummy->a[index.i][index.j][index.k];
+                    for (int ii = 0; ii < 2; ++ii) {
+                        for (int jj = 0; jj < 2; ++jj) {
+                            f->dummy->a_int[index.i][index.j][index.k] +=
+                                    f->dummy->a[index.i - 1 + 2 * ii][index.j - 1 + 2 * jj][index.k];
+                        }
+                    }
+                    f->dummy->a_int[index.i][index.j][index.k] /= 24.0;
+                }
+            }
+        }
+    } else {
+        for (int i = 0; i < f->scalar->nx; ++i) {
+            for (int j = 0; j < f->scalar->ny; ++j) {
+                for (int k = 0; k < f->scalar->nz; ++k) {
+                    auto index = f->scalar->index_mapping(i + 1, j + 1, k + 1);
+                    // Simplson's rule
+                    f->dummy->a_int[index.i][index.j][index.k] = 51.0 * f->dummy->a[index.i][index.j][index.k];
+                    for (int ii = 0; ii < 2; ++ii) {
+                        for (int jj = 0; jj < 2; ++jj) {
+                            for (int kk = 0; kk < 2; ++kk) {
+                                f->dummy->a_int[index.i][index.j][index.k] +=
+                                        f->dummy->a[index.i - 1 + 2 * ii][index.j - 1 + 2 * jj][index.k - 1 + 2 * kk];
+                            }
+                        }
+                    }
+                    f->dummy->a_int[index.i][index.j][index.k] /= 77.0;
+                }
+            }
+        }
+    }
+}
+
+void integrate_b(wrapper *f) {
+
+    for (int i = 0; i < f->scalar->Nx; ++i) {
+        for (int j = 0; j < f->scalar->Ny; ++j) {
+            for (int k = 0; k < f->scalar->Nz; ++k) {
+                f->dummy->b_int[i][j][k] = 0.0;
+            }
+        }
+    }
+
+    if (f->scalar->ndim == 1) {
+#pragma omp parallel for default(none) shared(f) collapse(3)
+        for (int i = 0; i < f->scalar->nx; ++i) {
+            for (int j = 0; j < f->scalar->ny; ++j) {
+                for (int k = 0; k < f->scalar->nz; ++k) {
+                    auto index = f->scalar->index_mapping(i + 1, j + 1, k + 1);
+                    // Simplson's rule
+                    auto f0 =
+                            0.5 * (f->dummy->b[index.i][index.j][index.k] + f->dummy->b[index.i - 1][index.j][index.k]);
+                    auto f1 = f->dummy->b[index.i][index.j][index.k];
+                    auto f2 =
+                            0.5 * (f->dummy->b[index.i][index.j][index.k] + f->dummy->b[index.i + 1][index.j][index.k]);
+                    f->dummy->b_int[index.i][index.j][index.k] = (f0 + 4.0 * f1 + f2) / 6.0;
+                }
+            }
+        }
+    } else if (f->scalar->ndim == 2) {
+#pragma omp parallel for default(none) shared(f) collapse(3)
+        for (int i = 0; i < f->scalar->nx; ++i) {
+            for (int j = 0; j < f->scalar->ny; ++j) {
+                for (int k = 0; k < f->scalar->nz; ++k) {
+                    auto index = f->scalar->index_mapping(i + 1, j + 1, k + 1);
+                    // Simplson's rule
+                    f->dummy->b_int[index.i][index.j][index.k] = 16.0 * f->dummy->b[index.i][index.j][index.k];
+                    for (int ii = 0; ii < 2; ++ii) {
+                        for (int jj = 0; jj < 2; ++jj) {
+                            f->dummy->b_int[index.i][index.j][index.k] +=
+                                    f->dummy->b[index.i - 1 + 2 * ii][index.j - 1 + 2 * jj][index.k];
+                        }
+                    }
+                    f->dummy->b_int[index.i][index.j][index.k] /= 24.0;
+                }
+            }
+        }
+    } else {
+        for (int i = 0; i < f->scalar->nx; ++i) {
+            for (int j = 0; j < f->scalar->ny; ++j) {
+                for (int k = 0; k < f->scalar->nz; ++k) {
+                    auto index = f->scalar->index_mapping(i + 1, j + 1, k + 1);
+                    // Simplson's rule
+                    f->dummy->b_int[index.i][index.j][index.k] = 51.0 * f->dummy->b[index.i][index.j][index.k];
+                    for (int ii = 0; ii < 2; ++ii) {
+                        for (int jj = 0; jj < 2; ++jj) {
+                            for (int kk = 0; kk < 2; ++kk) {
+                                f->dummy->b_int[index.i][index.j][index.k] +=
+                                        f->dummy->b[index.i - 1 + 2 * ii][index.j - 1 + 2 * jj][index.k - 1 + 2 * kk];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

@@ -18,7 +18,8 @@ dummy_data *dummy_data_alloc(scalar_data* f) {
     dummy->w_tmp = init_array(f->Nx, f->Ny, f->Nz);
     dummy->a = init_array(f->Nx, f->Ny, f->Nz);
     dummy->b = init_array(f->Nx, f->Ny, f->Nz);
-    dummy->c = init_array(f->Nx, f->Ny, f->Nz);
+    dummy->a_int = init_array(f->Nx, f->Ny, f->Nz);
+    dummy->b_int = init_array(f->Nx, f->Ny, f->Nz);
 
     return dummy;
 }
