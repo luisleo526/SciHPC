@@ -53,4 +53,6 @@ add_executable(SciHPC
         scihpc/godunov_gradient.cpp
         scihpc/godunov_gradient.h
         scihpc/wrapper_func.cpp
-        scihpc/wrapper_func.h scihpc/projection_method.cpp scihpc/projection_method.h)
+        scihpc/wrapper_func.h
+        scihpc/projection_method.cpp
+        scihpc/projection_method.h)

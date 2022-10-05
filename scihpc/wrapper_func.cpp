@@ -283,8 +283,12 @@ void find_curvature(wrapper *lsf) {
                     auto fxx = lsf->scalar->fxx[i][j][k];
                     auto fyy = lsf->scalar->fyy[i][j][k];
                     auto fxy = lsf->scalar->fxy[i][j][k];
-                    lsf->dummy->curvature[i][j][k] = (fxx * fy * fy + fyy * fx * fx - 2.0 * fxy * fx * fy) /
+                    lsf->dummy->curvature[i][j][k] = -(fxx * fy * fy + fyy * fx * fx - 2.0 * fxy * fx * fy) /
                                                      pow(fx * fx + fy * fy, 1.5);
+
+                    //Correction
+                    lsf->dummy->curvature[i][j][k] =
+                            1.0 / (1.0 / lsf->dummy->curvature[i][j][k] + lsf->scalar->data[i][j][k]);
                 }
             }
         }
@@ -303,9 +307,13 @@ void find_curvature(wrapper *lsf) {
                     auto fxz = lsf->scalar->fzx[i][j][k];
                     auto fyz = lsf->scalar->fyz[i][j][k];
                     lsf->dummy->curvature[i][j][k] =
-                            (fx * fx * (fyy + fzz) + fy * fy * (fxx + fzz) + fz * fz * (fxx + fyy)
-                             - 2.0 * (fx * fy * fxy + fx * fz * fxz + fy * fz * fyz)) /
+                            -(fx * fx * (fyy + fzz) + fy * fy * (fxx + fzz) + fz * fz * (fxx + fyy)
+                              - 2.0 * (fx * fy * fxy + fx * fz * fxz + fy * fz * fyz)) /
                             pow(fx * fx + fy * fy + fz * fz, 1.5);
+
+                    //Correction
+                    lsf->dummy->curvature[i][j][k] =
+                            1.0 / (2.0 / lsf->dummy->curvature[i][j][k] + lsf->scalar->data[i][j][k]);
                 }
             }
         }

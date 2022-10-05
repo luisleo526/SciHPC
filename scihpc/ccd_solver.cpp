@@ -111,6 +111,13 @@ void ccd_solver::find_fz(scalar_data *f) const {
 void ccd_solver::mixed_xy(scalar_data *f) const {
     for (int i = 0; i < f->Nx; ++i) {
         for (int k = 0; k < f->Nz; ++k) {
+
+            // Boundary condition
+            for (int j = 0; j < f->ghc; ++j) {
+                f->fx[i][j][k] = f->fx[i][f->ghc][k];
+                f->fx[i][f->Ny - 1 - j][k] = f->fx[i][f->Ny - 1 - f->ghc][k];
+            }
+
             y->s[0] = (-3.5 * f->fx[i][0][k] + 4.0 * f->fx[i][1][k] - 0.5 * f->fx[i][2][k]) / y->h;
 
             y->ss[0] = (34.0 / 3.0 * f->fx[i][0][k] - 83.0 / 4.0 * f->fx[i][1][k]
@@ -142,6 +149,13 @@ void ccd_solver::mixed_xy(scalar_data *f) const {
 void ccd_solver::mixed_yz(scalar_data *f) const {
     for (int j = 0; j < f->Ny; ++j) {
         for (int i = 0; i < f->Nx; ++i) {
+
+            // Boundary condition
+            for (int k = 0; k < f->ghc; ++k) {
+                f->fy[i][j][k] = f->fy[i][j][f->ghc];
+                f->fy[i][j][f->Nz - 1 - k] = f->fy[i][j][f->Nz - 1 - f->ghc];
+            }
+
             z->s[0] = (-3.5 * f->fy[i][j][0] + 4.0 * f->fy[i][j][1] - 0.5 * f->fy[i][j][2]) / z->h;
 
             z->ss[0] = (34.0 / 3.0 * f->fy[i][j][0] - 83.0 / 4.0 * f->fy[i][j][1]
@@ -173,6 +187,13 @@ void ccd_solver::mixed_yz(scalar_data *f) const {
 void ccd_solver::mixed_zx(scalar_data *f) const {
     for (int k = 0; k < f->Nz; ++k) {
         for (int j = 0; j < f->Ny; ++j) {
+
+            // Boundary condition
+            for (int i = 0; i < f->ghc; ++i) {
+                f->fz[i][j][k] = f->fz[f->ghc][j][k];
+                f->fz[f->Nx - 1 - i][j][k] = f->fz[f->Nx - 1 - f->ghc][j][k];
+            }
+
             x->s[0] = (-3.5 * f->fz[0][j][k] + 4.0 * f->fz[1][j][k] - 0.5 * f->fz[2][j][k]) / x->h;
 
             x->ss[0] = (34.0 / 3.0 * f->fz[0][j][k] - 83.0 / 4.0 * f->fz[1][j][k]
