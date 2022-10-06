@@ -24,7 +24,7 @@ PROGRAM                = RUN
 
 # C and C++ program compilers. Un-comment and specify for cross-compiling if needed. 
 #CC                    = gcc
-CXX                    = clang++ 
+CXX                    = g++ 
 # Un-comment the following line to compile C programs as C++ ones.
 CC                    = $(CXX)
 

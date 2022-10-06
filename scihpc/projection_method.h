@@ -10,6 +10,7 @@
 #include "flux.h"
 #include "source.h"
 #include "boundary_condition.h"
+#include "structured_grid.h"
 
 class projection_method {
 public:
@@ -17,9 +18,9 @@ public:
     DataType ***u_src, ***v_src, ***w_src;
     DataType ***u_src_old, ***v_src_old, ***w_src_old;
     DataType ***CC, ***CR, ***CL, ***CU, ***CD, ***CF, ***CB, ***RHS;
-    void add_stress_x(wrapper* nvel, wrapper* lsf);
-    void add_stress_y(wrapper* nvel, wrapper* lsf);
-    void add_stress_z(wrapper* nvel, wrapper* lsf);
+    void add_stress_x(wrapper *vel, wrapper *lsf, structured_grid *geo);
+    void add_stress_y(wrapper *vel, wrapper *lsf, structured_grid *geo);
+    void add_stress_z(wrapper *vel, wrapper *lsf, structured_grid *geo);
     void find_source(wrapper *vel, wrapper *nvel, wrapper *lsf, structured_grid *geo);
     void find_intermediate_velocity(wrapper *vel);
     void solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel, structured_grid *geo);

@@ -37,7 +37,7 @@ struct problem_parameters {
     DataType Froude_number = -1.0;
     DataType Weber_number = -1.0;
 
-    DataType ppe_tol = 1e-5;
+    DataType ppe_tol = 1e-6;
     int ppe_max_iter = 100000;
 };
 

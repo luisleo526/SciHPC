@@ -57,6 +57,7 @@ int main() {
 
     vtk.create(0);
     vtk.add_scalar(phi.scalar, "phi");
+    vtk.add_vector(nvel.vector, "vel");
     vtk.close();
 
     phi.link_params(param);
@@ -92,8 +93,7 @@ int main() {
     do {
         store_tmp(&phi);
         solver.tvd_rk3(&phi, &vel, &geo, &identity_flux, &zero_order_extrapolation, &lsf_redistance_no_lambda);
-        std::cout << l2norm(&phi) << std::endl;
-    } while (++step * param->rdt < 5.0 and l2norm(&phi) > 1e-5);
+    } while (++step * param->rdt < 5.0 and l2norm(&phi) > 1e-7);
 
     flow_solver.find_source(&vel, &nvel, &phi, &geo);
     param->lsf_mass0 = lsf_mass(&phi);
@@ -103,6 +103,7 @@ int main() {
     vtk.add_vector(nvel.vector, "vel");
     vtk.close();
 
+    std::cout << "start time loop" << std::endl;
     step = 0;
     int pltid = 1;
     do {
@@ -117,6 +118,10 @@ int main() {
             std::cout << " mass loss ratio: " << fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) << std::endl;
             std::cout << " div: " << divergence(&vel, &geo) << std::endl;
             std::cout << " l2norm: " << l2norm(&pressure) << std::endl;
+            instep = 0;
+            do {
+                solver.tvd_rk3(&phi, &nvel, &geo, &identity_flux, &zero_order_extrapolation, &lsf_redistance_lambda);
+            } while (++instep * param->rdt < 3.0 * geo.h);
         }
 
         if (step % 100 == 0) {
