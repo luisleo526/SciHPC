@@ -16,7 +16,7 @@
 
 int main() {
 
-    auto phi = wrapper(new scalar_data(150, 60));
+    auto phi = wrapper(new scalar_data(100, 40));
     auto pressure = wrapper(new scalar_data(phi.scalar->nx, phi.scalar->ny));
     auto vel = wrapper(new vector_data(phi.scalar->nx, phi.scalar->ny));
     auto nvel = wrapper(new vector_data(phi.scalar->nx, phi.scalar->ny));
@@ -76,7 +76,7 @@ int main() {
     nvel.link_dummy(dummy);
 
     param->ls_width = 1.5 * geo.h;
-    param->rdt = 0.25 * geo.h;
+    param->rdt = 0.5 * geo.h;
     param->dt = 0.01 * geo.h;
     param->viscosity_ratio = 0.01;
     param->density_ratio = 0.001;
@@ -93,22 +93,23 @@ int main() {
         store_tmp(&phi);
         solver.tvd_rk3(&phi, &vel, &geo, &identity_flux, &zero_order_extrapolation, &lsf_redistance_no_lambda);
         std::cout << l2norm(&phi) << std::endl;
-    } while (++step * param->rdt < 5.0 and l2norm(&phi) > 1e-6);
-
-    vtk.create(1);
-    vtk.add_scalar(phi.scalar, "phi");
-    vtk.close();
+    } while (++step * param->rdt < 5.0 and l2norm(&phi) > 1e-5);
 
     flow_solver.find_source(&vel, &nvel, &phi, &geo);
     param->lsf_mass0 = lsf_mass(&phi);
 
-    std::cout << "start" << std::endl;
+    vtk.create(1);
+    vtk.add_scalar(phi.scalar, "phi");
+    vtk.add_vector(nvel.vector, "vel");
+    vtk.close();
+
     step = 0;
+    int pltid = 1;
     do {
         solver.tvd_rk3(&phi, &nvel, &geo, &identity_flux, &zero_order_extrapolation, &convection);
         do {
             solver.euler(&phi, &nvel, &geo, &identity_flux, &zero_order_extrapolation, &mpls);
-        } while ( fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) > 1e-10);
+        } while (fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) > 1e-10);
         flow_solver.solve(&vel, &nvel, &pressure, &phi, &geo);
         if (++step % 10 == 0) {
             std::cout << "----------------------------------------" << std::endl;
@@ -117,7 +118,14 @@ int main() {
             std::cout << " div: " << divergence(&vel, &geo) << std::endl;
             std::cout << " l2norm: " << l2norm(&pressure) << std::endl;
         }
-    }while (step * param->dt < 5.0);
+
+        if (step % 100 == 0) {
+            vtk.create(pltid++);
+            vtk.add_scalar(phi.scalar, "phi");
+            vtk.add_vector(nvel.vector, "vel");
+            vtk.close();
+        }
+    } while (step * param->dt < 5.0);
 
     return 0;
 }

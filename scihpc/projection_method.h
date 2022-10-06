@@ -20,7 +20,6 @@ public:
     void add_stress_x(wrapper* nvel, wrapper* lsf);
     void add_stress_y(wrapper* nvel, wrapper* lsf);
     void add_stress_z(wrapper* nvel, wrapper* lsf);
-    void store();
     void find_source(wrapper *vel, wrapper *nvel, wrapper *lsf, structured_grid *geo);
     void find_intermediate_velocity(wrapper *vel);
     void solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel, structured_grid *geo);

@@ -15,7 +15,6 @@ void find_sign(wrapper* lsf);
 void find_gradient(wrapper* lsf);
 void find_curvature(wrapper* lsf);
 void store_tmp(wrapper* f);
-void find_ppe_coefficients(wrapper* lsf);
 DataType l2norm(wrapper* f);
 DataType divergence(wrapper* vel, structured_grid* geo);
 void integrate_a(wrapper* f);
