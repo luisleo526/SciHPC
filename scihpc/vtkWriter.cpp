@@ -27,7 +27,7 @@ void vtkWriter::create(unsigned int id) {
     file << "SPACING " << grid->dx << " " << grid->dy << " " << grid->dz << std::endl;
 }
 
-void vtkWriter::add_scalar_data(scalar_data *data, const std::string &name) {
+void vtkWriter::add_scalar(scalar_data *data, const std::string &name) {
     file << "CELL_DATA " << data->nx * data->ny * data->nz << std::endl;
     file << "SCALARS " << name << " double 1" << std::endl;
     file << "LOOKUP_TABLE default" << std::endl;
@@ -43,7 +43,7 @@ void vtkWriter::add_scalar_data(scalar_data *data, const std::string &name) {
     }
 }
 
-void vtkWriter::add_vector_data(vector_data *data, const std::string &name) {
+void vtkWriter::add_vector(vector_data *data, const std::string &name) {
 
     file << "VECTORS " << name << " double" << std::endl;
     for (int k = 0; k < data->x.nz; ++k) {

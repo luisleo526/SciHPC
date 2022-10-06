@@ -17,6 +17,7 @@ scalar_data::scalar_data(const int _nx) {
 
     data = init_array(Nx, Ny, Nz);
     flux = init_array(Nx, Ny, Nz);
+    old = init_array(Nx, Ny, Nz);
 
     fx = init_array(Nx, Ny, Nz);
     fy = init_array(Nx, Ny, Nz);
@@ -128,4 +129,15 @@ indices scalar_data::index_mapping(int i, int j, int k) {
     }
 
     return indices{I, J, K};
+}
+
+void scalar_data::store() {
+#pragma omp parallel for collapse(3)
+    for (int i = 0; i < Nx; i++) {
+        for (int j = 0; j < Ny; j++) {
+            for (int k = 0; k < Nz; k++) {
+                old[i][j][k] = data[i][j][k];
+            }
+        }
+    }
 }

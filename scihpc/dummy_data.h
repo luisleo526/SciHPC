@@ -21,9 +21,6 @@ struct dummy_data {
     // for domain integration
     DataType ***a, ***b;
     DataType ***a_int, ***b_int;
-    // for Navier-Stokes
-    DataType ***old;
-    DataType ***u_old, ***v_old, ***w_old;
 };
 
 dummy_data* dummy_data_alloc(scalar_data* f);

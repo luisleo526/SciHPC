@@ -24,3 +24,9 @@ vector_data::vector_data(const int _nx, const int _ny, const int _nz) :
     y = scalar_data(_nx, _ny, _nz);
     z = scalar_data(_nx, _ny, _nz);
 }
+
+void vector_data::store() {
+    x.store();
+    y.store();
+    z.store();
+}

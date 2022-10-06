@@ -8,10 +8,12 @@ include_directories(scihpc)
 
 add_executable(SciHPC
         main.cpp
-#        benchmarks_convergence.cpp
-#        benchmarks_inviscid_Burger's_equation.cpp
+#        benchmarks_1d_wave.cpp
+#        benchmarks_1d_IBE.cpp
 #        benchmarks_2d_vortex.cpp
+#        benchmarks_2d_zalesak.cpp
 #        benchmarks_lsf_initialization.cpp
+#        benchmarks_lsf_curvature.cpp.cp
         scihpc/boundary_condition.cpp
         scihpc/boundary_condition.h
         scihpc/flux.cpp
@@ -55,4 +57,6 @@ add_executable(SciHPC
         scihpc/wrapper_func.cpp
         scihpc/wrapper_func.h
         scihpc/projection_method.cpp
-        scihpc/projection_method.h)
+        scihpc/projection_method.h
+        scihpc/no_slip.cpp
+        scihpc/no_slip.h)

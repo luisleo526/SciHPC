@@ -63,14 +63,14 @@ int main() {
     zero_order_extrapolation(phi.scalar);
 
     vtk.create(0);
-    vtk.add_scalar_data(phi.scalar, "phi");
+    vtk.add_scalar(phi.scalar, "phi");
     vtk.close();
 
     find_sign(&phi);
     stabilized_upon_gradient(&phi, &geo);
     int step = 0;
     do {
-        store(&phi);
+        store_tmp(&phi);
         if (step % 100 == 0 and step < 500) {
             find_sign(&phi);
             stabilized_upon_gradient(&phi, &geo);
@@ -80,7 +80,7 @@ int main() {
     } while (++step < 1500 and l2norm(&phi) > 1e-6);
 
     vtk.create(1);
-    vtk.add_scalar_data(phi.scalar, "phi");
+    vtk.add_scalar(phi.scalar, "phi");
     vtk.close();
 
     return 0;

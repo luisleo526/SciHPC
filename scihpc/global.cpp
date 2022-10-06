@@ -10,6 +10,9 @@ DataType ***init_array(int Nx, int Ny, int Nz) {
         arr[i] = new DataType *[Ny];
         for (int j = 0; j < Ny; ++j) {
             arr[i][j] = new DataType[Nz];
+            for (int k = 0; k < Nz; ++k) {
+                arr[i][j][k] = 0.0;
+            }
         }
     }
     return arr;

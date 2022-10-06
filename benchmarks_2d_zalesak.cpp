@@ -65,7 +65,7 @@ int main() {
     zero_order_extrapolation(vel.vector);
 
     vtk.create(-1);
-    vtk.add_scalar_data(phi.scalar, "phi");
+    vtk.add_scalar(phi.scalar, "phi");
     vtk.close();
 
     find_sign(&phi);
@@ -81,7 +81,7 @@ int main() {
 
 
     vtk.create(0);
-    vtk.add_scalar_data(phi.scalar, "phi");
+    vtk.add_scalar(phi.scalar, "phi");
     vtk.close();
 
     param->lsf_mass0 = lsf_mass(&phi);
@@ -100,7 +100,7 @@ int main() {
 
         if (++step * param->dt >= pltid * period / 4.0) {
             vtk.create(pltid);
-            vtk.add_scalar_data(phi.scalar, "phi");
+            vtk.add_scalar(phi.scalar, "phi");
             vtk.close();
             ++pltid;
         }

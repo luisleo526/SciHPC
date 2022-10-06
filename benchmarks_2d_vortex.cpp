@@ -42,8 +42,8 @@ int main() {
 
     auto vtk = vtkWriter(&geo, "vortex_deformation");
     vtk.create(0);
-    vtk.add_scalar_data(phi.scalar, "phi");
-    vtk.add_vector_data(vel.vector, "vel");
+    vtk.add_scalar(phi.scalar, "phi");
+    vtk.add_vector(vel.vector, "vel");
     vtk.close();
 
     auto param = new problem_parameters{};
@@ -89,8 +89,8 @@ int main() {
 
         if (cnt * param->dt >= plt_id * period / 8.0) {
             vtk.create(plt_id);
-            vtk.add_scalar_data(phi.scalar, "phi");
-            vtk.add_vector_data(vel.vector, "vel");
+            vtk.add_scalar(phi.scalar, "phi");
+            vtk.add_vector(vel.vector, "vel");
             vtk.close();
             plt_id++;
         }

@@ -23,13 +23,22 @@ struct axis {
     int n;
 };
 
-struct problem_parameters{
-    DataType dt;
-    DataType rdt;
-    DataType density_ratio;
-    DataType viscosity_ratio;
-    DataType ls_width;
-    DataType lsf_mass0;
+struct problem_parameters {
+    DataType dt{};
+    DataType rdt{};
+
+    DataType density_ratio{};
+    DataType viscosity_ratio{};
+
+    DataType ls_width{};
+    DataType lsf_mass0{};
+
+    DataType Reynolds_number{};
+    DataType Froude_number = -1.0;
+    DataType Weber_number = -1.0;
+
+    DataType ppe_tol = 1e-5;
+    int ppe_max_iter = 100000;
 };
 
 DataType ***init_array(int Nx, int Ny, int Nz);

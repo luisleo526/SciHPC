@@ -20,8 +20,8 @@ public:
     std::string filename;
     std::ofstream file;
     void create(unsigned int id);
-    void add_scalar_data(scalar_data* data, const std::string& name);
-    void add_vector_data(vector_data* data, const std::string& name);
+    void add_scalar(scalar_data* data, const std::string& name);
+    void add_vector(vector_data* data, const std::string& name);
     void close();
 };
 
