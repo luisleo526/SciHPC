@@ -5,14 +5,15 @@
 #include <random>
 #include <ctime>
 
-#include "wrapper.h"
-#include "structured_grid.h"
+#include "scihpc/wrapper.h"
+#include "scihpc/structured_grid.h"
 #include "scihpc/flux.h"
-#include "simple_bc.h"
-#include "wrapper_func.h"
-#include "runge_kutta.h"
+#include "scihpc/simple_bc.h"
+#include "scihpc/wrapper_func.h"
+#include "scihpc/runge_kutta.h"
 #include "scihpc/projection_method.h"
 #include "scihpc/vtkWriter.h"
+#include "scihpc/velocities_bc.h"
 
 int main() {
 
@@ -22,7 +23,8 @@ int main() {
     auto nvel = wrapper(new vector_data(phi.scalar->nx, phi.scalar->ny));
     auto geo = structured_grid(axis{0.0, 5.0, phi.scalar->nx},
                                axis{0.0, 2.0, phi.scalar->ny});
-
+    auto velbc = new velocities_bc(bc_info{SLIP}, bc_info{NO_SLIP},
+                                   bc_info{SLIP}, bc_info{NO_SLIP});
     auto solver = runge_kutta(phi.scalar->Nx, phi.scalar->Ny, phi.scalar->Ny);
     auto flow_solver = projection_method(phi.scalar);
     auto vtk = vtkWriter(&geo, "dambreak");
@@ -66,10 +68,12 @@ int main() {
     vel.link_params(param);
     vel.link_solvers(deri_solvers);
     vel.link_dummy(dummy);
+    vel.link_bc(velbc);
 
     nvel.link_params(param);
     nvel.link_solvers(deri_solvers);
     nvel.link_dummy(dummy);
+    nvel.link_bc(velbc);
 
     param->ls_width = 1.5 * geo.h;
     param->rdt = 0.1 * geo.h;

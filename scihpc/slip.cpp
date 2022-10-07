@@ -84,6 +84,7 @@ void slip_face_xr(scalar_data *u) {
             for (int i = 1; i <= u->ghc; ++i) {
                 u->data[index.i + i][index.j][index.k] = u->data[index.i - i][index.j][index.k];
             }
+            u->data[index.i][index.j][index.k] = 0.0;
         }
     }
 }
@@ -96,6 +97,7 @@ void slip_face_xl(scalar_data *u) {
             for (int i = 1; i <= u->ghc; ++i) {
                 u->data[index.i - i][index.j][index.k] = u->data[index.i - 2 + i][index.j][index.k];
             }
+            u->data[index.i - 1][index.j][index.k] = 0.0;
         }
     }
 }
@@ -108,6 +110,7 @@ void slip_face_yr(scalar_data *v) {
             for (int j = 1; j <= v->ghc; ++j) {
                 v->data[index.i][index.j + j][index.k] = v->data[index.i][index.j - j][index.k];
             }
+            v->data[index.i][index.j][index.k] = 0.0;
         }
     }
 }
@@ -120,6 +123,7 @@ void slip_face_yl(scalar_data *v) {
             for (int j = 1; j <= v->ghc; ++j) {
                 v->data[index.i][index.j - j][index.k] = v->data[index.i][index.j - 2 + j][index.k];
             }
+            v->data[index.i][index.j - 1][index.k] = 0.0;
         }
     }
 }
@@ -132,6 +136,7 @@ void slip_face_zr(scalar_data *w) {
             for (int k = 1; k <= w->ghc; ++k) {
                 w->data[index.i][index.j][index.k + k] = w->data[index.i][index.j][index.k - k];
             }
+            w->data[index.i][index.j][index.k] = 0.0;
         }
     }
 }
@@ -144,6 +149,7 @@ void slip_face_zl(scalar_data *w) {
             for (int k = 1; k <= w->ghc; ++k) {
                 w->data[index.i][index.j][index.k - k] = w->data[index.i][index.j][index.k - 2 + k];
             }
+            w->data[index.i][index.j][index.k - 1] = 0.0;
         }
     }
 }

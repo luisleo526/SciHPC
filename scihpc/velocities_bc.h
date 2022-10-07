@@ -24,17 +24,17 @@ struct bc_info{
 
 class velocities_bc {
 private:
-    void check_bc(bc_info bc_r, bc_info bc_l);
+    static void check_bc(bc_info bc_r, bc_info bc_l);
 public:
-    velocities_bc(bc_info xl_bc, bc_info xr_bc);
-    velocities_bc(bc_info xl_bc, bc_info xr_bc, bc_info yl_bc, bc_info yr_bc);
-    velocities_bc(bc_info xl_bc, bc_info xr_bc, bc_info yl_bc, bc_info yr_bc, bc_info zl_bc, bc_info zr_bc);
+    velocities_bc(const bc_info& xl_bc, const bc_info& xr_bc);
+    velocities_bc(const bc_info& xl_bc, const bc_info& xr_bc, const bc_info& yl_bc, const bc_info& yr_bc);
+    velocities_bc(const bc_info& xl_bc, const bc_info& xr_bc, const bc_info& yl_bc, const bc_info& yr_bc, const bc_info& zl_bc, const bc_info& zr_bc);
     bc_info xlbc, xrbc, ylbc, yrbc, zlbc, zrbc;
-    void apply_vel_bc(vector_data* vel);
-    void apply_nvel_bc(vector_data* nvel);
-    void apply_velx_bc(vector_data* vel);
-    void apply_vely_bc(vector_data* vel);
-    void apply_velz_bc(vector_data* vel);
+    void apply_vel_bc(vector_data* vel) const;
+    void apply_nvel_bc(vector_data* nvel) const;
+    void apply_velx_bc(vector_data* vel) const;
+    void apply_vely_bc(vector_data* vel) const;
+    void apply_velz_bc(vector_data* vel) const;
 };
 
 

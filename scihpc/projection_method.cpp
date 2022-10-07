@@ -55,6 +55,15 @@ void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, structured_grid
                 auto stress_part1 = uxx + uyy;
                 auto stress_part2 = 2.0 * phix * ux + phiy * (uy + vx);
 
+                if (lsf->scalar->ndim > 2){
+                    auto phiz = 0.5 * (lsf->scalar->fz[i][j][k] + lsf->scalar->fz[i + 1][j][k]);
+                    auto uzz = vel->vector->x.fzz[i][j][k];
+                    auto uz = vel->vector->x.fz[i][j][k];
+                    auto wx = nvel->vector->z.fx[i][j][k];
+                    stress_part1 += uzz;
+                    stress_part2 += phiz * (uz + wx);
+                }
+
                 stress_part1 *= mu;
                 stress_part2 *= delta * (1.0 - lsf->params->viscosity_ratio);
 
@@ -94,10 +103,20 @@ void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, structured_grid
                 auto stress_part1 = vxx + vyy;
                 auto stress_part2 = 2.0 * phiy * vy + phix * (vx + uy);
 
+                if (lsf->scalar->ndim > 2){
+                    auto phiz = 0.5 * (lsf->scalar->fz[i][j][k] + lsf->scalar->fz[i][j + 1][k]);
+                    auto vzz = vel->vector->y.fzz[i][j][k];
+                    auto vz = vel->vector->y.fz[i][j][k];
+                    auto wy = nvel->vector->z.fy[i][j][k];
+                    stress_part1 += vzz;
+                    stress_part2 += phiz * (vz + wy);
+                }
+
                 stress_part1 *= mu;
                 stress_part2 *= delta * (1.0 - lsf->params->viscosity_ratio);
 
-                v_src[i][j][k] += (stress_part1 + stress_part2) / lsf->params->Reynolds_number / rho;
+                v_src[i][j][k] += (stress_part1 + stress_part2) / lsf->params->Reynolds_number / rho
+                                  - 1.0 / lsf->params->Froude_number;
 
             }
         }
@@ -105,7 +124,12 @@ void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, structured_grid
 
 }
 
-void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf, structured_grid *geo) const {
+void projection_method::add_stress_z(wrapper *vel, wrapper *lsf, structured_grid *geo, wrapper *nvel) const {
+
+}
+
+void
+projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf, structured_grid *geo) const {
 
 #pragma omp parallel for default(none) collapse(3) shared(u_src, v_src, w_src, u_src_old, v_src_old, w_src_old, vel)
     for (int i = 0; i < vel->vector->x.Nx; ++i) {
@@ -124,7 +148,7 @@ void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf, s
     find_curvature(lsf);
 
     all_to_face_x(vel, nvel);
-    no_slip_face_x(nvel->vector);
+    nvel->velbc->apply_velx_bc(nvel->vector);
     vel->scalar = &vel->vector->x;
     convection(vel, nvel, geo, u_src, identity_flux);
     identity_flux(nvel->vector);
@@ -132,28 +156,39 @@ void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf, s
     add_stress_x(vel, lsf, geo, nvel);
 
     all_to_face_y(vel, nvel);
-    no_slip_face_y(nvel->vector);
+    nvel->velbc->apply_vely_bc(nvel->vector);
     vel->scalar = &vel->vector->y;
     convection(vel, nvel, geo, v_src, identity_flux);
     identity_flux(nvel->vector);
     nvel->solvers->uccd->find_derivatives(&nvel->vector->y, nvel->vector);
     add_stress_y(vel, lsf, geo, nvel);
 
+    if (lsf->scalar->ndim > 2){
+        all_to_face_z(vel, nvel);
+        nvel->velbc->apply_velz_bc(nvel->vector);
+        vel->scalar = &vel->vector->z;
+        convection(vel, nvel, geo, w_src, identity_flux);
+        identity_flux(nvel->vector);
+        nvel->solvers->uccd->find_derivatives(&nvel->vector->z, nvel->vector);
+        add_stress_z(vel, lsf, geo, nvel);
+    }
+
 }
 
 void projection_method::find_intermediate_velocity(wrapper *vel) const {
 
-#pragma omp parallel for default(none) shared(vel) collapse(3)
+#pragma omp parallel for default(none) shared(vel, u_src, v_src, w_src) collapse(3)
     for (int i = 0; i < vel->vector->x.Nx; ++i) {
         for (int j = 0; j < vel->vector->x.Ny; ++j) {
             for (int k = 0; k < vel->vector->x.Nz; ++k) {
                 vel->vector->x.data[i][j][k] += vel->params->dt * (1.5 * u_src[i][j][k] - 0.5 * u_src_old[i][j][k]);
                 vel->vector->y.data[i][j][k] += vel->params->dt * (1.5 * v_src[i][j][k] - 0.5 * v_src_old[i][j][k]);
+                vel->vector->z.data[i][j][k] += vel->params->dt * (1.5 * w_src[i][j][k] - 0.5 * w_src_old[i][j][k]);
             }
         }
     }
 
-    no_slip_face(vel->vector);
+    vel->velbc->apply_vel_bc(vel->vector);
 
 }
 
@@ -250,7 +285,7 @@ void projection_method::find_final_velocity(wrapper *vel, wrapper *pressure, wra
                                             (pressure->scalar->data[i][j + 1][0] - pressure->scalar->data[i][j][0]);
         }
     }
-    no_slip_face(vel->vector);
+    vel->velbc->apply_vel_bc(vel->vector);
 }
 
 void
@@ -260,5 +295,5 @@ projection_method::solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper
     solve_ppe(pressure, lsf, vel, geo);
     find_final_velocity(vel, pressure, lsf, geo);
     node_from_face(vel, nvel);
-    no_slip_node(nvel->vector);
+    nvel->velbc->apply_nvel_bc(nvel->vector);
 }

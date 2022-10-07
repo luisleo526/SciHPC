@@ -27,3 +27,7 @@ void wrapper::link_params(problem_parameters *_params) {
 void wrapper::link_dummy(dummy_data *_dummy) {
     dummy = _dummy;
 }
+
+void wrapper::link_bc(velocities_bc *_bc) {
+    velbc = _bc;
+}

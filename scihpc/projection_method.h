@@ -6,11 +6,11 @@
 #define SCIHPC_PROJECTION_METHOD_H
 
 #include "wrapper_func.h"
-#include "no_slip.h"
 #include "flux.h"
 #include "source.h"
 #include "simple_bc.h"
 #include "structured_grid.h"
+#include "velocities_bc.h"
 
 class projection_method {
 public:
@@ -20,12 +20,13 @@ public:
     DataType ***CC, ***CR, ***CL, ***CU, ***CD, ***CF, ***CB, ***RHS;
     void add_stress_x(wrapper *vel, wrapper *lsf, structured_grid *geo, wrapper *nvel) const;
     void add_stress_y(wrapper *vel, wrapper *lsf, structured_grid *geo, wrapper *nvel) const;
-//    void add_stress_z(wrapper *vel, wrapper *lsf, structured_grid *geo);
+    void add_stress_z(wrapper *vel, wrapper *lsf, structured_grid *geo, wrapper *nvel) const;
     void find_source(wrapper *vel, wrapper *nvel, wrapper *lsf, structured_grid *geo) const;
     void find_intermediate_velocity(wrapper *vel) const;
     void solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel, structured_grid *geo) const;
     static void find_final_velocity(wrapper *vel, wrapper* pressure, wrapper *lsf, structured_grid *geo);
-    void solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf, structured_grid *geo) const;
+    void
+    solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf, structured_grid *geo) const;
 };
 
 
