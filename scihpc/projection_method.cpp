@@ -28,7 +28,7 @@ projection_method::projection_method(scalar_data *f) {
 void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, structured_grid *geo, wrapper *nvel) const {
 
 
-#pragma omp parallel for default(none) shared(vel, lsf, geo) collapse(3)
+#pragma omp parallel for default(none) shared(vel, lsf, geo, nvel) collapse(3)
     for (int I = 1; I <= lsf->scalar->nx; ++I) {
         for (int J = 1; J <= lsf->scalar->ny; ++J) {
             for (int k = 0; k < lsf->scalar->nz; ++k) {
@@ -48,8 +48,7 @@ void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, structured_grid
                                 lsf->scalar->data[i + 1][j + 1][k] - lsf->scalar->data[i + 1][j - 1][k]) / geo->dy;
 
                 auto u = vel->vector->x.data[i][j][k];
-                auto v = 0.25 * (vel->vector->y.data[i][j][k] + vel->vector->y.data[i][j - 1][k] +
-                                 vel->vector->y.data[i + 1][j][k] + vel->vector->y.data[i + 1][j - 1][k]);
+                auto v = nvel->vector->y.data[i][j][k];
 
                 DataType ux, uy;
                 if (u > 0.0) {
@@ -73,9 +72,7 @@ void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, structured_grid
                 auto uyy = (vel->vector->x.data[i][j + 1][k] - 2.0 * vel->vector->x.data[i][j][k] +
                             vel->vector->x.data[i][j - 1][k]) / (geo->dy * geo->dy);
 
-                auto vx =
-                        0.5 * (vel->vector->y.data[i + 1][j][k] - vel->vector->y.data[i][j][k] +
-                               vel->vector->y.data[i + 1][j - 1][k] - vel->vector->y.data[i][j - 1][k]) / geo->dx;
+                auto vx = 0.5 * (nvel->vector->y.data[i + 1][j][k] - nvel->vector->y.data[i - 1][j][k]) / geo->dx;
 
                 auto stress_part1 = uxx + uyy;
                 auto stress_part2 = 2.0 * phix * ux + phiy * (uy + vx);
@@ -93,7 +90,7 @@ void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, structured_grid
 void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, structured_grid *geo, wrapper *nvel) const {
 
 
-#pragma omp parallel for default(none) shared(vel, lsf, geo) collapse(3)
+#pragma omp parallel for default(none) shared(vel, lsf, geo, nvel) collapse(3)
     for (int I = 1; I <= lsf->scalar->nx; ++I) {
         for (int J = 1; J <= lsf->scalar->ny; ++J) {
             for (int k = 0; k < lsf->scalar->nz; ++k) {
@@ -112,8 +109,7 @@ void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, structured_grid
                         0.25 * (lsf->scalar->data[i + 1][j][k] - lsf->scalar->data[i - 1][j][k] +
                                 lsf->scalar->data[i + 1][j + 1][k] - lsf->scalar->data[i - 1][j + 1][k]) / geo->dx;
 
-                auto u = 0.25 * (vel->vector->x.data[i][j][k] + vel->vector->x.data[i - 1][j][k] +
-                                 vel->vector->x.data[i][j + 1][k] + vel->vector->x.data[i - 1][j + 1][k]);
+                auto u = nvel->vector->x.data[i][j][k];
                 auto v = vel->vector->y.data[i][j][k];
 
                 DataType vx, vy;
@@ -139,8 +135,7 @@ void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, structured_grid
                 auto vyy = (vel->vector->y.data[i][j + 1][k] - 2.0 * vel->vector->y.data[i][j][k] +
                             vel->vector->y.data[i][j - 1][k]) / (geo->dy * geo->dy);
 
-                auto uy = 0.5 * (vel->vector->x.data[i][j + 1][k] - vel->vector->x.data[i][j][k] +
-                                 vel->vector->x.data[i - 1][j + 1][k] - vel->vector->x.data[i - 1][j][k]) / geo->dy;
+                auto uy = 0.5 * (nvel->vector->x.data[i][j + 1][k] - nvel->vector->x.data[i][j - 1][k]) / geo->dy;
 
                 auto stress_part1 = vxx + vyy;
                 auto stress_part2 = 2.0 * phiy * vy + phix * (vx + uy);
@@ -174,8 +169,14 @@ void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf, s
     // prepare level set function
     find_delta(lsf);
     find_heavyside(lsf);
-    add_stress_x(vel, lsf, geo, nullptr);
-    add_stress_y(vel, lsf, geo, nullptr);
+
+    all_to_face_x(vel, nvel);
+    no_slip_face_x(nvel->vector);
+    add_stress_x(vel, lsf, geo, nvel);
+
+    all_to_face_y(vel, nvel);
+    no_slip_face_y(nvel->vector);
+    add_stress_y(vel, lsf, geo, nvel);
 
 }
 
