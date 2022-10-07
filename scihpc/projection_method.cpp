@@ -25,7 +25,7 @@ projection_method::projection_method(scalar_data *f) {
     RHS = init_array(f->Nx, f->Ny, f->Nz);
 }
 
-void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, structured_grid *geo) {
+void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, structured_grid *geo) const {
 
 
 #pragma omp parallel for default(none) shared(vel, lsf, geo) collapse(3)
@@ -90,7 +90,7 @@ void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, structured_grid
     }
 }
 
-void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, structured_grid *geo) {
+void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, structured_grid *geo) const {
 
 
 #pragma omp parallel for default(none) shared(vel, lsf, geo) collapse(3)
@@ -158,7 +158,7 @@ void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, structured_grid
 
 }
 
-void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf, structured_grid *geo) {
+void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf, structured_grid *geo) const {
 
 #pragma omp parallel for default(none) collapse(3) shared(vel)
     for (int i = 0; i < vel->vector->x.Nx; ++i) {
@@ -179,7 +179,7 @@ void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf, s
 
 }
 
-void projection_method::find_intermediate_velocity(wrapper *vel) {
+void projection_method::find_intermediate_velocity(wrapper *vel) const {
 
 #pragma omp parallel for default(none) shared(vel) collapse(3)
     for (int i = 0; i < vel->vector->x.Nx; ++i) {
@@ -195,7 +195,7 @@ void projection_method::find_intermediate_velocity(wrapper *vel) {
 
 }
 
-void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel, structured_grid *geo) {
+void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel, structured_grid *geo) const {
 
 #pragma omp parallel for default(none) shared(lsf, geo, vel) collapse(3)
     for (int i = 1; i < lsf->scalar->Nx - 1; ++i) {
@@ -292,7 +292,7 @@ void projection_method::find_final_velocity(wrapper *vel, wrapper *pressure, wra
     no_slip_face(vel->vector);
 }
 
-void projection_method::solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf, structured_grid *geo) {
+void projection_method::solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf, structured_grid *geo) const {
     find_source(vel, nvel, lsf, geo);
     find_intermediate_velocity(vel);
     solve_ppe(pressure, lsf, vel, geo);
