@@ -55,11 +55,6 @@ int main() {
         }
     }
 
-    vtk.create(0);
-    vtk.add_scalar(phi.scalar, "phi");
-    vtk.add_vector(nvel.vector, "vel");
-    vtk.close();
-
     phi.link_params(param);
     phi.link_solvers(deri_solvers);
     phi.link_dummy(dummy);
@@ -77,7 +72,7 @@ int main() {
     nvel.link_dummy(dummy);
 
     param->ls_width = 1.5 * geo.h;
-    param->rdt = 0.5 * geo.h;
+    param->rdt = 0.1 * geo.h;
     param->dt = 0.01 * geo.h;
     param->viscosity_ratio = 0.01;
     param->density_ratio = 0.001;
@@ -98,9 +93,10 @@ int main() {
     flow_solver.find_source(&vel, &nvel, &phi, &geo);
     param->lsf_mass0 = lsf_mass(&phi);
 
-    vtk.create(1);
+    vtk.create(0);
     vtk.add_scalar(phi.scalar, "phi");
-    vtk.add_vector(nvel.vector, "vel");
+    vtk.add_vector(nvel.vector, "nvel");
+    vtk.add_vector(vel.vector, "vel");
     vtk.close();
 
     std::cout << "start time loop" << std::endl;
@@ -108,26 +104,34 @@ int main() {
     int pltid = 1;
     do {
         solver.tvd_rk3(&phi, &nvel, &geo, &identity_flux, &zero_order_extrapolation, &convection);
+
         do {
             solver.euler(&phi, &nvel, &geo, &identity_flux, &zero_order_extrapolation, &mpls);
         } while (fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) > 1e-10);
+
         flow_solver.solve(&vel, &nvel, &pressure, &phi, &geo);
+
         if (++step % 10 == 0) {
             std::cout << "----------------------------------------" << std::endl;
             std::cout << " time: " << step * param->dt << std::endl;
             std::cout << " mass loss ratio: " << fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) << std::endl;
             std::cout << " div: " << divergence(&vel, &geo) << std::endl;
             std::cout << " l2norm: " << l2norm(&pressure) << std::endl;
+
+            find_sign(&phi);
+
             instep = 0;
             do {
                 solver.tvd_rk3(&phi, &nvel, &geo, &identity_flux, &zero_order_extrapolation, &lsf_redistance_lambda);
             } while (++instep * param->rdt < 3.0 * geo.h);
+
         }
 
-        if (step % 100 == 0) {
+        if (step % 250 == 0) {
             vtk.create(pltid++);
             vtk.add_scalar(phi.scalar, "phi");
-            vtk.add_vector(nvel.vector, "vel");
+            vtk.add_vector(nvel.vector, "nvel");
+            vtk.add_vector(vel.vector, "vel");
             vtk.close();
         }
     } while (step * param->dt < 5.0);

@@ -224,7 +224,7 @@ void integrate_b(wrapper *f) {
             }
         }
     } else {
-#pragma omp paralell for default(none) shared(f) collapse(3)
+#pragma omp parallel for default(none) shared(f) collapse(3)
         for (int i = 0; i < f->scalar->nx; ++i) {
             for (int j = 0; j < f->scalar->ny; ++j) {
                 for (int k = 0; k < f->scalar->nz; ++k) {

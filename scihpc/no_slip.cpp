@@ -129,7 +129,7 @@ void no_slip_face_yr(scalar_data *v) {
 }
 
 void no_slip_face_zl(scalar_data *w) {
-#pragma omp parallel for default(none) shared(v) collapse(2)
+#pragma omp parallel for default(none) shared(w) collapse(2)
     for (int i = 0; i < w->nx; i++) {
         for (int j = 0; j < w->ny; j++) {
             auto index = w->index_mapping(i + 1, j + 1, 1);
@@ -142,7 +142,7 @@ void no_slip_face_zl(scalar_data *w) {
 }
 
 void no_slip_face_zr(scalar_data *w) {
-#pragma omp parallel for default(none) shared(v) collapse(2)
+#pragma omp parallel for default(none) shared(w) collapse(2)
     for (int i = 0; i < w->nx; i++) {
         for (int j = 0; j < w->ny; j++) {
             auto index = w->index_mapping(i + 1, j + 1, w->nz);

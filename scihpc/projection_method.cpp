@@ -149,8 +149,8 @@ void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, structured_grid
                 stress_part2 *= delta * (1.0 - lsf->params->viscosity_ratio);
 
                 v_src[i][j][k] = -u * vx - v * vy +
-                                 (stress_part1 + stress_part2) / lsf->params->Reynolds_number / rho +
-                                 1.0 / lsf->params->Froude_number;
+                                 (stress_part1 + stress_part2) / lsf->params->Reynolds_number / rho
+                                 - 1.0 / lsf->params->Froude_number;
 
             }
         }
@@ -292,7 +292,8 @@ void projection_method::find_final_velocity(wrapper *vel, wrapper *pressure, wra
     no_slip_face(vel->vector);
 }
 
-void projection_method::solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf, structured_grid *geo) const {
+void
+projection_method::solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf, structured_grid *geo) const {
     find_source(vel, nvel, lsf, geo);
     find_intermediate_velocity(vel);
     solve_ppe(pressure, lsf, vel, geo);
