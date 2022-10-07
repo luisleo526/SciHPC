@@ -2,7 +2,7 @@
 // Created by 溫晧良 on 2022/9/28.
 //
 
-#include "boundary_condition.h"
+#include "simple_bc.h"
 
 void periodic_x(scalar_data *f) {
 #pragma omp parallel for default(none) shared(f)

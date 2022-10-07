@@ -9,7 +9,7 @@
 #include "no_slip.h"
 #include "flux.h"
 #include "source.h"
-#include "boundary_condition.h"
+#include "simple_bc.h"
 #include "structured_grid.h"
 
 class projection_method {

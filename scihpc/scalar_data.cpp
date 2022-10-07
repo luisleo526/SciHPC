@@ -132,7 +132,7 @@ indices scalar_data::index_mapping(int i, int j, int k) {
 }
 
 void scalar_data::store() {
-#pragma omp parallel for collapse(3)
+#pragma omp parallel for collapse(3) default(none) shared(data, old)
     for (int i = 0; i < Nx; i++) {
         for (int j = 0; j < Ny; j++) {
             for (int k = 0; k < Nz; k++) {

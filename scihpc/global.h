@@ -6,6 +6,7 @@
 #define SCIHPC_GLOBAL_H
 
 #include <cmath>
+#include <string>
 
 typedef double DataType;
 
@@ -35,7 +36,7 @@ struct problem_parameters {
     DataType Froude_number = -1.0;
     DataType Weber_number = -1.0;
 
-    DataType ppe_tol = 1e-6;
+    DataType ppe_tol = 1e-4;
     int ppe_max_iter = 100000;
 };
 

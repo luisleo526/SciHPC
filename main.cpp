@@ -5,12 +5,12 @@
 #include <random>
 #include <ctime>
 
-#include "scihpc/wrapper.h"
-#include "scihpc/structured_grid.h"
+#include "wrapper.h"
+#include "structured_grid.h"
 #include "scihpc/flux.h"
-#include "scihpc/boundary_condition.h"
-#include "scihpc/wrapper_func.h"
-#include "scihpc/runge_kutta.h"
+#include "simple_bc.h"
+#include "wrapper_func.h"
+#include "runge_kutta.h"
 #include "scihpc/projection_method.h"
 #include "scihpc/vtkWriter.h"
 
@@ -79,16 +79,16 @@ int main() {
     param->Froude_number = 1.0;
     param->Reynolds_number = 45000.0;
 
+    int step, instep;
+
     // Init phi
     find_sign(&phi);
     stabilized_upon_gradient(&phi, &geo);
-    int step, instep;
-
     step = 0;
     do {
         store_tmp(&phi);
-        solver.tvd_rk3(&phi, &vel, &geo, &identity_flux, &zero_order_extrapolation, &lsf_redistance_no_lambda);
-    } while (++step * param->rdt < 5.0 and l2norm(&phi) > 1e-7);
+        solver.tvd_rk3(&phi, &vel, &geo, identity_flux, zero_order_extrapolation, lsf_redistance_lambda);
+    } while (++step * param->rdt < 5.0 and l2norm(&phi) > 1e-6);
 
     flow_solver.find_source(&vel, &nvel, &phi, &geo);
     param->lsf_mass0 = lsf_mass(&phi);
@@ -96,10 +96,8 @@ int main() {
     vtk.create(0);
     vtk.add_scalar(phi.scalar, "phi");
     vtk.add_vector(nvel.vector, "nvel");
-    vtk.add_vector(vel.vector, "vel");
     vtk.close();
 
-    std::cout << "start time loop" << std::endl;
     step = 0;
     int pltid = 1;
     do {
@@ -118,20 +116,20 @@ int main() {
             std::cout << " div: " << divergence(&vel, &geo) << std::endl;
             std::cout << " l2norm: " << l2norm(&pressure) << std::endl;
 
-            find_sign(&phi);
-
             instep = 0;
-            do {
-                solver.tvd_rk3(&phi, &nvel, &geo, &identity_flux, &zero_order_extrapolation, &lsf_redistance_lambda);
-            } while (++instep * param->rdt < 3.0 * geo.h);
-
+            while (instep * param->rdt < 2.0 * param->ls_width and step % 20 == 0) {
+                if (instep == 0) {
+                    find_sign(&phi);
+                }
+                instep++;
+                solver.tvd_rk3(&phi, &nvel, &geo, identity_flux, zero_order_extrapolation, lsf_redistance_lambda);
+            };
         }
 
         if (step % 250 == 0) {
             vtk.create(pltid++);
             vtk.add_scalar(phi.scalar, "phi");
             vtk.add_vector(nvel.vector, "nvel");
-            vtk.add_vector(vel.vector, "vel");
             vtk.close();
         }
     } while (step * param->dt < 5.0);

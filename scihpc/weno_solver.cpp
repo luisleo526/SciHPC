@@ -55,9 +55,9 @@ weno_data weno_solver::wenojs_ceofficients(DataType b0, DataType b1, DataType b2
 //    auto a2 = 3.0 / (epsilon + b2) / (epsilon + b2);
 
 // WENO-Z
-    auto a0 = 1.0 * (1.0 + abs(b0 - b2) / (epsilon + b0));
-    auto a1 = 6.0 * (1.0 + abs(b0 - b2) / (epsilon + b1));
-    auto a2 = 3.0 * (1.0 + abs(b0 - b2) / (epsilon + b2));
+    auto a0 = 1.0 * (1.0 + fabs(b0 - b2) / (epsilon + b0));
+    auto a1 = 6.0 * (1.0 + fabs(b0 - b2) / (epsilon + b1));
+    auto a2 = 3.0 * (1.0 + fabs(b0 - b2) / (epsilon + b2));
 
     auto w1 = a0 / (a0 + a1 + a2);
     auto w2 = a1 / (a0 + a1 + a2);

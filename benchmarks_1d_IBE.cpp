@@ -4,13 +4,13 @@
 #include <fstream>
 #include <chrono>
 
-#include "scalar_data.h"
+#include "scihpc/scalar_data.h"
 #include "scihpc/global.h"
 #include "scihpc/structured_grid.h"
 #include "scihpc/vector_data.h"
 #include "scihpc/runge_kutta.h"
 #include "scihpc/source.h"
-#include "scihpc/boundary_condition.h"
+#include "scihpc/simple_bc.h"
 #include "scihpc/flux.h"
 #include "scihpc/derivatives_solver.h"
 #include "scihpc/wrapper.h"

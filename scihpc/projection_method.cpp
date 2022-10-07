@@ -28,7 +28,7 @@ projection_method::projection_method(scalar_data *f) {
 void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, structured_grid *geo, wrapper *nvel) const {
 
 
-#pragma omp parallel for default(none) shared(vel, lsf, geo, nvel) collapse(3)
+#pragma omp parallel for default(none) shared(vel, lsf, geo, nvel, u_src) collapse(3)
     for (int I = 1; I <= lsf->scalar->nx; ++I) {
         for (int J = 1; J <= lsf->scalar->ny; ++J) {
             for (int k = 0; k < lsf->scalar->nz; ++k) {
@@ -42,37 +42,15 @@ void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, structured_grid
                 auto mu = h + (1.0 - h) * lsf->params->viscosity_ratio;
                 auto rho = h + (1.0 - h) * lsf->params->density_ratio;
 
-                auto phix = (lsf->scalar->data[i + 1][j][k] - lsf->scalar->data[i][j][k]) / geo->dx;
-                auto phiy =
-                        0.25 * (lsf->scalar->data[i][j + 1][k] - lsf->scalar->data[i][j - 1][k] +
-                                lsf->scalar->data[i + 1][j + 1][k] - lsf->scalar->data[i + 1][j - 1][k]) / geo->dy;
+                auto phix = 0.5 * (lsf->scalar->fx[i][j][k] + lsf->scalar->fx[i + 1][j][k]);
+                auto phiy = 0.5 * (lsf->scalar->fy[i][j][k] + lsf->scalar->fy[i + 1][j][k]);
 
-                auto u = vel->vector->x.data[i][j][k];
-                auto v = nvel->vector->y.data[i][j][k];
+                auto uxx = vel->vector->x.fxx[i][j][k];
+                auto uyy = vel->vector->x.fyy[i][j][k];
+                auto ux = vel->vector->x.fx[i][j][k];
+                auto uy = vel->vector->x.fy[i][j][k];
 
-                DataType ux, uy;
-                if (u > 0.0) {
-                    ux = (vel->vector->x.data[i - 2][j][k] - 4.0 * vel->vector->x.data[i - 1][j][k] +
-                          3.0 * vel->vector->x.data[i][j][k]) / (2.0 * geo->dx);
-                } else {
-                    ux = -(vel->vector->x.data[i + 2][j][k] - 4.0 * vel->vector->x.data[i + 1][j][k] +
-                           3.0 * vel->vector->x.data[i][j][k]) / (2.0 * geo->dx);
-                }
-
-                if (v > 0.0) {
-                    uy = (vel->vector->x.data[i][j - 2][k] - 4.0 * vel->vector->x.data[i][j - 1][k] +
-                          3.0 * vel->vector->x.data[i][j][k]) / (2.0 * geo->dy);
-                } else {
-                    uy = -(vel->vector->x.data[i][j + 2][k] - 4.0 * vel->vector->x.data[i][j + 1][k] +
-                           3.0 * vel->vector->x.data[i][j][k]) / (2.0 * geo->dy);
-                }
-
-                auto uxx = (vel->vector->x.data[i + 1][j][k] - 2.0 * vel->vector->x.data[i][j][k] +
-                            vel->vector->x.data[i - 1][j][k]) / (geo->dx * geo->dx);
-                auto uyy = (vel->vector->x.data[i][j + 1][k] - 2.0 * vel->vector->x.data[i][j][k] +
-                            vel->vector->x.data[i][j - 1][k]) / (geo->dy * geo->dy);
-
-                auto vx = 0.5 * (nvel->vector->y.data[i + 1][j][k] - nvel->vector->y.data[i - 1][j][k]) / geo->dx;
+                auto vx = nvel->vector->y.fx[i][j][k];
 
                 auto stress_part1 = uxx + uyy;
                 auto stress_part2 = 2.0 * phix * ux + phiy * (uy + vx);
@@ -80,8 +58,7 @@ void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, structured_grid
                 stress_part1 *= mu;
                 stress_part2 *= delta * (1.0 - lsf->params->viscosity_ratio);
 
-                u_src[i][j][k] = -u * ux - v * uy +
-                                 (stress_part1 + stress_part2) / lsf->params->Reynolds_number / rho;
+                u_src[i][j][k] += (stress_part1 + stress_part2) / lsf->params->Reynolds_number / rho;
             }
         }
     }
@@ -90,7 +67,7 @@ void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, structured_grid
 void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, structured_grid *geo, wrapper *nvel) const {
 
 
-#pragma omp parallel for default(none) shared(vel, lsf, geo, nvel) collapse(3)
+#pragma omp parallel for default(none) shared(vel, lsf, geo, nvel, v_src) collapse(3)
     for (int I = 1; I <= lsf->scalar->nx; ++I) {
         for (int J = 1; J <= lsf->scalar->ny; ++J) {
             for (int k = 0; k < lsf->scalar->nz; ++k) {
@@ -104,38 +81,15 @@ void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, structured_grid
                 auto mu = h + (1.0 - h) * lsf->params->viscosity_ratio;
                 auto rho = h + (1.0 - h) * lsf->params->density_ratio;
 
-                auto phiy = (lsf->scalar->data[i][j + 1][k] - lsf->scalar->data[i][j][k]) / geo->dy;
-                auto phix =
-                        0.25 * (lsf->scalar->data[i + 1][j][k] - lsf->scalar->data[i - 1][j][k] +
-                                lsf->scalar->data[i + 1][j + 1][k] - lsf->scalar->data[i - 1][j + 1][k]) / geo->dx;
+                auto phix = 0.5 * (lsf->scalar->fx[i][j][k] + lsf->scalar->fx[i][j + 1][k]);
+                auto phiy = 0.5 * (lsf->scalar->fy[i][j][k] + lsf->scalar->fy[i][j + 1][k]);
 
-                auto u = nvel->vector->x.data[i][j][k];
-                auto v = vel->vector->y.data[i][j][k];
+                auto vxx = vel->vector->y.fxx[i][j][k];
+                auto vyy = vel->vector->y.fyy[i][j][k];
+                auto vx = vel->vector->y.fx[i][j][k];
+                auto vy = vel->vector->y.fy[i][j][k];
 
-                DataType vx, vy;
-                if (u > 0.0) {
-                    vx = (vel->vector->y.data[i - 2][j][k] - 4.0 * vel->vector->y.data[i - 1][j][k] +
-                          3.0 * vel->vector->y.data[i][j][k]) / (2.0 * geo->dx);
-                } else {
-                    vx = -(vel->vector->y.data[i + 2][j][k] - 4.0 * vel->vector->y.data[i + 1][j][k] +
-                           3.0 * vel->vector->y.data[i][j][k]) / (2.0 * geo->dx);
-                }
-
-                if (v > 0.0) {
-                    vy = (vel->vector->y.data[i][j - 2][k] - 4.0 * vel->vector->y.data[i][j - 1][k] +
-                          3.0 * vel->vector->y.data[i][j][k]) / (2.0 * geo->dy);
-                } else {
-                    vy = -(vel->vector->y.data[i][j + 2][k] - 4.0 * vel->vector->y.data[i][j + 1][k] +
-                           3.0 * vel->vector->y.data[i][j][k]) / (2.0 * geo->dy);
-                }
-
-                auto vxx = (vel->vector->y.data[i + 1][j][k] - 2.0 * vel->vector->y.data[i][j][k] +
-                            vel->vector->y.data[i - 1][j][k]) / (geo->dx * geo->dx);
-
-                auto vyy = (vel->vector->y.data[i][j + 1][k] - 2.0 * vel->vector->y.data[i][j][k] +
-                            vel->vector->y.data[i][j - 1][k]) / (geo->dy * geo->dy);
-
-                auto uy = 0.5 * (nvel->vector->x.data[i][j + 1][k] - nvel->vector->x.data[i][j - 1][k]) / geo->dy;
+                auto uy = nvel->vector->x.fy[i][j][k];
 
                 auto stress_part1 = vxx + vyy;
                 auto stress_part2 = 2.0 * phiy * vy + phix * (vx + uy);
@@ -143,9 +97,7 @@ void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, structured_grid
                 stress_part1 *= mu;
                 stress_part2 *= delta * (1.0 - lsf->params->viscosity_ratio);
 
-                v_src[i][j][k] = -u * vx - v * vy +
-                                 (stress_part1 + stress_part2) / lsf->params->Reynolds_number / rho
-                                 - 1.0 / lsf->params->Froude_number;
+                v_src[i][j][k] += (stress_part1 + stress_part2) / lsf->params->Reynolds_number / rho;
 
             }
         }
@@ -155,7 +107,7 @@ void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, structured_grid
 
 void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf, structured_grid *geo) const {
 
-#pragma omp parallel for default(none) collapse(3) shared(vel)
+#pragma omp parallel for default(none) collapse(3) shared(u_src, v_src, w_src, u_src_old, v_src_old, w_src_old, vel)
     for (int i = 0; i < vel->vector->x.Nx; ++i) {
         for (int j = 0; j < vel->vector->x.Ny; ++j) {
             for (int k = 0; k < vel->vector->x.Nz; ++k) {
@@ -169,13 +121,22 @@ void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf, s
     // prepare level set function
     find_delta(lsf);
     find_heavyside(lsf);
+    find_curvature(lsf);
 
     all_to_face_x(vel, nvel);
     no_slip_face_x(nvel->vector);
+    vel->scalar = &vel->vector->x;
+    convection(vel, nvel, geo, u_src, identity_flux);
+    identity_flux(nvel->vector);
+    nvel->solvers->uccd->find_derivatives(&nvel->vector->y, nvel->vector);
     add_stress_x(vel, lsf, geo, nvel);
 
     all_to_face_y(vel, nvel);
     no_slip_face_y(nvel->vector);
+    vel->scalar = &vel->vector->y;
+    convection(vel, nvel, geo, v_src, identity_flux);
+    identity_flux(nvel->vector);
+    nvel->solvers->uccd->find_derivatives(&nvel->vector->y, nvel->vector);
     add_stress_y(vel, lsf, geo, nvel);
 
 }
@@ -198,7 +159,7 @@ void projection_method::find_intermediate_velocity(wrapper *vel) const {
 
 void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel, structured_grid *geo) const {
 
-#pragma omp parallel for default(none) shared(lsf, geo, vel) collapse(3)
+#pragma omp parallel for default(none) shared(lsf, geo, vel, CR, CL, CU, CD, CC, RHS) collapse(3)
     for (int i = 1; i < lsf->scalar->Nx - 1; ++i) {
         for (int j = 1; j < lsf->scalar->Ny - 1; ++j) {
             for (int k = 0; k < lsf->scalar->Nz; ++k) {
@@ -226,7 +187,6 @@ void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel,
             }
         }
     }
-
 
     // solve pressure poisson equation
 
@@ -257,7 +217,7 @@ void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel,
         }
         sump = sump / (pressure->scalar->nx * pressure->scalar->ny);
 
-#pragma omp parallel for default(none) shared(lsf, geo, pressure, sump) collapse(2)
+#pragma omp parallel for default(none) shared(pressure, sump) collapse(2)
         for (int i = 0; i < pressure->scalar->nx; ++i) {
             for (int j = 0; j < pressure->scalar->ny; ++j) {
                 auto index = pressure->scalar->index_mapping(i + 1, j + 1, 1);

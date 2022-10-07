@@ -1,21 +1,22 @@
 cmake_minimum_required(VERSION 3.23)
 project(SciHPC)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -openmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 set(CMAKE_CXX_STANDARD 23)
 
 include_directories(scihpc)
 
 add_executable(SciHPC
-        main.cpp
-#        benchmarks_1d_wave.cpp
+#        main.cpp
+        benchmarks_1d_wave.cpp
 #        benchmarks_1d_IBE.cpp
 #        benchmarks_2d_vortex.cpp
 #        benchmarks_2d_zalesak.cpp
 #        benchmarks_lsf_initialization.cpp
 #        benchmarks_lsf_curvature.cpp.cp
-        scihpc/boundary_condition.cpp
-        scihpc/boundary_condition.h
+#        benchmarks_lid_driven_cavity.cpp
+        scihpc/simple_bc.cpp
+        scihpc/simple_bc.h
         scihpc/flux.cpp
         scihpc/flux.h
         scihpc/global.cpp
@@ -59,4 +60,4 @@ add_executable(SciHPC
         scihpc/projection_method.cpp
         scihpc/projection_method.h
         scihpc/no_slip.cpp
-        scihpc/no_slip.h)
+        scihpc/no_slip.h scihpc/velocities_bc.cpp scihpc/velocities_bc.h scihpc/slip.cpp scihpc/slip.h)

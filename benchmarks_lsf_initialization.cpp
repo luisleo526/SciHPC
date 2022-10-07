@@ -11,7 +11,7 @@
 #include "scihpc/source.h"
 #include "scihpc/runge_kutta.h"
 #include "scihpc/flux.h"
-#include "scihpc/boundary_condition.h"
+#include "scihpc/simple_bc.h"
 #include "scihpc/wrapper_func.h"
 
 int main() {

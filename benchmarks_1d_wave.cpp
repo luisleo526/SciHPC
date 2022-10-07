@@ -9,7 +9,7 @@
 #include "scihpc/vector_data.h"
 #include "scihpc/runge_kutta.h"
 #include "scihpc/source.h"
-#include "scihpc/boundary_condition.h"
+#include "scihpc/simple_bc.h"
 #include "scihpc/flux.h"
 #include "scihpc/derivatives_solver.h"
 
