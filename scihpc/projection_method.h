@@ -18,8 +18,8 @@ public:
     DataType ***u_src, ***v_src, ***w_src;
     DataType ***u_src_old, ***v_src_old, ***w_src_old;
     DataType ***CC, ***CR, ***CL, ***CU, ***CD, ***CF, ***CB, ***RHS;
-    void add_stress_x(wrapper *vel, wrapper *lsf, structured_grid *geo) const;
-    void add_stress_y(wrapper *vel, wrapper *lsf, structured_grid *geo) const;
+    void add_stress_x(wrapper *vel, wrapper *lsf, structured_grid *geo, wrapper *nvel) const;
+    void add_stress_y(wrapper *vel, wrapper *lsf, structured_grid *geo, wrapper *nvel) const;
 //    void add_stress_z(wrapper *vel, wrapper *lsf, structured_grid *geo);
     void find_source(wrapper *vel, wrapper *nvel, wrapper *lsf, structured_grid *geo) const;
     void find_intermediate_velocity(wrapper *vel) const;

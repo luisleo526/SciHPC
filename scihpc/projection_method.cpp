@@ -25,7 +25,7 @@ projection_method::projection_method(scalar_data *f) {
     RHS = init_array(f->Nx, f->Ny, f->Nz);
 }
 
-void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, structured_grid *geo) const {
+void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, structured_grid *geo, wrapper *nvel) const {
 
 
 #pragma omp parallel for default(none) shared(vel, lsf, geo) collapse(3)
@@ -90,7 +90,7 @@ void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, structured_grid
     }
 }
 
-void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, structured_grid *geo) const {
+void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, structured_grid *geo, wrapper *nvel) const {
 
 
 #pragma omp parallel for default(none) shared(vel, lsf, geo) collapse(3)
@@ -174,8 +174,8 @@ void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf, s
     // prepare level set function
     find_delta(lsf);
     find_heavyside(lsf);
-    add_stress_x(vel, lsf, geo);
-    add_stress_y(vel, lsf, geo);
+    add_stress_x(vel, lsf, geo, nullptr);
+    add_stress_y(vel, lsf, geo, nullptr);
 
 }
 

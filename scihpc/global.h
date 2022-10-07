@@ -6,8 +6,6 @@
 #define SCIHPC_GLOBAL_H
 
 #include <cmath>
-//#include <boost/multiprecision/cpp_bin_float.hpp>
-//typedef boost::multiprecision::cpp_bin_float_50 DataType;
 
 typedef double DataType;
 
