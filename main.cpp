@@ -8,24 +8,31 @@
 #include "scihpc/wrapper.h"
 #include "scihpc/structured_grid.h"
 #include "scihpc/flux.h"
-#include "scihpc/simple_bc.h"
 #include "scihpc/wrapper_func.h"
 #include "scihpc/runge_kutta.h"
 #include "scihpc/projection_method.h"
 #include "scihpc/vtkWriter.h"
-#include "scihpc/velocities_bc.h"
+#include "scihpc/bc_factory.h"
 
 int main() {
 
-    auto phi = wrapper(new scalar_data(100, 40));
-    auto pressure = wrapper(new scalar_data(phi.scalar->nx, phi.scalar->ny));
-    auto vel = wrapper(new vector_data(phi.scalar->nx, phi.scalar->ny));
-    auto nvel = wrapper(new vector_data(phi.scalar->nx, phi.scalar->ny));
-    auto geo = structured_grid(axis{0.0, 5.0, phi.scalar->nx},
-                               axis{0.0, 2.0, phi.scalar->ny});
-    auto velbc = new velocities_bc(bc_info{SLIP}, bc_info{NO_SLIP},
-                                   bc_info{SLIP}, bc_info{NO_SLIP});
-    auto solver = runge_kutta(phi.scalar->Nx, phi.scalar->Ny, phi.scalar->Ny);
+    auto geo = structured_grid(axis{0.0, 5.0, 100},
+                               axis{0.0, 2.0, 40});
+
+    auto phi = wrapper(true, &geo,
+                       bc_info{NEUMANN}, bc_info{NEUMANN},
+                       bc_info{NEUMANN}, bc_info{NEUMANN});
+    auto vel = wrapper(false, &geo,
+                       bc_info{NO_SLIP}, bc_info{NO_SLIP},
+                       bc_info{NO_SLIP}, bc_info{NO_SLIP});
+    auto nvel = wrapper(false, &geo,
+                        bc_info{NO_SLIP}, bc_info{NO_SLIP},
+                        bc_info{NO_SLIP}, bc_info{NO_SLIP});
+    auto pressure = wrapper(true, &geo,
+                            bc_info{NEUMANN}, bc_info{NEUMANN},
+                            bc_info{NEUMANN}, bc_info{NEUMANN});
+
+    auto solver = runge_kutta(phi.scalar->Nx, phi.scalar->Ny, phi.scalar->Nz);
     auto flow_solver = projection_method(phi.scalar);
     auto vtk = vtkWriter(&geo, "dambreak");
 
@@ -43,7 +50,7 @@ int main() {
             }
         }
     }
-    zero_order_extrapolation(phi.scalar);
+    phi.apply_scalar_bc();
 
     for (int i = 0; i < phi.scalar->Nx; ++i) {
         for (int j = 0; j < phi.scalar->Ny; ++j) {
@@ -68,12 +75,10 @@ int main() {
     vel.link_params(param);
     vel.link_solvers(deri_solvers);
     vel.link_dummy(dummy);
-    vel.link_bc(velbc);
 
     nvel.link_params(param);
     nvel.link_solvers(deri_solvers);
     nvel.link_dummy(dummy);
-    nvel.link_bc(velbc);
 
     param->ls_width = 1.5 * geo.h;
     param->rdt = 0.1 * geo.h;
@@ -91,10 +96,10 @@ int main() {
     step = 0;
     do {
         store_tmp(&phi);
-        solver.tvd_rk3(&phi, &vel, &geo, identity_flux, zero_order_extrapolation, lsf_redistance_lambda);
+        solver.tvd_rk3(&phi, &vel, identity_flux, lsf_redistance_lambda);
     } while (++step * param->rdt < 5.0 and l2norm(&phi) > 1e-6);
 
-    flow_solver.find_source(&vel, &nvel, &phi, &geo);
+    flow_solver.find_source(&vel, &nvel, &phi);
     param->lsf_mass0 = lsf_mass(&phi);
 
     vtk.create(0);
@@ -105,13 +110,13 @@ int main() {
     step = 0;
     int pltid = 1;
     do {
-        solver.tvd_rk3(&phi, &nvel, &geo, &identity_flux, &zero_order_extrapolation, &convection);
+        solver.tvd_rk3(&phi, &nvel, &identity_flux, &convection);
 
         do {
-            solver.euler(&phi, &nvel, &geo, &identity_flux, &zero_order_extrapolation, &mpls);
+            solver.euler(&phi, &nvel, &identity_flux, &mpls);
         } while (fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) > 1e-10);
 
-        flow_solver.solve(&vel, &nvel, &pressure, &phi, &geo);
+        flow_solver.solve(&vel, &nvel, &pressure, &phi);
 
         if (++step % 10 == 0) {
             std::cout << "----------------------------------------" << std::endl;
@@ -126,7 +131,7 @@ int main() {
                     find_sign(&phi);
                 }
                 instep++;
-                solver.tvd_rk3(&phi, &nvel, &geo, identity_flux, zero_order_extrapolation, lsf_redistance_lambda);
+                solver.tvd_rk3(&phi, &nvel, identity_flux, lsf_redistance_lambda);
             };
         }
 

@@ -11,12 +11,10 @@ runge_kutta::runge_kutta(int nx, int ny, int nz) {
 }
 
 void
-runge_kutta::tvd_rk3(wrapper *f, wrapper *vel, structured_grid *geo, void (*flux)(scalar_data *, vector_data *),
-                     void (*bc)(scalar_data *),
-                     void (*rhs)(wrapper *, wrapper *, structured_grid *, DataType ***,
-                                 void (*)(scalar_data *, vector_data *))) {
+runge_kutta::tvd_rk3(wrapper *f, wrapper *vel, void (*flux)(scalar_data *, vector_data *),
+                     void (*rhs)(wrapper *, wrapper *, DataType ***, void (*)(scalar_data *, vector_data *))) const {
 
-    (*rhs)(f, vel, geo, s1, flux);
+    (*rhs)(f, vel, s1, flux);
 #pragma omp parallel for default(none) shared(f, s1, geo)
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
@@ -25,9 +23,9 @@ runge_kutta::tvd_rk3(wrapper *f, wrapper *vel, structured_grid *geo, void (*flux
             }
         }
     }
-    (*bc)(f->scalar);
+    f->apply_scalar_bc();
 
-    (*rhs)(f, vel, geo, s2, flux);
+    (*rhs)(f, vel, s2, flux);
 #pragma omp parallel for default(none) shared(f, s1, s2, geo)
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
@@ -36,9 +34,9 @@ runge_kutta::tvd_rk3(wrapper *f, wrapper *vel, structured_grid *geo, void (*flux
             }
         }
     }
-    (*bc)(f->scalar);
+    f->apply_scalar_bc();
 
-    (*rhs)(f, vel, geo, s3, flux);
+    (*rhs)(f, vel, s3, flux);
 #pragma omp parallel for default(none) shared(f, s1, s2, s3, geo)
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
@@ -47,13 +45,12 @@ runge_kutta::tvd_rk3(wrapper *f, wrapper *vel, structured_grid *geo, void (*flux
             }
         }
     }
-    (*bc)(f->scalar);
+    f->apply_scalar_bc();
 }
 
-void runge_kutta::euler(wrapper *f, wrapper *vel, structured_grid *geo, void (*flux)(scalar_data *, vector_data *),
-                        void (*bc)(scalar_data *), void (*rhs)(wrapper *, wrapper *, structured_grid *, DataType ***,
-                                                               void (*)(scalar_data *, vector_data *))) {
-    (*rhs)(f, vel, geo, s1, flux);
+void runge_kutta::euler(wrapper *f, wrapper *vel, void (*flux)(scalar_data *, vector_data *),
+                        void (*rhs)(wrapper *, wrapper *, DataType ***, void (*)(scalar_data *, vector_data *))) const {
+    (*rhs)(f, vel, s1, flux);
 #pragma omp parallel for default(none) shared(f, s1, geo)
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
@@ -62,5 +59,5 @@ void runge_kutta::euler(wrapper *f, wrapper *vel, structured_grid *geo, void (*f
             }
         }
     }
-    (*bc)(f->scalar);
+    f->apply_scalar_bc();
 }

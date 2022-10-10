@@ -8,7 +8,6 @@
 #include "scihpc/wrapper.h"
 #include "scihpc/structured_grid.h"
 #include "scihpc/flux.h"
-#include "scihpc/simple_bc.h"
 #include "scihpc/wrapper_func.h"
 
 int main() {
@@ -20,11 +19,21 @@ int main() {
     for (int level = 0; level < level_max; ++level) {
 
         auto n = 32 * static_cast<int>(pow(2, level));
-        auto phi = wrapper(new scalar_data(n, n, n));
-        auto vel = wrapper(new vector_data(phi.scalar->nx, phi.scalar->ny));
-        auto geo = structured_grid(axis{-1.0, 1.0, phi.scalar->nx},
-                                   axis{-1.0, 1.0, phi.scalar->ny},
-                                   axis{-1.0, 1.0, phi.scalar->nz});
+
+        auto geo = structured_grid(axis{-1.0, 1.0, n},
+                                   axis{-1.0, 1.0, n},
+                                   axis{-1.0, 1.0, n});
+
+        auto phi = wrapper(true, &geo,
+                           bc_info{NEUMANN}, bc_info{NEUMANN},
+                           bc_info{NEUMANN}, bc_info{NEUMANN},
+                           bc_info{NEUMANN}, bc_info{NEUMANN});
+
+        auto vel = wrapper(false, &geo,
+                           bc_info{NEUMANN}, bc_info{NEUMANN},
+                           bc_info{NEUMANN}, bc_info{NEUMANN},
+                           bc_info{NEUMANN}, bc_info{NEUMANN});
+
         auto param = new problem_parameters{};
         auto deri_solvers = derivatives_solver_alloc(phi.scalar, &geo);
         auto dummy = dummy_data_alloc(phi.scalar);
@@ -43,7 +52,7 @@ int main() {
                 }
             }
         }
-        zero_order_extrapolation(phi.scalar);
+        phi.apply_scalar_bc();
 
         identity_flux(phi.scalar, vel.vector);
         find_curvature(&phi);

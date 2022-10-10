@@ -15,12 +15,11 @@ public:
 
     DataType ***s1, ***s2, ***s3;
 
-    void tvd_rk3(wrapper *f, wrapper *vel, structured_grid *geo, void (*flux)(scalar_data *, vector_data *),
-                 void (*bc)(scalar_data *), void (*rhs)(wrapper *, wrapper *, structured_grid *, DataType ***,
-                                                        void (*)(scalar_data *, vector_data *)));
-    void euler(wrapper *f, wrapper *vel, structured_grid *geo, void (*flux)(scalar_data *, vector_data *),
-               void (*bc)(scalar_data *), void (*rhs)(wrapper *, wrapper *, structured_grid *, DataType ***,
-                                                      void (*)(scalar_data *, vector_data *)));
+    void tvd_rk3(wrapper *f, wrapper *vel, void (*flux)(scalar_data *, vector_data *),
+                 void (*rhs)(wrapper *, wrapper *, DataType ***, void (*)(scalar_data *, vector_data *))) const;
+
+    void euler(wrapper *f, wrapper *vel, void (*flux)(scalar_data *, vector_data *),
+               void (*rhs)(wrapper *, wrapper *, DataType ***, void (*)(scalar_data *, vector_data *))) const;
 };
 
 

@@ -11,8 +11,10 @@
 class ccd_base {
 private:
     void init_coefficients() const;
+
 public:
     ccd_base(int _n, DataType _h);
+
     DataType **a, **b, **aa, **bb, *s, *ss;
     DataType h;
     int n;

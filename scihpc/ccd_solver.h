@@ -14,22 +14,28 @@
 
 class ccd_solver {
 public:
-    ccd_solver(scalar_data* f, structured_grid* geo);
+    ccd_solver(scalar_data *f, structured_grid *geo);
 
     ccd_base *x, *y, *z;
 
     void find_fx(scalar_data *f) const;
+
     void find_fy(scalar_data *f) const;
+
     void find_fz(scalar_data *f) const;
 
     void mixed_xy(scalar_data *f) const;
+
     void mixed_yz(scalar_data *f) const;
+
     void mixed_zx(scalar_data *f) const;
 
     void find_derivatives(scalar_data *f) const;
+
     void find_derivatives(vector_data *f) const;
 
     void find_derivatives_all(scalar_data *f) const;
+
     void find_derivatives_all(vector_data *f) const;
 
 };

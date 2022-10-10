@@ -14,12 +14,16 @@
 
 class uccd_solver {
 public:
-    uccd_solver(scalar_data* f, structured_grid* geo);
+    uccd_solver(scalar_data *f, structured_grid *geo);
+
     uccd_base *x, *y, *z;
 
     void find_fx(scalar_data *f, vector_data *vel) const;
+
     void find_fy(scalar_data *f, vector_data *vel) const;
+
     void find_fz(scalar_data *f, vector_data *vel) const;
+
     void find_derivatives(scalar_data *f, vector_data *vel) const;
 };
 

@@ -22,9 +22,13 @@ public:
     DataType ***fzx, ***fzxx;
 
     explicit scalar_data(int _nx);
+
     scalar_data(int _nx, int _ny);
+
     scalar_data(int _nx, int _ny, int _nz);
+
     indices index_mapping(int i, int j, int k);
+
     void store();
 
 };

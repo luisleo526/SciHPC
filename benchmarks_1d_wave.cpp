@@ -9,9 +9,10 @@
 #include "scihpc/vector_data.h"
 #include "scihpc/runge_kutta.h"
 #include "scihpc/source.h"
-#include "scihpc/simple_bc.h"
 #include "scihpc/flux.h"
 #include "scihpc/derivatives_solver.h"
+#include "scihpc/wrapper.h"
+#include "scihpc/bc_factory.h"
 
 int main() {
 
@@ -21,17 +22,18 @@ int main() {
 
     for (int cnt = 0; cnt < 8; ++cnt) {
 
-        auto phi = wrapper(new scalar_data(16 * static_cast<int>(pow(2, cnt))));
-        auto vel = wrapper(new vector_data(phi.scalar->nx));
-        auto geo = structured_grid(axis{-1.0, 1.0, phi.scalar->nx});
+        auto geo = structured_grid(axis{-1.0, 1.0, 16 * static_cast<int>(pow(2, cnt))});
+
+        auto phi = wrapper(true, &geo, bc_info{PERIODIC}, bc_info{PERIODIC});
+        auto vel = wrapper(false, &geo, bc_info{PERIODIC}, bc_info{PERIODIC});
         auto solver = runge_kutta(phi.scalar->Nx, phi.scalar->Ny, phi.scalar->Nz);
         for (int i = 0; i < phi.scalar->nx; ++i) {
             auto index = phi.scalar->index_mapping(i + 1, 1, 1);
             phi.scalar->data[index.i][index.j][index.k] = sin(pi * geo.xc[i]);
             vel.vector->x.data[index.i][index.j][index.k] = 1.0;
         }
-        periodic(phi.scalar);
-        zero_order_extrapolation(vel.vector);
+        phi.apply_scalar_bc();
+        vel.apply_nvel_bc();
 
         auto params = new problem_parameters;
         params->dt = 0.01 * geo.h;
@@ -44,7 +46,7 @@ int main() {
         int tcnt = 0;
         auto begin = std::chrono::high_resolution_clock::now();
         while (tcnt * params->dt < 2.0) {
-            solver.tvd_rk3(&phi, &vel, &geo, &identity_flux, &periodic, &convection);
+            solver.tvd_rk3(&phi, &vel, &identity_flux, &convection);
             tcnt++;
         }
         auto end = std::chrono::high_resolution_clock::now();

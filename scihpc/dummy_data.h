@@ -23,6 +23,6 @@ struct dummy_data {
     DataType ***a_int, ***b_int;
 };
 
-dummy_data* dummy_data_alloc(scalar_data* f);
+dummy_data *dummy_data_alloc(scalar_data *f);
 
 #endif //SCIHPC_DUMMY_DATA_H

@@ -19,6 +19,10 @@ public:
     DataType *y, *yc;
     DataType *z, *zc;
     DataType dx, dy, dz, h, dv;
+
+    axis x_axis, y_axis, z_axis;
+    int ndim;
+
     struct {
         DataType xstart, ystart, zstart;
         int nx, ny, nz;

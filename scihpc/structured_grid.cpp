@@ -35,6 +35,9 @@ structured_grid::structured_grid(axis x_data) {
     vtk_info.ystart = 0.0;
     vtk_info.zstart = 0.0;
 
+    ndim = 1;
+    x_axis = x_data;
+
 }
 
 structured_grid::structured_grid(axis x_data, axis y_data) {
@@ -73,6 +76,10 @@ structured_grid::structured_grid(axis x_data, axis y_data) {
     vtk_info.xstart = x_data.start;
     vtk_info.ystart = y_data.start;
     vtk_info.zstart = 0.0;
+
+    ndim = 2;
+    x_axis = x_data;
+    y_axis = y_data;
 
 }
 
@@ -118,5 +125,10 @@ structured_grid::structured_grid(axis x_data, axis y_data, axis z_data) {
     vtk_info.xstart = x_data.start;
     vtk_info.ystart = y_data.start;
     vtk_info.zstart = z_data.start;
+
+    ndim = 3;
+    x_axis = x_data;
+    y_axis = y_data;
+    z_axis = z_data;
 
 }

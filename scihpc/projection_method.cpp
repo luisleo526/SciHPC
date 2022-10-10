@@ -25,7 +25,7 @@ projection_method::projection_method(scalar_data *f) {
     RHS = init_array(f->Nx, f->Ny, f->Nz);
 }
 
-void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, structured_grid *geo, wrapper *nvel) const {
+void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, wrapper *nvel) const {
 
 
 #pragma omp parallel for default(none) shared(vel, lsf, geo, nvel, u_src) collapse(3)
@@ -55,7 +55,7 @@ void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, structured_grid
                 auto stress_part1 = uxx + uyy;
                 auto stress_part2 = 2.0 * phix * ux + phiy * (uy + vx);
 
-                if (lsf->scalar->ndim > 2){
+                if (lsf->scalar->ndim > 2) {
                     auto phiz = 0.5 * (lsf->scalar->fz[i][j][k] + lsf->scalar->fz[i + 1][j][k]);
                     auto uzz = vel->vector->x.fzz[i][j][k];
                     auto uz = vel->vector->x.fz[i][j][k];
@@ -73,7 +73,7 @@ void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, structured_grid
     }
 }
 
-void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, structured_grid *geo, wrapper *nvel) const {
+void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, wrapper *nvel) const {
 
 
 #pragma omp parallel for default(none) shared(vel, lsf, geo, nvel, v_src) collapse(3)
@@ -103,7 +103,7 @@ void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, structured_grid
                 auto stress_part1 = vxx + vyy;
                 auto stress_part2 = 2.0 * phiy * vy + phix * (vx + uy);
 
-                if (lsf->scalar->ndim > 2){
+                if (lsf->scalar->ndim > 2) {
                     auto phiz = 0.5 * (lsf->scalar->fz[i][j][k] + lsf->scalar->fz[i][j + 1][k]);
                     auto vzz = vel->vector->y.fzz[i][j][k];
                     auto vz = vel->vector->y.fz[i][j][k];
@@ -124,12 +124,12 @@ void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, structured_grid
 
 }
 
-void projection_method::add_stress_z(wrapper *vel, wrapper *lsf, structured_grid *geo, wrapper *nvel) const {
+void projection_method::add_stress_z(wrapper *vel, wrapper *lsf, wrapper *nvel) const {
 
 }
 
 void
-projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf, structured_grid *geo) const {
+projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf) const {
 
 #pragma omp parallel for default(none) collapse(3) shared(u_src, v_src, w_src, u_src_old, v_src_old, w_src_old, vel)
     for (int i = 0; i < vel->vector->x.Nx; ++i) {
@@ -148,29 +148,29 @@ projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf, struct
     find_curvature(lsf);
 
     all_to_face_x(vel, nvel);
-    nvel->velbc->apply_velx_bc(nvel->vector);
+    nvel->apply_vel_x_bc();
     vel->scalar = &vel->vector->x;
-    convection(vel, nvel, geo, u_src, identity_flux);
+    convection(vel, nvel, u_src, identity_flux);
     identity_flux(nvel->vector);
     nvel->solvers->uccd->find_derivatives(&nvel->vector->y, nvel->vector);
-    add_stress_x(vel, lsf, geo, nvel);
+    add_stress_x(vel, lsf, nvel);
 
     all_to_face_y(vel, nvel);
-    nvel->velbc->apply_vely_bc(nvel->vector);
+    nvel->apply_vel_y_bc();
     vel->scalar = &vel->vector->y;
-    convection(vel, nvel, geo, v_src, identity_flux);
+    convection(vel, nvel, v_src, identity_flux);
     identity_flux(nvel->vector);
     nvel->solvers->uccd->find_derivatives(&nvel->vector->y, nvel->vector);
-    add_stress_y(vel, lsf, geo, nvel);
+    add_stress_y(vel, lsf, nvel);
 
-    if (lsf->scalar->ndim > 2){
+    if (lsf->scalar->ndim > 2) {
         all_to_face_z(vel, nvel);
-        nvel->velbc->apply_velz_bc(nvel->vector);
+        nvel->apply_vel_z_bc();
         vel->scalar = &vel->vector->z;
-        convection(vel, nvel, geo, w_src, identity_flux);
+        convection(vel, nvel, w_src, identity_flux);
         identity_flux(nvel->vector);
         nvel->solvers->uccd->find_derivatives(&nvel->vector->z, nvel->vector);
-        add_stress_z(vel, lsf, geo, nvel);
+        add_stress_z(vel, lsf, nvel);
     }
 
 }
@@ -188,11 +188,11 @@ void projection_method::find_intermediate_velocity(wrapper *vel) const {
         }
     }
 
-    vel->velbc->apply_vel_bc(vel->vector);
+    vel->apply_vel_bc();
 
 }
 
-void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel, structured_grid *geo) const {
+void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel) const {
 
 #pragma omp parallel for default(none) shared(lsf, geo, vel, CR, CL, CU, CD, CC, RHS) collapse(3)
     for (int i = 1; i < lsf->scalar->Nx - 1; ++i) {
@@ -208,15 +208,15 @@ void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel,
                 U = U + (1.0 - U) * lsf->params->density_ratio;
                 D = D + (1.0 - D) * lsf->params->density_ratio;
 
-                CR[i][j][k] = 1.0 / R / geo->dx / geo->dx;
-                CL[i][j][k] = 1.0 / L / geo->dx / geo->dx;
-                CU[i][j][k] = 1.0 / U / geo->dy / geo->dy;
-                CD[i][j][k] = 1.0 / D / geo->dy / geo->dy;
+                CR[i][j][k] = 1.0 / R / pressure->geo->dx / pressure->geo->dx;
+                CL[i][j][k] = 1.0 / L / pressure->geo->dx / pressure->geo->dx;
+                CU[i][j][k] = 1.0 / U / pressure->geo->dy / pressure->geo->dy;
+                CD[i][j][k] = 1.0 / D / pressure->geo->dy / pressure->geo->dy;
 
                 CC[i][j][k] = -(CR[i][j][k] + CL[i][j][k] + CU[i][j][k] + CD[i][j][k]);
 
-                RHS[i][j][k] = (vel->vector->x.data[i][j][k] - vel->vector->x.data[i - 1][j][k]) / geo->dx +
-                               (vel->vector->y.data[i][j][k] - vel->vector->y.data[i][j - 1][k]) / geo->dy;
+                RHS[i][j][k] = (vel->vector->x.data[i][j][k] - vel->vector->x.data[i - 1][j][k]) / pressure->geo->dx +
+                               (vel->vector->y.data[i][j][k] - vel->vector->y.data[i][j - 1][k]) / pressure->geo->dy;
                 RHS[i][j][k] /= lsf->params->dt;
 
             }
@@ -259,8 +259,7 @@ void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel,
                 pressure->scalar->data[index.i][index.j][index.k] -= sump;
             }
         }
-
-        zero_order_extrapolation(pressure->scalar);
+        pressure->apply_scalar_bc();
         if (++iter % 5000 == 0) {
             std::cout << "iter: " << iter << " error: " << error << " sump: " << sump << std::endl;
         }
@@ -268,32 +267,31 @@ void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel,
 
 }
 
-void projection_method::find_final_velocity(wrapper *vel, wrapper *pressure, wrapper *lsf, structured_grid *geo) {
+void projection_method::find_final_velocity(wrapper *vel, wrapper *pressure, wrapper *lsf) {
 
 #pragma omp parallel for default(none) shared(vel, pressure, geo, lsf) collapse(2)
     for (int i = 0; i < vel->vector->x.Nx - 1; ++i) {
         for (int j = 0; j < vel->vector->x.Ny - 1; ++j) {
             auto h = 0.5 * (lsf->dummy->heaviside[i][j][0] + lsf->dummy->heaviside[i + 1][j][0]);
             auto density = (1 - h) * vel->params->density_ratio + h;
-            vel->vector->x.data[i][j][0] -= pressure->params->dt / geo->dx / density *
+            vel->vector->x.data[i][j][0] -= pressure->params->dt / pressure->geo->dx / density *
                                             (pressure->scalar->data[i + 1][j][0] - pressure->scalar->data[i][j][0]);
 
             h = 0.5 * (lsf->dummy->heaviside[i][j][0] + lsf->dummy->heaviside[i][j + 1][0]);
             density = (1 - h) * vel->params->density_ratio + h;
 
-            vel->vector->y.data[i][j][0] -= pressure->params->dt / geo->dy / density *
+            vel->vector->y.data[i][j][0] -= pressure->params->dt / pressure->geo->dy / density *
                                             (pressure->scalar->data[i][j + 1][0] - pressure->scalar->data[i][j][0]);
         }
     }
-    vel->velbc->apply_vel_bc(vel->vector);
+    vel->apply_vel_bc();
 }
 
-void
-projection_method::solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf, structured_grid *geo) const {
-    find_source(vel, nvel, lsf, geo);
+void projection_method::solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const {
+    find_source(vel, nvel, lsf);
     find_intermediate_velocity(vel);
-    solve_ppe(pressure, lsf, vel, geo);
-    find_final_velocity(vel, pressure, lsf, geo);
+    solve_ppe(pressure, lsf, vel);
+    find_final_velocity(vel, pressure, lsf);
     node_from_face(vel, nvel);
-    nvel->velbc->apply_nvel_bc(nvel->vector);
+    nvel->apply_nvel_bc();
 }

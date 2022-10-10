@@ -11,15 +11,19 @@
 #include "scihpc/source.h"
 #include "scihpc/runge_kutta.h"
 #include "scihpc/flux.h"
-#include "scihpc/simple_bc.h"
 #include "scihpc/wrapper_func.h"
 
 int main() {
 
-    auto phi = wrapper(new scalar_data(128, 128));
-    auto vel = wrapper(new vector_data(phi.scalar->nx, phi.scalar->ny));
-    auto geo = structured_grid(axis{0.0, 1.0, phi.scalar->nx},
-                               axis{0.0, 1.0, phi.scalar->ny});
+    auto geo = structured_grid(axis{0.0, 1.0, 128},
+                               axis{0.0, 1.0, 128});
+
+    auto phi = wrapper(true, &geo,
+                       bc_info{NEUMANN}, bc_info{NEUMANN},
+                       bc_info{NEUMANN}, bc_info{NEUMANN});
+    auto vel = wrapper(false, &geo,
+                       bc_info{NEUMANN}, bc_info{NEUMANN},
+                       bc_info{NEUMANN}, bc_info{NEUMANN});
     auto solver = runge_kutta(phi.scalar->Nx, phi.scalar->Ny, phi.scalar->Nz);
     auto vtk = vtkWriter(&geo, "zalesak_disk");
     auto param = new problem_parameters{};
@@ -61,8 +65,8 @@ int main() {
             phi.scalar->data[index.i][index.j][index.k] = 2.0 * phi.scalar->data[index.i][index.j][index.k] - 1.0;
         }
     }
-    zero_order_extrapolation(phi.scalar);
-    zero_order_extrapolation(vel.vector);
+    phi.apply_scalar_bc();
+    vel.apply_nvel_bc();
 
     vtk.create(-1);
     vtk.add_scalar(phi.scalar, "phi");
@@ -74,7 +78,7 @@ int main() {
     int step = 0;
     do {
         store_tmp(&phi);
-        solver.tvd_rk3(&phi, &vel, &geo, &identity_flux, &zero_order_extrapolation, &lsf_redistance_lambda);
+        solver.tvd_rk3(&phi, &vel, &identity_flux, &lsf_redistance_lambda);
         error = l2norm(&phi);
         std::cout << error << std::endl;
     } while (++step * param->rdt < 1.0 and error > 1e-6);
@@ -90,13 +94,13 @@ int main() {
     auto instep = 0;
     auto pltid = 1;
     do {
-        solver.tvd_rk3(&phi, &vel, &geo, &identity_flux, &zero_order_extrapolation, &convection);
+        solver.tvd_rk3(&phi, &vel, &identity_flux, &convection);
 
         instep = 0;
         find_sign(&phi);
         do {
-            solver.tvd_rk3(&phi, &vel, &geo, &identity_flux, &zero_order_extrapolation, &lsf_redistance_lambda);
-        } while (++instep * param->rdt < 2.5 * geo.h);
+            solver.tvd_rk3(&phi, &vel, &identity_flux, &lsf_redistance_lambda);
+        } while (++instep * param->rdt < 1.5 * param->ls_width);
 
         if (++step * param->dt >= pltid * period / 4.0) {
             vtk.create(pltid);

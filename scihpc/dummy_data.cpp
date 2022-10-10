@@ -4,7 +4,7 @@
 
 #include "dummy_data.h"
 
-dummy_data *dummy_data_alloc(scalar_data* f) {
+dummy_data *dummy_data_alloc(scalar_data *f) {
 
     auto dummy = new dummy_data;
 

@@ -12,10 +12,12 @@
 class uccd_base {
 private:
     void init_coefficients() const;
+
 public:
     ccd_base *upwind, *downwind;
     DataType h;
     int n;
+
     uccd_base(int _n, DataType _h);
 };
 

@@ -8,7 +8,6 @@
 #include "wrapper.h"
 #include "structured_grid.h"
 #include "scihpc/flux.h"
-#include "simple_bc.h"
 #include "wrapper_func.h"
 #include "runge_kutta.h"
 #include "scihpc/projection_method.h"
@@ -17,12 +16,21 @@
 
 int main() {
 
-    auto phi = wrapper(new scalar_data(128, 128));
-    auto pressure = wrapper(new scalar_data(phi.scalar->nx, phi.scalar->ny));
-    auto vel = wrapper(new vector_data(phi.scalar->nx, phi.scalar->ny));
-    auto nvel = wrapper(new vector_data(phi.scalar->nx, phi.scalar->ny));
-    auto geo = structured_grid(axis{0.0, 1.0, phi.scalar->nx},
-                               axis{0.0, 1.0, phi.scalar->ny});
+    auto geo = structured_grid(axis{0.0, 5.0, 128},
+                               axis{0.0, 2.0, 128});
+
+    auto phi = wrapper(true, &geo,
+                       bc_info{NEUMANN}, bc_info{NEUMANN},
+                       bc_info{NEUMANN}, bc_info{NEUMANN});
+    auto vel = wrapper(false, &geo,
+                       bc_info{NO_SLIP}, bc_info{NO_SLIP},
+                       bc_info{NO_SLIP}, bc_info{NO_SLIP});
+    auto nvel = wrapper(false, &geo,
+                        bc_info{NO_SLIP}, bc_info{NO_SLIP},
+                        bc_info{NO_SLIP}, bc_info{NO_SLIP});
+    auto pressure = wrapper(true, &geo,
+                            bc_info{NEUMANN}, bc_info{NEUMANN},
+                            bc_info{NEUMANN}, bc_info{NEUMANN});
 
     auto solver = runge_kutta(phi.scalar->Nx, phi.scalar->Ny, phi.scalar->Ny);
     auto flow_solver = projection_method(phi.scalar);
@@ -67,7 +75,7 @@ int main() {
     param->density_ratio = 1.0;
     param->Reynolds_number = 1000.0;
 
-    flow_solver.find_source(&vel, &nvel, &phi, &geo);
+    flow_solver.find_source(&vel, &nvel, &phi);
 
     vtk.create(0);
     vtk.add_vector(nvel.vector, "nvel");
@@ -76,7 +84,7 @@ int main() {
     DataType error = 0.0;
     do {
         store_tmp(&vel);
-        flow_solver.solve(&vel, &nvel, &pressure, &phi, &geo);
+        flow_solver.solve(&vel, &nvel, &pressure, &phi);
         error = l2norm(&vel);
     } while (error > 1.0e-5);
 

@@ -10,7 +10,6 @@
 #include "scihpc/vector_data.h"
 #include "scihpc/runge_kutta.h"
 #include "scihpc/source.h"
-#include "scihpc/simple_bc.h"
 #include "scihpc/flux.h"
 #include "scihpc/derivatives_solver.h"
 #include "scihpc/wrapper.h"
@@ -27,16 +26,15 @@ int main() {
 
         DataType shock_formation = 2.0;
 
-        auto phi = wrapper(new scalar_data(16 * static_cast<int>(pow(2, cnt))));
-        auto vel = wrapper(new vector_data(phi.scalar->nx));
-        auto geo = structured_grid(axis{0.0, 1.0, phi.scalar->nx});
+        auto geo = structured_grid(axis{0.0, 1.0, 16 * static_cast<int>(pow(2, cnt))});
+        auto phi = wrapper(true, &geo, bc_info{PERIODIC}, bc_info{PERIODIC});
+        auto vel = wrapper(false, &geo, bc_info{PERIODIC}, bc_info{PERIODIC});
         auto solver = runge_kutta(phi.scalar->Nx, phi.scalar->Ny, phi.scalar->Nz);
         for (int i = 0; i < phi.scalar->nx; ++i) {
             auto index = phi.scalar->index_mapping(i + 1, 1, 1);
             phi.scalar->data[index.i][index.j][index.k] = sin(2.0 * pi * geo.xc[i]) / (2.0 * pi * shock_formation);
         }
-
-        periodic(phi.scalar);
+        phi.apply_scalar_bc();
 
         auto params = new problem_parameters;
         params->dt = 0.01 * geo.h;
@@ -56,7 +54,7 @@ int main() {
                     }
                 }
             }
-            solver.tvd_rk3(&phi, &vel, &geo, &burgers_flux, &periodic, &Hamilton_Jacobi);
+            solver.tvd_rk3(&phi, &vel, &burgers_flux, &Hamilton_Jacobi);
             tcnt++;
         }
         auto end = std::chrono::high_resolution_clock::now();
@@ -71,7 +69,8 @@ int main() {
         do {
             error = 0.0;
             for (int i = 0; i < phi.scalar->nx; ++i) {
-                auto new_phi = sin(2.0 * pi * (geo.xc[i] - phi_exact[i] * tcnt * params->dt)) / (2.0 * pi * shock_formation);
+                auto new_phi =
+                        sin(2.0 * pi * (geo.xc[i] - phi_exact[i] * tcnt * params->dt)) / (2.0 * pi * shock_formation);
                 error += pow(new_phi - phi_exact[i], 2);
                 phi_exact[i] = new_phi;
             }

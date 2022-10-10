@@ -11,15 +11,19 @@
 #include "scihpc/source.h"
 #include "scihpc/runge_kutta.h"
 #include "scihpc/flux.h"
-#include "scihpc/simple_bc.h"
 #include "scihpc/wrapper_func.h"
 
 int main() {
 
-    auto phi = wrapper(new scalar_data(256, 256));
-    auto vel = wrapper(new vector_data(phi.scalar->nx, phi.scalar->ny));
-    auto geo = structured_grid(axis{-1.1, 1.1, phi.scalar->nx},
-                               axis{-1.1, 1.1, phi.scalar->ny});
+    auto geo = structured_grid(axis{-1.1, 1.1, 256},
+                               axis{-1.1, 1.1, 256});
+
+    auto phi = wrapper(true, &geo,
+                       bc_info{NEUMANN}, bc_info{NEUMANN},
+                       bc_info{NEUMANN}, bc_info{NEUMANN});
+    auto vel = wrapper(false, &geo,
+                       bc_info{NEUMANN}, bc_info{NEUMANN},
+                       bc_info{NEUMANN}, bc_info{NEUMANN});
     auto solver = runge_kutta(phi.scalar->Nx, phi.scalar->Ny, phi.scalar->Nz);
     auto vtk = vtkWriter(&geo, "lsf_iris");
     auto param = new problem_parameters{};
@@ -60,7 +64,7 @@ int main() {
             phi.scalar->data[index.i][index.j][index.k] /= 255.0;
         }
     }
-    zero_order_extrapolation(phi.scalar);
+    phi.apply_scalar_bc();
 
     vtk.create(0);
     vtk.add_scalar(phi.scalar, "phi");
@@ -75,7 +79,7 @@ int main() {
             find_sign(&phi);
             stabilized_upon_gradient(&phi, &geo);
         }
-        solver.tvd_rk3(&phi, &vel, &geo, &identity_flux, &zero_order_extrapolation, &lsf_redistance_lambda);
+        solver.tvd_rk3(&phi, &vel, &identity_flux, &lsf_redistance_lambda);
         std::cout << l2norm(&phi) << std::endl;
     } while (++step < 1500 and l2norm(&phi) > 1e-6);
 

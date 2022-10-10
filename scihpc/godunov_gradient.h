@@ -10,9 +10,11 @@
 #include "structured_grid.h"
 
 DataType godunov_limiter_p(DataType fp, DataType fm);
+
 DataType godunov_limiter_m(DataType fp, DataType fm);
 
-void godunov_gradient(wrapper* f, structured_grid* geo);
-void stabilized_upon_gradient(wrapper* f, structured_grid* geo);
+void godunov_gradient(wrapper *f, structured_grid *geo);
+
+void stabilized_upon_gradient(wrapper *f, structured_grid *geo);
 
 #endif //SCIHPC_GODUNOV_GRADIENT_H

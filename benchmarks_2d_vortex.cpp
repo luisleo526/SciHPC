@@ -9,7 +9,6 @@
 #include "scihpc/vector_data.h"
 #include "scihpc/runge_kutta.h"
 #include "scihpc/source.h"
-#include "scihpc/simple_bc.h"
 #include "scihpc/flux.h"
 #include "scihpc/vtkWriter.h"
 #include "scihpc/derivatives_solver.h"
@@ -18,10 +17,15 @@
 
 int main() {
 
-    auto phi = wrapper(new scalar_data(64, 64));
-    auto vel = wrapper(new vector_data(phi.scalar->nx, phi.scalar->ny));
-    auto geo = structured_grid(axis{0.0, 1.0, phi.scalar->nx},
-                               axis{0.0, 1.0, phi.scalar->ny});
+    auto geo = structured_grid(axis{0.0, 1.0, 64},
+                               axis{0.0, 1.0, 64});
+
+    auto phi = wrapper(true, &geo,
+                       bc_info{NEUMANN}, bc_info{NEUMANN},
+                       bc_info{NEUMANN}, bc_info{NEUMANN});
+    auto vel = wrapper(false, &geo,
+                       bc_info{NEUMANN}, bc_info{NEUMANN},
+                       bc_info{NEUMANN}, bc_info{NEUMANN});
 
     auto solver = runge_kutta(phi.scalar->Nx, phi.scalar->Ny, phi.scalar->Nz);
 
@@ -37,8 +41,8 @@ int main() {
         }
     }
 
-    zero_order_extrapolation(phi.scalar);
-    zero_order_extrapolation(vel.vector);
+    phi.apply_scalar_bc();
+    vel.apply_nvel_bc();
 
     auto vtk = vtkWriter(&geo, "vortex_deformation");
     vtk.create(0);
@@ -60,7 +64,7 @@ int main() {
 
     param->lsf_mass0 = lsf_mass(&phi);
 
-    DataType period = 16.0;
+    DataType period = 4.0;
     int cnt = 0;
     int plt_id = 1;
 
@@ -69,10 +73,10 @@ int main() {
 
         cnt++;
 
-        solver.tvd_rk3(&phi, &vel, &geo, &identity_flux, &zero_order_extrapolation, &convection);
+        solver.tvd_rk3(&phi, &vel, &identity_flux, &convection);
         do {
-            solver.euler(&phi, &vel, &geo, &identity_flux, &zero_order_extrapolation, &mpls);
-        } while ( fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) > 1e-10);
+            solver.euler(&phi, &vel, &identity_flux, &mpls);
+        } while (fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) > 1e-10);
 
         for (int i = 0; i < phi.scalar->nx; ++i) {
             for (int j = 0; j < phi.scalar->ny; ++j) {
@@ -85,7 +89,7 @@ int main() {
                         cos(pi * cnt * param->dt / period);
             }
         }
-        zero_order_extrapolation(vel.vector);
+        vel.apply_nvel_bc();
 
         if (cnt * param->dt >= plt_id * period / 8.0) {
             vtk.create(plt_id);
