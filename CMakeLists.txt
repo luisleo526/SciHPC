@@ -10,12 +10,14 @@ set(CMAKE_CXX_STANDARD 23)
 
 include_directories(scihpc)
 
+find_package(OpenMP REQUIRED)
+
 add_executable(SciHPC
 #        main.cpp
 #        benchmarks_1d_wave.cpp
 #        benchmarks_1d_IBE.cpp
 #        benchmarks_2d_vortex.cpp
-        benchmarks_2d_zalesak.cpp
+#        benchmarks_2d_zalesak.cpp
 #        benchmarks_lsf_initialization.cpp
 #        benchmarks_lsf_curvature.cpp
         scihpc/flux.cpp
