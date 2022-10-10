@@ -27,7 +27,6 @@ projection_method::projection_method(scalar_data *f) {
 
 void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, wrapper *nvel) const {
 
-
 #pragma omp parallel for default(none) shared(vel, lsf, nvel) collapse(3)
     for (int I = 0; I < lsf->scalar->nx; ++I) {
         for (int J = 0; J < lsf->scalar->ny; ++J) {
@@ -75,7 +74,6 @@ void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, wrapper *nvel) 
 }
 
 void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, wrapper *nvel) const {
-
 
 #pragma omp parallel for default(none) shared(vel, lsf, nvel) collapse(3)
     for (int I = 0; I < lsf->scalar->nx; ++I) {

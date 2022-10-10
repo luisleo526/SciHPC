@@ -9,5 +9,6 @@ derivatives_solver *derivatives_solver_alloc(scalar_data *f, structured_grid *ge
     solvers->ccd = new ccd_solver(f, geo);
     solvers->uccd = new uccd_solver(f, geo);
     solvers->weno = new weno_solver(f, geo);
+    solvers->secSol = new second_order_solver(geo->dx, geo->dy, geo->dz);
     return solvers;
 }

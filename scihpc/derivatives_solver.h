@@ -8,11 +8,13 @@
 #include "ccd_solver.h"
 #include "uccd_solver.h"
 #include "weno_solver.h"
+#include "second_order_solver.h"
 
 struct derivatives_solver {
     ccd_solver *ccd;
     uccd_solver *uccd;
     weno_solver *weno;
+    second_order_solver *secSol;
 };
 
 derivatives_solver *derivatives_solver_alloc(scalar_data *f, structured_grid *geo);

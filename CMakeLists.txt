@@ -20,6 +20,7 @@ add_executable(SciHPC
 #        benchmarks_2d_zalesak.cpp
 #        benchmarks_lsf_initialization.cpp
 #        benchmarks_lsf_curvature.cpp
+        benchmarks_lid_driven_cavity.cpp
         scihpc/flux.cpp
         scihpc/flux.h
         scihpc/global.cpp
@@ -74,4 +75,5 @@ add_executable(SciHPC
         scihpc/neumann.h
         scihpc/periodic.cpp
         scihpc/periodic.h
-        )
+        scihpc/second_order_solver.cpp
+        scihpc/second_order_solver.h)
