@@ -5,6 +5,7 @@
 #include "neumann.h"
 
 void Neumann_node_xr(scalar_data *f, DataType df, DataType h) {
+#pragma omp parallel for default(none) shared(f, df, h) collapse(2)
     for (int k = 0; k < f->nz; k++) {
         for (int j = 0; j < f->ny; j++) {
             auto index = f->index_mapping(f->nx, j + 1, k + 1);
@@ -17,6 +18,7 @@ void Neumann_node_xr(scalar_data *f, DataType df, DataType h) {
 }
 
 void Neumann_node_xl(scalar_data *f, DataType df, DataType h) {
+#pragma omp parallel for default(none) shared(f, df, h) collapse(2)
     for (int k = 0; k < f->nz; k++) {
         for (int j = 0; j < f->ny; j++) {
             auto index = f->index_mapping(1, j + 1, k + 1);
@@ -29,6 +31,7 @@ void Neumann_node_xl(scalar_data *f, DataType df, DataType h) {
 }
 
 void Neumann_node_yr(scalar_data *f, DataType df, DataType h) {
+#pragma omp parallel for default(none) shared(f, df, h) collapse(2)
     for (int k = 0; k < f->nz; k++) {
         for (int i = 0; i < f->nx; i++) {
             auto index = f->index_mapping(i + 1, f->ny, k + 1);
@@ -41,6 +44,7 @@ void Neumann_node_yr(scalar_data *f, DataType df, DataType h) {
 }
 
 void Neumann_node_yl(scalar_data *f, DataType df, DataType h) {
+#pragma omp parallel for default(none) shared(f, df, h) collapse(2)
     for (int k = 0; k < f->nz; k++) {
         for (int i = 0; i < f->nx; i++) {
             auto index = f->index_mapping(i + 1, 1, k + 1);
@@ -53,6 +57,7 @@ void Neumann_node_yl(scalar_data *f, DataType df, DataType h) {
 }
 
 void Neumann_node_zr(scalar_data *f, DataType df, DataType h) {
+#pragma omp parallel for default(none) shared(f, df, h) collapse(2)
     for (int j = 0; j < f->ny; j++) {
         for (int i = 0; i < f->nx; i++) {
             auto index = f->index_mapping(i + 1, j + 1, f->nz);
@@ -65,6 +70,7 @@ void Neumann_node_zr(scalar_data *f, DataType df, DataType h) {
 }
 
 void Neumann_node_zl(scalar_data *f, DataType df, DataType h) {
+#pragma omp parallel for default(none) shared(f, df, h) collapse(2)
     for (int j = 0; j < f->ny; j++) {
         for (int i = 0; i < f->nx; i++) {
             auto index = f->index_mapping(i + 1, j + 1, 1);
@@ -77,6 +83,7 @@ void Neumann_node_zl(scalar_data *f, DataType df, DataType h) {
 }
 
 void Neumann_face_xr(scalar_data *f, DataType df, DataType h) {
+#pragma omp parallel for default(none) shared(f, df, h) collapse(2)
     for (int k = 0; k < f->nz; k++) {
         for (int j = 0; j < f->ny; j++) {
             auto index = f->index_mapping(f->nx, j + 1, k + 1);
@@ -91,6 +98,7 @@ void Neumann_face_xr(scalar_data *f, DataType df, DataType h) {
 }
 
 void Neumann_face_xl(scalar_data *f, DataType df, DataType h) {
+#pragma omp parallel for default(none) shared(f, df, h) collapse(2)
     for (int k = 0; k < f->nz; k++) {
         for (int j = 0; j < f->ny; j++) {
             auto index = f->index_mapping(0, j + 1, k + 1);
@@ -103,6 +111,7 @@ void Neumann_face_xl(scalar_data *f, DataType df, DataType h) {
 }
 
 void Neumann_face_yr(scalar_data *f, DataType df, DataType h) {
+#pragma omp parallel for default(none) shared(f, df, h) collapse(2)
     for (int k = 0; k < f->nz; k++) {
         for (int i = 0; i < f->nx; i++) {
             auto index = f->index_mapping(i + 1, f->ny, k + 1);
@@ -116,6 +125,7 @@ void Neumann_face_yr(scalar_data *f, DataType df, DataType h) {
 }
 
 void Neumann_face_yl(scalar_data *f, DataType df, DataType h) {
+#pragma omp parallel for default(none) shared(f, df, h) collapse(2)
     for (int k = 0; k < f->nz; k++) {
         for (int i = 0; i < f->nx; i++) {
             auto index = f->index_mapping(i + 1, 0, k + 1);
@@ -128,6 +138,7 @@ void Neumann_face_yl(scalar_data *f, DataType df, DataType h) {
 }
 
 void Neumann_face_zr(scalar_data *f, DataType df, DataType h) {
+#pragma omp parallel for default(none) shared(f, df, h) collapse(2)
     for (int j = 0; j < f->ny; j++) {
         for (int i = 0; i < f->nx; i++) {
             auto index = f->index_mapping(i + 1, j + 1, f->nz);
@@ -141,6 +152,7 @@ void Neumann_face_zr(scalar_data *f, DataType df, DataType h) {
 }
 
 void Neumann_face_zl(scalar_data *f, DataType df, DataType h) {
+#pragma omp parallel for default(none) shared(f, df, h) collapse(2)
     for (int j = 0; j < f->ny; j++) {
         for (int i = 0; i < f->nx; i++) {
             auto index = f->index_mapping(i + 1, j + 1, 0);

@@ -23,7 +23,7 @@ void store_tmp(wrapper *f);
 
 DataType l2norm(wrapper *f);
 
-DataType divergence(wrapper *vel, structured_grid *geo);
+DataType divergence(wrapper *vel);
 
 void integrate_a(wrapper *f);
 

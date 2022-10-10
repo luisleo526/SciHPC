@@ -414,12 +414,12 @@ void node_from_face(wrapper *ref, wrapper *tgt) {
     }
 }
 
-DataType divergence(wrapper *vel, structured_grid *geo) {
+DataType divergence(wrapper *vel) {
     DataType max_div;
 
     if (vel->vector->x.ndim == 2) {
         max_div = 0.0;
-#pragma omp parallel for default(none) shared(vel, geo) reduction(max:max_div) collapse(3)
+#pragma omp parallel for default(none) shared(vel) reduction(max:max_div) collapse(3)
         for (int i = 0; i < vel->vector->x.nx; ++i) {
             for (int j = 0; j < vel->vector->x.ny; ++j) {
                 for (int k = 0; k < vel->vector->x.Nz; ++k) {
@@ -427,15 +427,15 @@ DataType divergence(wrapper *vel, structured_grid *geo) {
                     auto I = index.i;
                     auto J = index.j;
                     auto K = index.k;
-                    auto div = (vel->vector->x.data[I][J][K] - vel->vector->x.data[I - 1][J][K]) / geo->dx +
-                               (vel->vector->y.data[I][J][K] - vel->vector->y.data[I][J - 1][K]) / geo->dy;
+                    auto div = (vel->vector->x.data[I][J][K] - vel->vector->x.data[I - 1][J][K]) / vel->geo->dx +
+                               (vel->vector->y.data[I][J][K] - vel->vector->y.data[I][J - 1][K]) / vel->geo->dy;
                     max_div = fmax(max_div, fabs(div));
                 }
             }
         }
     } else {
         max_div = 0.0;
-#pragma omp parallel for default(none) shared(vel, geo) reduction(max:max_div) collapse(3)
+#pragma omp parallel for default(none) shared(vel) reduction(max:max_div) collapse(3)
         for (int i = 0; i < vel->vector->x.nx; ++i) {
             for (int j = 0; j < vel->vector->x.ny; ++j) {
                 for (int k = 0; k < vel->vector->x.nz; ++k) {
@@ -443,9 +443,9 @@ DataType divergence(wrapper *vel, structured_grid *geo) {
                     auto I = index.i;
                     auto J = index.j;
                     auto K = index.k;
-                    auto div = (vel->vector->x.data[I][J][K] - vel->vector->x.data[I - 1][J][K]) / geo->dx +
-                               (vel->vector->y.data[I][J][K] - vel->vector->y.data[I][J - 1][K]) / geo->dy +
-                               (vel->vector->z.data[I][J][K] - vel->vector->z.data[I][J][K - 1]) / geo->dz;
+                    auto div = (vel->vector->x.data[I][J][K] - vel->vector->x.data[I - 1][J][K]) / vel->geo->dx +
+                               (vel->vector->y.data[I][J][K] - vel->vector->y.data[I][J - 1][K]) / vel->geo->dy +
+                               (vel->vector->z.data[I][J][K] - vel->vector->z.data[I][J][K - 1]) / vel->geo->dz;
                     max_div = fmax(max_div, fabs(div));
                 }
             }

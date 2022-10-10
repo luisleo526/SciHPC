@@ -5,6 +5,7 @@
 #include "dirichlet.h"
 
 void Dirichlet_node_xr(scalar_data *f, DataType U) {
+#pragma omp parallel for default(none) shared(f, U) collapse(2)
     for (int k = 0; k < f->nz; k++) {
         for (int j = 0; j < f->ny; j++) {
             auto index = f->index_mapping(f->nx, j + 1, k + 1);
@@ -17,6 +18,7 @@ void Dirichlet_node_xr(scalar_data *f, DataType U) {
 }
 
 void Dirichlet_node_xl(scalar_data *f, DataType U) {
+#pragma omp parallel for default(none) shared(f, U) collapse(2)
     for (int k = 0; k < f->nz; k++) {
         for (int j = 0; j < f->ny; j++) {
             auto index = f->index_mapping(1, j + 1, k + 1);
@@ -29,6 +31,7 @@ void Dirichlet_node_xl(scalar_data *f, DataType U) {
 }
 
 void Dirichlet_node_yr(scalar_data *f, DataType U) {
+#pragma omp parallel for default(none) shared(f, U) collapse(2)
     for (int k = 0; k < f->nz; k++) {
         for (int i = 0; i < f->nx; i++) {
             auto index = f->index_mapping(i + 1, f->ny, k + 1);
@@ -41,6 +44,7 @@ void Dirichlet_node_yr(scalar_data *f, DataType U) {
 }
 
 void Dirichlet_node_yl(scalar_data *f, DataType U) {
+#pragma omp parallel for default(none) shared(f, U) collapse(2)
     for (int k = 0; k < f->nz; k++) {
         for (int i = 0; i < f->nx; i++) {
             auto index = f->index_mapping(i + 1, 1, k + 1);
@@ -53,6 +57,7 @@ void Dirichlet_node_yl(scalar_data *f, DataType U) {
 }
 
 void Dirichlet_node_zr(scalar_data *f, DataType U) {
+#pragma omp parallel for default(none) shared(f, U) collapse(2)
     for (int j = 0; j < f->ny; j++) {
         for (int i = 0; i < f->nx; i++) {
             auto index = f->index_mapping(i + 1, j + 1, f->nz);
@@ -65,6 +70,7 @@ void Dirichlet_node_zr(scalar_data *f, DataType U) {
 }
 
 void Dirichlet_node_zl(scalar_data *f, DataType U) {
+#pragma omp parallel for default(none) shared(f, U) collapse(2)
     for (int j = 0; j < f->ny; j++) {
         for (int i = 0; i < f->nx; i++) {
             auto index = f->index_mapping(i + 1, j + 1, 1);
@@ -77,6 +83,7 @@ void Dirichlet_node_zl(scalar_data *f, DataType U) {
 }
 
 void Dirichlet_face_xr(scalar_data *f, DataType U) {
+#pragma omp parallel for default(none) shared(f, U) collapse(2)
     for (int k = 0; k < f->nz; k++) {
         for (int j = 0; j < f->ny; j++) {
             auto index = f->index_mapping(f->nx, j + 1, k + 1);
@@ -89,6 +96,7 @@ void Dirichlet_face_xr(scalar_data *f, DataType U) {
 }
 
 void Dirichlet_face_xl(scalar_data *f, DataType U) {
+#pragma omp parallel for default(none) shared(f, U) collapse(2)
     for (int k = 0; k < f->nz; k++) {
         for (int j = 0; j < f->ny; j++) {
             auto index = f->index_mapping(1, j + 1, k + 1);
@@ -100,6 +108,7 @@ void Dirichlet_face_xl(scalar_data *f, DataType U) {
 }
 
 void Dirichlet_face_yr(scalar_data *f, DataType U) {
+#pragma omp parallel for default(none) shared(f, U) collapse(2)
     for (int k = 0; k < f->nz; k++) {
         for (int i = 0; i < f->nx; i++) {
             auto index = f->index_mapping(i + 1, f->ny, k + 1);
@@ -112,6 +121,7 @@ void Dirichlet_face_yr(scalar_data *f, DataType U) {
 }
 
 void Dirichlet_face_yl(scalar_data *f, DataType U) {
+#pragma omp parallel for default(none) shared(f, U) collapse(2)
     for (int k = 0; k < f->nz; k++) {
         for (int i = 0; i < f->nx; i++) {
             auto index = f->index_mapping(i + 1, 1, k + 1);
@@ -123,6 +133,7 @@ void Dirichlet_face_yl(scalar_data *f, DataType U) {
 }
 
 void Dirichlet_face_zr(scalar_data *f, DataType U) {
+#pragma omp parallel for default(none) shared(f, U) collapse(2)
     for (int j = 0; j < f->ny; j++) {
         for (int i = 0; i < f->nx; i++) {
             auto index = f->index_mapping(i + 1, j + 1, f->nz);
@@ -135,6 +146,7 @@ void Dirichlet_face_zr(scalar_data *f, DataType U) {
 }
 
 void Dirichlet_face_zl(scalar_data *f, DataType U) {
+#pragma omp parallel for default(none) shared(f, U) collapse(2)
     for (int j = 0; j < f->ny; j++) {
         for (int i = 0; i < f->nx; i++) {
             auto index = f->index_mapping(i + 1, j + 1, 1);

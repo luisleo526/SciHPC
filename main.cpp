@@ -16,8 +16,8 @@
 
 int main() {
 
-    auto geo = structured_grid(axis{0.0, 5.0, 100},
-                               axis{0.0, 2.0, 40});
+    auto geo = structured_grid(axis{0.0, 5.0, 200},
+                               axis{0.0, 2.0, 80});
 
     auto phi = wrapper(true, &geo,
                        bc_info{NEUMANN}, bc_info{NEUMANN},
@@ -122,7 +122,7 @@ int main() {
             std::cout << "----------------------------------------" << std::endl;
             std::cout << " time: " << step * param->dt << std::endl;
             std::cout << " mass loss ratio: " << fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) << std::endl;
-            std::cout << " div: " << divergence(&vel, &geo) << std::endl;
+            std::cout << " div: " << divergence(&vel) << std::endl;
             std::cout << " l2norm: " << l2norm(&pressure) << std::endl;
 
             instep = 0;

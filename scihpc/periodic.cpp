@@ -5,6 +5,7 @@
 #include "periodic.h"
 
 void periodic_node_xr(scalar_data *f) {
+#pragma omp parallel for default(none) shared(f) collapse(2)
     for (int j = 0; j < f->ny; j++) {
         for (int k = 0; k < f->nz; k++) {
             auto index = f->index_mapping(f->nx, j + 1, k + 1);
@@ -16,6 +17,7 @@ void periodic_node_xr(scalar_data *f) {
 }
 
 void periodic_node_xl(scalar_data *f) {
+#pragma omp parallel for default(none) shared(f) collapse(2)
     for (int j = 0; j < f->ny; j++) {
         for (int k = 0; k < f->nz; k++) {
             auto index = f->index_mapping(1, j + 1, k + 1);
@@ -27,6 +29,7 @@ void periodic_node_xl(scalar_data *f) {
 }
 
 void periodic_node_yr(scalar_data *f) {
+#pragma omp parallel for default(none) shared(f) collapse(2)
     for (int i = 0; i < f->nx; i++) {
         for (int k = 0; k < f->nz; k++) {
             auto index = f->index_mapping(i + 1, f->ny, k + 1);
@@ -38,6 +41,7 @@ void periodic_node_yr(scalar_data *f) {
 }
 
 void periodic_node_yl(scalar_data *f) {
+#pragma omp parallel for default(none) shared(f) collapse(2)
     for (int i = 0; i < f->nx; i++) {
         for (int k = 0; k < f->nz; k++) {
             auto index = f->index_mapping(i + 1, 1, k + 1);
@@ -49,6 +53,7 @@ void periodic_node_yl(scalar_data *f) {
 }
 
 void periodic_node_zr(scalar_data *f) {
+#pragma omp parallel for default(none) shared(f) collapse(2)
     for (int i = 0; i < f->nx; i++) {
         for (int j = 0; j < f->ny; j++) {
             auto index = f->index_mapping(i + 1, j + 1, f->nz);
@@ -60,6 +65,7 @@ void periodic_node_zr(scalar_data *f) {
 }
 
 void periodic_node_zl(scalar_data *f) {
+#pragma omp parallel for default(none) shared(f) collapse(2)
     for (int i = 0; i < f->nx; i++) {
         for (int j = 0; j < f->ny; j++) {
             auto index = f->index_mapping(i + 1, j + 1, 1);
@@ -83,6 +89,7 @@ void periodic_node_zl(scalar_data *f) {
 //  ...    ╚═══════╩═══════╩═══════╝ | ╚═══════╩═══════╩═══════╝   ...
 
 void periodic_face_xr(scalar_data *f) {
+#pragma omp parallel for default(none) shared(f) collapse(2)
     for (int j = 0; j < f->ny; j++) {
         for (int k = 0; k < f->nz; k++) {
             auto index = f->index_mapping(f->nx, j + 1, k + 1);
@@ -94,6 +101,7 @@ void periodic_face_xr(scalar_data *f) {
 }
 
 void periodic_face_xl(scalar_data *f) {
+#pragma omp parallel for default(none) shared(f) collapse(2)
     for (int j = 0; j < f->ny; j++) {
         for (int k = 0; k < f->nz; k++) {
             auto index = f->index_mapping(1, j + 1, k + 1);
@@ -105,6 +113,7 @@ void periodic_face_xl(scalar_data *f) {
 }
 
 void periodic_face_yr(scalar_data *f) {
+#pragma omp parallel for default(none) shared(f) collapse(2)
     for (int i = 0; i < f->nx; i++) {
         for (int k = 0; k < f->nz; k++) {
             auto index = f->index_mapping(i + 1, f->ny, k + 1);
@@ -116,6 +125,7 @@ void periodic_face_yr(scalar_data *f) {
 }
 
 void periodic_face_yl(scalar_data *f) {
+#pragma omp parallel for default(none) shared(f) collapse(2)
     for (int i = 0; i < f->nx; i++) {
         for (int k = 0; k < f->nz; k++) {
             auto index = f->index_mapping(i + 1, 1, k + 1);
@@ -127,6 +137,7 @@ void periodic_face_yl(scalar_data *f) {
 }
 
 void periodic_face_zr(scalar_data *f) {
+#pragma omp parallel for default(none) shared(f) collapse(2)
     for (int i = 0; i < f->nx; i++) {
         for (int j = 0; j < f->ny; j++) {
             auto index = f->index_mapping(i + 1, j + 1, f->nz);
@@ -138,6 +149,7 @@ void periodic_face_zr(scalar_data *f) {
 }
 
 void periodic_face_zl(scalar_data *f) {
+#pragma omp parallel for default(none) shared(f) collapse(2)
     for (int i = 0; i < f->nx; i++) {
         for (int j = 0; j < f->ny; j++) {
             auto index = f->index_mapping(i + 1, j + 1, 1);

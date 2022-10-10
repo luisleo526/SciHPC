@@ -15,7 +15,7 @@ runge_kutta::tvd_rk3(wrapper *f, wrapper *vel, void (*flux)(scalar_data *, vecto
                      void (*rhs)(wrapper *, wrapper *, DataType ***, void (*)(scalar_data *, vector_data *))) const {
 
     (*rhs)(f, vel, s1, flux);
-#pragma omp parallel for default(none) shared(f, s1, geo)
+#pragma omp parallel for default(none) shared(f, s1)
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
             for (int k = 0; k < f->scalar->Nz; ++k) {
@@ -26,7 +26,7 @@ runge_kutta::tvd_rk3(wrapper *f, wrapper *vel, void (*flux)(scalar_data *, vecto
     f->apply_scalar_bc();
 
     (*rhs)(f, vel, s2, flux);
-#pragma omp parallel for default(none) shared(f, s1, s2, geo)
+#pragma omp parallel for default(none) shared(f, s1, s2)
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
             for (int k = 0; k < f->scalar->Nz; ++k) {
@@ -37,7 +37,7 @@ runge_kutta::tvd_rk3(wrapper *f, wrapper *vel, void (*flux)(scalar_data *, vecto
     f->apply_scalar_bc();
 
     (*rhs)(f, vel, s3, flux);
-#pragma omp parallel for default(none) shared(f, s1, s2, s3, geo)
+#pragma omp parallel for default(none) shared(f, s1, s2, s3)
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
             for (int k = 0; k < f->scalar->Nz; ++k) {
@@ -51,7 +51,7 @@ runge_kutta::tvd_rk3(wrapper *f, wrapper *vel, void (*flux)(scalar_data *, vecto
 void runge_kutta::euler(wrapper *f, wrapper *vel, void (*flux)(scalar_data *, vector_data *),
                         void (*rhs)(wrapper *, wrapper *, DataType ***, void (*)(scalar_data *, vector_data *))) const {
     (*rhs)(f, vel, s1, flux);
-#pragma omp parallel for default(none) shared(f, s1, geo)
+#pragma omp parallel for default(none) shared(f, s1)
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
             for (int k = 0; k < f->scalar->Nz; ++k) {

@@ -1,20 +1,23 @@
 cmake_minimum_required(VERSION 3.23)
 project(SciHPC)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -openmp")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -openmp")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+endif()
 set(CMAKE_CXX_STANDARD 23)
 
 include_directories(scihpc)
 
 add_executable(SciHPC
-#        main.cpp
+        main.cpp
 #        benchmarks_1d_wave.cpp
 #        benchmarks_1d_IBE.cpp
 #        benchmarks_2d_vortex.cpp
 #        benchmarks_2d_zalesak.cpp
 #        benchmarks_lsf_initialization.cpp
 #        benchmarks_lsf_curvature.cpp
-        benchmarks_lid_driven_cavity.cpp
         scihpc/flux.cpp
         scihpc/flux.h
         scihpc/global.cpp
@@ -64,4 +67,9 @@ add_executable(SciHPC
         scihpc/slip.cpp
         scihpc/slip.h
         scihpc/dirichlet.cpp
-        scihpc/dirichlet.h scihpc/neumann.cpp scihpc/neumann.h scihpc/periodic.cpp scihpc/periodic.h)
+        scihpc/dirichlet.h
+        scihpc/neumann.cpp
+        scihpc/neumann.h
+        scihpc/periodic.cpp
+        scihpc/periodic.h
+        )
