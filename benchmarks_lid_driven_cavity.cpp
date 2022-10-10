@@ -25,14 +25,17 @@ int main() {
     auto vel = wrapper(false, &geo,
                        bc_info{NO_SLIP}, bc_info{NO_SLIP},
                        bc_info{NO_SLIP}, bc_info{NO_SLIP});
+    vel.bcFactoryV->yrbc.type = DIRICHLET;
+    vel.bcFactoryV->yrbc.value = 1.0;
     auto nvel = wrapper(false, &geo,
                         bc_info{NO_SLIP}, bc_info{NO_SLIP},
                         bc_info{NO_SLIP}, bc_info{NO_SLIP});
+    nvel.bcFactoryV->yrbc.type = DIRICHLET;
+    nvel.bcFactoryV->yrbc.value = 1.0;
     auto pressure = wrapper(true, &geo,
                             bc_info{NEUMANN}, bc_info{NEUMANN},
                             bc_info{NEUMANN}, bc_info{NEUMANN});
 
-    auto solver = runge_kutta(phi.scalar->Nx, phi.scalar->Ny, phi.scalar->Ny);
     auto flow_solver = projection_method(phi.scalar);
     auto vtk = vtkWriter(&geo, "lid_driven_cavity");
 
@@ -73,7 +76,8 @@ int main() {
     param->dt = 0.01 * geo.h;
     param->viscosity_ratio = 1.0;
     param->density_ratio = 1.0;
-    param->Reynolds_number = 1000.0;
+    param->Reynolds_number = 100.0;
+    param->ppe_max_iter = 5000;
 
     flow_solver.find_source(&vel, &nvel, &phi);
 
@@ -86,7 +90,8 @@ int main() {
         store_tmp(&vel);
         flow_solver.solve(&vel, &nvel, &pressure, &phi);
         error = l2norm(&vel);
-    } while (error > 1.0e-5);
+        std::cout << error << std::endl;
+    } while (error > 1.0e-10);
 
     return 0;
 }

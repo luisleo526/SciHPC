@@ -115,8 +115,8 @@ void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, wrapper *nvel) 
                 stress_part1 *= mu;
                 stress_part2 *= delta * (1.0 - lsf->params->viscosity_ratio);
 
-                v_src[i][j][k] += (stress_part1 + stress_part2) / lsf->params->Reynolds_number / rho
-                                  - 1.0 / lsf->params->Froude_number;
+                v_src[i][j][k] += (stress_part1 + stress_part2) / lsf->params->Reynolds_number / rho;
+//                                  - 1.0 / lsf->params->Froude_number;
 
             }
         }
