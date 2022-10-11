@@ -29,10 +29,6 @@ DataType l2norm(wrapper *f);
 
 DataType divergence(wrapper *vel);
 
-void integrate_a(wrapper *f);
-
-void integrate_b(wrapper *f);
-
 void all_to_face_x(wrapper *ref, wrapper *tgt);
 
 void all_to_face_y(wrapper *ref, wrapper *tgt);

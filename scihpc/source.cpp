@@ -6,7 +6,8 @@
 
 void convection(wrapper *f, wrapper *vel, DataType ***s, void (*flux)(scalar_data *, vector_data *)) {
     flux(f->scalar, vel->vector);
-    f->solvers->weno->weno5_find_derivatives(f->scalar, vel->vector);
+    f->solvers->uccd->find_derivatives(f->scalar, vel->vector);
+//    f->solvers->weno->weno5_find_derivatives(f->scalar, vel->vector);
 #pragma omp parallel for default(none) shared(f, vel, s) collapse(3)
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
@@ -180,18 +181,47 @@ void lsf_redistance_lambda(wrapper *phi, wrapper *vel, DataType ***s, void (*flu
         }
     }
 
-    integrate_a(phi);
-    integrate_b(phi);
+#pragma omp parallel for default(none) shared(phi, s) collapse(3)
+    for (int I = 0; I < phi->scalar->nx; ++I) {
+        for (int J = 0; J < phi->scalar->ny; ++J) {
+            for (int K = 0; K < phi->scalar->nz; ++K) {
+                auto index = phi->scalar->index_mapping(I + 1, J + 1, K + 1);
+                auto i = index.i;
+                auto j = index.j;
+                auto k = index.k;
 
-    for (int i = 0; i < phi->scalar->Nx; ++i) {
-        for (int j = 0; j < phi->scalar->Ny; ++j) {
-            for (int k = 0; k < phi->scalar->Nz; ++k) {
-                if (fabs(phi->dummy->b_int[i][j][k]) > epsilon) {
-                    s[i][j][k] += phi->dummy->a_int[i][j][k] / phi->dummy->b_int[i][j][k] *
+                auto a = 0.0;
+                auto b = 0.0;
+                if (phi->scalar->ndim == 2) {
+                    for (int ii = -1; ii < 2; ++ii) {
+                        for (int jj = -1; jj < 2; ++jj) {
+                            if (ii != 0 && jj != 0) {
+                                a += phi->dummy->a[i + ii][j + jj][k];
+                                b += phi->dummy->b[i + ii][j + jj][k];
+                            }
+                        }
+                    }
+                } else if (phi->scalar->ndim == 3) {
+                    for (int ii = -1; ii < 2; ++ii) {
+                        for (int jj = -1; jj < 2; ++jj) {
+                            for (int kk = -1; kk < 2; ++kk) {
+                                if (ii != 0 && jj != 0 && kk != 0) {
+                                    a += phi->dummy->a[i + ii][j + jj][k + kk];
+                                    b += phi->dummy->b[i + ii][j + jj][k + kk];
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (fabs(b) > epsilon) {
+                    s[i][j][k] += a / b *
                                   phi->dummy->delta[i][j][k] * phi->dummy->grad[i][j][k] * phi->params->rdt /
                                   phi->params->dt;
                 }
+
             }
         }
     }
+
 }
