@@ -245,6 +245,7 @@ void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf) c
     find_heavyside(lsf);
     find_density(lsf);
     find_viscosity(lsf);
+    identity_with_extrapolation(lsf->scalar);
     lsf->solvers->ccd->find_derivatives_all(lsf->scalar);
 
     all_to_face_x(vel, nvel);
