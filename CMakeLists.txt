@@ -1,26 +1,24 @@
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.21.0)
 project(SciHPC)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -openmp")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -openmp")
 endif()
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 17)
 
 include_directories(scihpc)
 
-find_package(OpenMP REQUIRED)
-
 add_executable(SciHPC
-#        main.cpp
+        main.cpp
 #        benchmarks_1d_wave.cpp
 #        benchmarks_1d_IBE.cpp
 #        benchmarks_2d_vortex.cpp
 #        benchmarks_2d_zalesak.cpp
 #        benchmarks_lsf_initialization.cpp
 #        benchmarks_lsf_curvature.cpp
-        benchmarks_lid_driven_cavity.cpp
+#        benchmarks_lid_driven_cavity.cpp
         scihpc/flux.cpp
         scihpc/flux.h
         scihpc/global.cpp
@@ -76,4 +74,5 @@ add_executable(SciHPC
         scihpc/periodic.cpp
         scihpc/periodic.h
         scihpc/second_order_solver.cpp
-        scihpc/second_order_solver.h)
+        scihpc/second_order_solver.h
+        )
