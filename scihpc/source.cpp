@@ -108,7 +108,8 @@ void Hamilton_Jacobi(wrapper *f, wrapper *vel, DataType ***s, void (*flux)(scala
 void mpls(wrapper *phi, wrapper *vel, DataType ***s, void (*flux)(scalar_data *, vector_data *)) {
 
     flux(phi->scalar, vel->vector);
-    phi->solvers->secSol->find_derivatives(phi->scalar);
+    identity_with_extrapolation(phi->scalar);
+    phi->solvers->ccd->find_derivatives(phi->scalar);
     auto mass = lsf_mass(phi);
 
     find_heavyside(phi);

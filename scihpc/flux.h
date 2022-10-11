@@ -15,7 +15,24 @@ void identity_flux(scalar_data *f);
 
 void identity_flux(vector_data *vel);
 
+void identity_with_extrapolation(scalar_data *f, vector_data *vel);
+
+void identity_with_extrapolation(scalar_data *f);
+
+void identity_with_extrapolation(vector_data *vel);
+
 void burgers_flux(scalar_data *f, vector_data *vel);
 
+void identity_with_extrapolation_face_x(scalar_data *f);
+
+void identity_with_extrapolation_face_y(scalar_data *f);
+
+void identity_with_extrapolation_face_z(scalar_data *f);
+
+void identity_with_extrapolation_face_x(scalar_data *f, vector_data *vel);
+
+void identity_with_extrapolation_face_y(scalar_data *f, vector_data *vel);
+
+void identity_with_extrapolation_face_z(scalar_data *f, vector_data *vel);
 
 #endif //SCIHPC_FLUX_H

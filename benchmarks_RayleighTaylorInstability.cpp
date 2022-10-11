@@ -16,8 +16,8 @@
 
 int main() {
 
-    auto geo = structured_grid(axis{0.0, 1.0, 64},
-                               axis{-2.0, 2.0, 256});
+    auto geo = structured_grid(axis{0.0, 1.0, 128},
+                               axis{-2.0, 2.0, 512});
 
     auto phi = wrapper(true, &geo,
                        bc_info{NEUMANN}, bc_info{NEUMANN},

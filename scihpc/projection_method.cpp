@@ -250,7 +250,7 @@ void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf) c
     all_to_face_x(vel, nvel);
     nvel->apply_vel_x_bc();
     vel->scalar = &vel->vector->x;
-    convection(vel, nvel, u_src, identity_flux);
+    convection(vel, nvel, u_src, identity_with_extrapolation_face_x);
     identity_flux(nvel->vector);
     nvel->solvers->uccd->find_derivatives(&nvel->vector->y, nvel->vector);
     add_stress_x(vel, lsf, nvel);
@@ -258,7 +258,7 @@ void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf) c
     all_to_face_y(vel, nvel);
     nvel->apply_vel_y_bc();
     vel->scalar = &vel->vector->y;
-    convection(vel, nvel, v_src, identity_flux);
+    convection(vel, nvel, v_src, identity_with_extrapolation_face_y);
     identity_flux(nvel->vector);
     nvel->solvers->uccd->find_derivatives(&nvel->vector->y, nvel->vector);
     add_stress_y(vel, lsf, nvel);
@@ -267,7 +267,7 @@ void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf) c
         all_to_face_z(vel, nvel);
         nvel->apply_vel_z_bc();
         vel->scalar = &vel->vector->z;
-        convection(vel, nvel, w_src, identity_flux);
+        convection(vel, nvel, w_src, identity_with_extrapolation_face_z);
         identity_flux(nvel->vector);
         nvel->solvers->uccd->find_derivatives(&nvel->vector->z, nvel->vector);
         add_stress_z(vel, lsf, nvel);

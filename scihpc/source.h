@@ -8,6 +8,7 @@
 
 #include "wrapper_func.h"
 #include "godunov_gradient.h"
+#include "flux.h"
 
 void convection(wrapper *f, wrapper *vel, DataType ***s, void (*flux)(scalar_data *, vector_data *));
 void convection_sec(wrapper *f, wrapper *vel, DataType ***s, void (*flux)(scalar_data *, vector_data *));
