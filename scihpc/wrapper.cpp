@@ -73,6 +73,14 @@ wrapper::wrapper(bool as_scalar, structured_grid *_geo,
         bcFactoryV = new bc_factory(geo, xlbc_type, xrbc_type);
         bcFactoryW = new bc_factory(geo, xlbc_type, xrbc_type);
     }
+
+    if (xlbc_type.type == SLIP) {
+        bcFactoryU->xlbc.type = NO_SLIP;
+    }
+
+    if (xrbc_type.type == SLIP) {
+        bcFactoryU->xrbc.type = NO_SLIP;
+    }
 }
 
 wrapper::wrapper(bool as_scalar, structured_grid *_geo,
@@ -98,6 +106,22 @@ wrapper::wrapper(bool as_scalar, structured_grid *_geo,
         bcFactoryW = new bc_factory(geo,
                                     xlbc_type, xrbc_type,
                                     ylbc_type, yrbc_type);
+    }
+
+    if (xlbc_type.type == SLIP) {
+        bcFactoryU->xlbc.type = NO_SLIP;
+    }
+
+    if (xrbc_type.type == SLIP) {
+        bcFactoryU->xrbc.type = NO_SLIP;
+    }
+
+    if (ylbc_type.type == SLIP) {
+        bcFactoryV->ylbc.type = NO_SLIP;
+    }
+
+    if (yrbc_type.type == SLIP) {
+        bcFactoryV->yrbc.type = NO_SLIP;
     }
 
 }
@@ -130,5 +154,29 @@ wrapper::wrapper(bool as_scalar, structured_grid *_geo,
                                     xlbc_type, xrbc_type,
                                     ylbc_type, yrbc_type,
                                     zlbc_type, zrbc_type);
+    }
+
+    if (xlbc_type.type == SLIP) {
+        bcFactoryU->xlbc.type = NO_SLIP;
+    }
+
+    if (xrbc_type.type == SLIP) {
+        bcFactoryU->xrbc.type = NO_SLIP;
+    }
+
+    if (ylbc_type.type == SLIP) {
+        bcFactoryV->ylbc.type = NO_SLIP;
+    }
+
+    if (yrbc_type.type == SLIP) {
+        bcFactoryV->yrbc.type = NO_SLIP;
+    }
+
+    if (zlbc_type.type == SLIP) {
+        bcFactoryW->zlbc.type = NO_SLIP;
+    }
+
+    if (zrbc_type.type == SLIP) {
+        bcFactoryW->zrbc.type = NO_SLIP;
     }
 }

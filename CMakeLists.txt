@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21.0)
 project(SciHPC)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -openmp")
 set(CMAKE_CXX_STANDARD 17)
 
 include_directories(scihpc)

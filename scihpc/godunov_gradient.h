@@ -9,9 +9,7 @@
 #include "wrapper.h"
 #include "structured_grid.h"
 
-DataType godunov_limiter_p(DataType fp, DataType fm);
-
-DataType godunov_limiter_m(DataType fp, DataType fm);
+DataType weno5_for_godunov(DataType a, DataType b, DataType c, DataType d);
 
 void godunov_gradient(wrapper *f, structured_grid *geo);
 

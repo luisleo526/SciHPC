@@ -4,14 +4,6 @@
 
 #include "godunov_gradient.h"
 
-DataType godunov_limiter_p(DataType fp, DataType fm) {
-    return std::pow(fmax(-fmin(fp, 0.0), fmax(fm, 0.0)), 2);
-}
-
-DataType godunov_limiter_m(DataType fp, DataType fm) {
-    return std::pow(fmax(fmax(fp, 0.0), -fmin(fm, 0.0)), 2);
-}
-
 void godunov_gradient(wrapper *f, structured_grid *geo) {
 
     // Initialized for gradient
@@ -25,87 +17,85 @@ void godunov_gradient(wrapper *f, structured_grid *geo) {
     }
 
     // x direction
-    // prepare first order derivative
-#pragma omp parallel for default(none) shared(f, geo) collapse(3)
-    for (int i = 1; i < f->scalar->Nx; ++i) {
-        for (int j = 0; j < f->scalar->Ny; ++j) {
-            for (int k = 0; k < f->scalar->Nz; ++k) {
-                f->scalar->flux[i][j][k] = (f->scalar->data[i][j][k] - f->scalar->data[i - 1][j][k]) / geo->dx;
-            }
-        }
-    }
-    // boundary condition for first order derivative
-#pragma omp parallel for default(none) shared(f, geo) collapse(2)
-    for (int j = 0; j < f->scalar->Ny; ++j) {
-        for (int k = 0; k < f->scalar->Nz; ++k) {
-            auto index_l = f->scalar->index_mapping(1, 1, 1);
-            auto index_r = f->scalar->index_mapping(f->scalar->nx, 1, 1);
-            for (int i = 1; i <= f->scalar->ghc; ++i) {
-                f->scalar->flux[index_l.i - i][j][k] = f->scalar->flux[index_l.i][j][k];
-                f->scalar->flux[index_r.i + i][j][k] = f->scalar->flux[index_r.i][j][k];
-            }
-        }
-    }
-    // find fluxes in x direction
-    f->solvers->weno->weno5_flux_x(f->scalar);
-#pragma omp parallel for default(none) shared(f, geo) collapse(3)
-    for (int i = 0; i < f->scalar->nx; ++i) {
-        for (int j = 0; j < f->scalar->ny; ++j) {
-            for (int k = 0; k < f->scalar->nz; ++k) {
-                auto index = f->scalar->index_mapping(i + 1, j + 1, k + 1);
-                if (f->dummy->sign[index.i][index.j][index.k] > 0.0) {
-                    f->dummy->grad[index.i][index.j][index.k] = godunov_limiter_p(
-                            f->solvers->weno->fp[index.i][index.j][index.k],
-                            f->solvers->weno->fm[index.i][index.j][index.k]);
+
+    auto phi = f->scalar->data;
+
+#pragma omp parallel for default(none) shared(f, geo, phi) collapse(3)
+    for (int I = 0; I < f->scalar->nx; ++I) {
+        for (int J = 0; J < f->scalar->ny; ++J) {
+            for (int K = 0; K < f->scalar->nz; ++K) {
+                auto index = f->scalar->index_mapping(I + 1, J + 1, K + 1);
+                auto i = index.i;
+                auto j = index.j;
+                auto k = index.k;
+
+                auto v = 1.0 / (12.0 * geo->dx) * (-(phi[i - 1][j][k] - phi[i - 2][j][k])
+                                                   + 7.0 * (phi[i][j][k] - phi[i - 1][j][k])
+                                                   + 7.0 * (phi[i + 1][j][k] - phi[i][j][k])
+                                                   - (phi[i + 2][j][k] - phi[i + 1][j][k]));
+
+                auto up = v + 1.0 / geo->dx *
+                              weno5_for_godunov(phi[i + 3][j][k] - 2.0 * phi[i + 2][j][k] + phi[i + 1][j][k],
+                                                phi[i + 2][j][k] - 2.0 * phi[i + 1][j][k] + phi[i][j][k],
+                                                phi[i + 1][j][k] - 2.0 * phi[i][j][k] + phi[i - 1][j][k],
+                                                phi[i][j][k] - 2.0 * phi[i - 1][j][k] + phi[i - 2][j][k]);
+
+                auto um = v - 1.0 / geo->dx *
+                              weno5_for_godunov(phi[i - 3][j][k] - 2.0 * phi[i - 2][j][k] + phi[i - 1][j][k],
+                                                phi[i - 2][j][k] - 2.0 * phi[i - 1][j][k] + phi[i][j][k],
+                                                phi[i - 1][j][k] - 2.0 * phi[i][j][k] + phi[i + 1][j][k],
+                                                phi[i][j][k] - 2.0 * phi[i + 1][j][k] + phi[i + 2][j][k]);
+
+                if (f->dummy->sign[i][j][k] > 0.0) {
+                    auto upm = -fmin(up, 0.0);
+                    auto ump = fmax(um, 0.0);
+                    f->dummy->grad[i][j][k] = pow(fmax(upm, ump), 2);
                 } else {
-                    f->dummy->grad[index.i][index.j][index.k] = godunov_limiter_m(
-                            f->solvers->weno->fp[index.i][index.j][index.k],
-                            f->solvers->weno->fm[index.i][index.j][index.k]);
+                    auto upp = fmax(up, 0.0);
+                    auto upm = -fmin(um, 0.0);
+                    f->dummy->grad[i][j][k] = pow(fmax(upp, upm), 2);
                 }
+
             }
         }
     }
 
     if (f->scalar->ndim > 1) {
         // y direction
-        // prepare first order derivative
-#pragma omp parallel for default(none) shared(f, geo) collapse(3)
-        for (int i = 0; i < f->scalar->Nx; ++i) {
-            for (int j = 1; j < f->scalar->Ny; ++j) {
-                for (int k = 0; k < f->scalar->Nz; ++k) {
-                    f->scalar->flux[i][j][k] = (f->scalar->data[i][j][k] - f->scalar->data[i][j - 1][k]) / geo->dy;
-                }
-            }
-        }
+#pragma omp parallel for default(none) shared(f, geo, phi) collapse(3)
+        for (int I = 0; I < f->scalar->nx; ++I) {
+            for (int J = 0; J < f->scalar->ny; ++J) {
+                for (int K = 0; K < f->scalar->nz; ++K) {
+                    auto index = f->scalar->index_mapping(I + 1, J + 1, K + 1);
+                    auto i = index.i;
+                    auto j = index.j;
+                    auto k = index.k;
 
-        // boundary condition for first order derivative
-#pragma omp parallel for default(none) shared(f, geo) collapse(2)
-        for (int i = 0; i < f->scalar->Nx; ++i) {
-            for (int k = 0; k < f->scalar->Nz; ++k) {
-                auto index_l = f->scalar->index_mapping(1, 1, 1);
-                auto index_r = f->scalar->index_mapping(1, f->scalar->ny, 1);
-                for (int j = 1; j <= f->scalar->ghc; ++j) {
-                    f->scalar->flux[i][index_l.j - j][k] = f->scalar->flux[i][index_l.j][k];
-                    f->scalar->flux[i][index_r.j + j][k] = f->scalar->flux[i][index_r.j][k];
-                }
-            }
-        }
+                    auto v = 1.0 / (12.0 * geo->dy) * (-(phi[i][j - 1][k] - phi[i][j - 2][k])
+                                                       + 7.0 * (phi[i][j][k] - phi[i][j - 1][k])
+                                                       + 7.0 * (phi[i][j + 1][k] - phi[i][j][k])
+                                                       - (phi[i][j + 2][k] - phi[i][j + 1][k]));
 
-        // find fluxes in y direction
-        f->solvers->weno->weno5_flux_y(f->scalar);
-#pragma omp parallel for default(none) shared(f, geo) collapse(3)
-        for (int i = 0; i < f->scalar->nx; ++i) {
-            for (int j = 0; j < f->scalar->ny; ++j) {
-                for (int k = 0; k < f->scalar->nz; ++k) {
-                    auto index = f->scalar->index_mapping(i + 1, j + 1, k + 1);
-                    if (f->dummy->sign[index.i][index.j][index.k] > 0.0) {
-                        f->dummy->grad[index.i][index.j][index.k] += godunov_limiter_p(
-                                f->solvers->weno->fp[index.i][index.j][index.k],
-                                f->solvers->weno->fm[index.i][index.j][index.k]);
+                    auto vp = v + 1.0 / geo->dy *
+                                  weno5_for_godunov(phi[i][j + 3][k] - 2.0 * phi[i][j + 2][k] + phi[i][j + 1][k],
+                                                    phi[i][j + 2][k] - 2.0 * phi[i][j + 1][k] + phi[i][j][k],
+                                                    phi[i][j + 1][k] - 2.0 * phi[i][j][k] + phi[i][j - 1][k],
+                                                    phi[i][j][k] - 2.0 * phi[i][j - 1][k] + phi[i][j - 2][k]);
+
+                    auto vm = v - 1.0 / geo->dy *
+                                  weno5_for_godunov(phi[i][j - 3][k] - 2.0 * phi[i][j - 2][k] + phi[i][j - 1][k],
+                                                    phi[i][j - 2][k] - 2.0 * phi[i][j - 1][k] + phi[i][j][k],
+                                                    phi[i][j - 1][k] - 2.0 * phi[i][j][k] + phi[i][j + 1][k],
+                                                    phi[i][j][k] - 2.0 * phi[i][j + 1][k] + phi[i][j + 2][k]);
+
+                    if (f->dummy->sign[i][j][k] > 0.0) {
+                        auto vpm = -fmin(vp, 0.0);
+                        auto vmp = fmax(vm, 0.0);
+                        f->dummy->grad[i][j][k] += pow(fmax(vpm, vmp), 2);
                     } else {
-                        f->dummy->grad[index.i][index.j][index.k] += godunov_limiter_m(
-                                f->solvers->weno->fp[index.i][index.j][index.k],
-                                f->solvers->weno->fm[index.i][index.j][index.k]);
+                        auto vpp = fmax(vp, 0.0);
+                        auto vpm = -fmin(vm, 0.0);
+                        f->dummy->grad[i][j][k] += pow(fmax(vpp, vpm), 2);
                     }
                 }
             }
@@ -114,45 +104,42 @@ void godunov_gradient(wrapper *f, structured_grid *geo) {
 
     if (f->scalar->ndim > 2) {
         // z direction
-        // prepare first order derivative
-#pragma omp parallel for default(none) shared(f, geo) collapse(3)
-        for (int i = 0; i < f->scalar->Nx; ++i) {
-            for (int j = 0; j < f->scalar->Ny; ++j) {
-                for (int k = 1; k < f->scalar->Nz; ++k) {
-                    f->scalar->flux[i][j][k] = (f->scalar->data[i][j][k] - f->scalar->data[i][j][k - 1]) / geo->dz;
-                }
-            }
-        }
+#pragma omp parallel for default(none) shared(f, geo, phi) collapse(3)
+        for (int I = 0; I < f->scalar->nx; ++I) {
+            for (int J = 0; J < f->scalar->ny; ++J) {
+                for (int K = 0; K < f->scalar->nz; ++K) {
+                    auto index = f->scalar->index_mapping(I + 1, J + 1, K + 1);
+                    auto i = index.i;
+                    auto j = index.j;
+                    auto k = index.k;
 
-        // boundary condition for first order derivative
-#pragma omp parallel for default(none) shared(f, geo) collapse(2)
-        for (int i = 0; i < f->scalar->Nx; ++i) {
-            for (int j = 0; j < f->scalar->Ny; ++j) {
-                auto index_l = f->scalar->index_mapping(1, 1, 1);
-                auto index_r = f->scalar->index_mapping(1, 1, f->scalar->nz);
-                for (int k = 1; k <= f->scalar->ghc; ++k) {
-                    f->scalar->flux[i][j][index_l.k - k] = f->scalar->flux[i][j][index_l.k];
-                    f->scalar->flux[i][j][index_r.k + k] = f->scalar->flux[i][j][index_r.k];
-                }
-            }
-        }
+                    auto v = 1.0 / (12.0 * geo->dz) * (-(phi[i][j][k - 1] - phi[i][j][k - 2])
+                                                       + 7.0 * (phi[i][j][k] - phi[i][j][k - 1])
+                                                       + 7.0 * (phi[i][j][k + 1] - phi[i][j][k])
+                                                       - (phi[i][j][k + 2] - phi[i][j][k + 1]));
 
-        // find fluxes in z direction
-        f->solvers->weno->weno5_flux_z(f->scalar);
-#pragma omp parallel for default(none) shared(f, geo) collapse(3)
-        for (int i = 0; i < f->scalar->nx; ++i) {
-            for (int j = 0; j < f->scalar->ny; ++j) {
-                for (int k = 0; k < f->scalar->nz; ++k) {
-                    auto index = f->scalar->index_mapping(i + 1, j + 1, k + 1);
-                    if (f->dummy->sign[index.i][index.j][index.k] > 0.0) {
-                        f->dummy->grad[index.i][index.j][index.k] += godunov_limiter_p(
-                                f->solvers->weno->fp[index.i][index.j][index.k],
-                                f->solvers->weno->fm[index.i][index.j][index.k]);
+                    auto wp = v + 1.0 / geo->dz *
+                                  weno5_for_godunov(phi[i][j][k + 3] - 2.0 * phi[i][j][k + 2] + phi[i][j][k + 1],
+                                                    phi[i][j][k + 2] - 2.0 * phi[i][j][k + 1] + phi[i][j][k],
+                                                    phi[i][j][k + 1] - 2.0 * phi[i][j][k] + phi[i][j][k - 1],
+                                                    phi[i][j][k] - 2.0 * phi[i][j][k - 1] + phi[i][j][k - 2]);
+
+                    auto wm = v - 1.0 / geo->dz *
+                                  weno5_for_godunov(phi[i][j][k - 3] - 2.0 * phi[i][j][k - 2] + phi[i][j][k - 1],
+                                                    phi[i][j][k - 2] - 2.0 * phi[i][j][k - 1] + phi[i][j][k],
+                                                    phi[i][j][k - 1] - 2.0 * phi[i][j][k] + phi[i][j][k + 1],
+                                                    phi[i][j][k] - 2.0 * phi[i][j][k + 1] + phi[i][j][k + 2]);
+
+                    if (f->dummy->sign[i][j][k] > 0.0) {
+                        auto wpm = -fmin(wp, 0.0);
+                        auto wmp = fmax(wm, 0.0);
+                        f->dummy->grad[i][j][k] += pow(fmax(wpm, wmp), 2);
                     } else {
-                        f->dummy->grad[index.i][index.j][index.k] += godunov_limiter_m(
-                                f->solvers->weno->fp[index.i][index.j][index.k],
-                                f->solvers->weno->fm[index.i][index.j][index.k]);
+                        auto wpp = fmax(wp, 0.0);
+                        auto wpm = -fmin(wm, 0.0);
+                        f->dummy->grad[i][j][k] += pow(fmax(wpp, wpm), 2);
                     }
+
                 }
             }
         }
@@ -173,7 +160,7 @@ void stabilized_upon_gradient(wrapper *f, structured_grid *geo) {
     godunov_gradient(f, geo);
     DataType max_grad = 0.0;
 
-#pragma omp parallel for reduction(max:max_grad) default(none) shared(f) collapse(3)
+#pragma omp parallel for reduction(fmax:max_grad) default(none) shared(f) collapse(3)
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
             for (int k = 0; k < f->scalar->Nz; ++k) {
@@ -191,6 +178,24 @@ void stabilized_upon_gradient(wrapper *f, structured_grid *geo) {
         }
     }
 
+}
+
+DataType weno5_for_godunov(DataType a, DataType b, DataType c, DataType d) {
+    auto eps = epsilon;
+    auto is0 = 13.0 * pow(a - b, 2.0) + 3.0 * pow(a - 3.0 * b, 2.0);
+    auto is1 = 13.0 * pow(b - c, 2.0) + 3.0 * pow(b + c, 2.0);
+    auto is2 = 13.0 * pow(c - d, 2.0) + 3.0 * pow(3.0 * c - d, 2.0);
+//    auto alp0 = 1.0 / pow(eps + is0, 2.0);
+//    auto alp1 = 6.0 / pow(eps + is1, 2.0);
+//    auto alp2 = 3.0 / pow(eps + is2, 2.0);
+
+    auto alp0 = 1.0 * (1.0 + fabs(is0 - is2) / (epsilon + is0));
+    auto alp1 = 6.0 * (1.0 + fabs(is0 - is2) / (epsilon + is1));
+    auto alp2 = 3.0 * (1.0 + fabs(is0 - is2) / (epsilon + is2));
+
+    auto w0 = alp0 / (alp0 + alp1 + alp2);
+    auto w2 = alp2 / (alp0 + alp1 + alp2);
+    return w0 / 3.0 * (a - 2.0 * b + c) + (w2 - 0.5) / 6.0 * (b - 2.0 * c + d);
 }
 
 

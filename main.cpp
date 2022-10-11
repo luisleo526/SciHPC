@@ -133,14 +133,14 @@ int main() {
             std::cout << " div: " << divergence(&vel) << std::endl;
             std::cout << " l2norm: " << l2norm(&pressure) << std::endl;
 
-//            instep = 0;
-//            while (instep * param->rdt < 2.5 * param->ls_width and step % 20 == 0) {
-//                if (instep == 0) {
-//                    find_sign(&phi);
-//                }
-//                instep++;
-//                solver.tvd_rk3(&phi, &nvel, identity_flux, lsf_redistance_lambda);
-//            };
+            instep = 0;
+            while (instep * param->rdt < 2.5 * param->ls_width and step % 20 == 0) {
+                if (instep == 0) {
+                    find_sign(&phi);
+                }
+                instep++;
+                solver.tvd_rk3(&phi, &nvel, identity_flux, lsf_redistance_lambda);
+            };
         }
 
         if (step * param->dt >= 0.1 * pltid) {
