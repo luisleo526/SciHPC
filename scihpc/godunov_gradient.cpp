@@ -160,7 +160,7 @@ void stabilized_upon_gradient(wrapper *f, structured_grid *geo) {
     godunov_gradient(f, geo);
     DataType max_grad = 0.0;
 
-#pragma omp parallel for reduction(fmax:max_grad) default(none) shared(f) collapse(3)
+#pragma omp parallel for reduction(max:max_grad) default(none) shared(f) collapse(3)
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
             for (int k = 0; k < f->scalar->Nz; ++k) {
