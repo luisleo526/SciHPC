@@ -6,7 +6,7 @@
 
 void convection(wrapper *f, wrapper *vel, DataType ***s, void (*flux)(scalar_data *, vector_data *)) {
     flux(f->scalar, vel->vector);
-    f->solvers->uccd->find_derivatives(f->scalar, vel->vector);
+    f->solvers->weno->weno5_find_derivatives(f->scalar, vel->vector);
 #pragma omp parallel for default(none) shared(f, vel, s) collapse(3)
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
@@ -107,7 +107,7 @@ void Hamilton_Jacobi(wrapper *f, wrapper *vel, DataType ***s, void (*flux)(scala
 void mpls(wrapper *phi, wrapper *vel, DataType ***s, void (*flux)(scalar_data *, vector_data *)) {
 
     flux(phi->scalar, vel->vector);
-    phi->solvers->ccd->find_derivatives(phi->scalar);
+    phi->solvers->secSol->find_derivatives(phi->scalar);
     auto mass = lsf_mass(phi);
 
     find_heavyside(phi);
