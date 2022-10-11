@@ -23,7 +23,7 @@ int main() {
                        bc_info{NEUMANN}, bc_info{NEUMANN},
                        bc_info{NEUMANN}, bc_info{NEUMANN});
     auto vel = wrapper(false, &geo,
-                       bc_info{NO_SLIP}, bc_info{NO_SLIP},
+                       bc_info{SLIP}, bc_info{SLIP},
                        bc_info{NO_SLIP}, bc_info{NO_SLIP});
     auto nvel = wrapper(false, &geo,
                         bc_info{NO_SLIP}, bc_info{NO_SLIP},
@@ -106,7 +106,7 @@ int main() {
         solver.tvd_rk3(&phi, &vel, identity_flux, lsf_redistance_lambda);
     } while (++step * param->rdt < 5.0 and l2norm(&phi) > 1e-6);
 
-    flow_solver.find_source_sec(&vel, &nvel, &phi);
+    flow_solver.find_source(&vel, &nvel, &phi);
     param->lsf_mass0 = lsf_mass(&phi);
 
     vtk.create(0);
@@ -124,7 +124,7 @@ int main() {
             solver.euler(&phi, &nvel, &identity_flux, &mpls);
         } while (fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) > 1e-10);
 
-        flow_solver.solve_sec(&vel, &nvel, &pressure, &phi);
+        flow_solver.solve(&vel, &nvel, &pressure, &phi);
 
         if (++step % 10 == 0) {
             std::cout << "----------------------------------------" << std::endl;
