@@ -32,15 +32,14 @@ void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, wrapper *nvel) 
         for (int J = 0; J < lsf->scalar->ny; ++J) {
             for (int K = 0; K < lsf->scalar->nz; ++K) {
 
-                auto index = lsf->scalar->index_mapping(I+1, J+1, K+1);
+                auto index = lsf->scalar->index_mapping(I + 1, J + 1, K + 1);
                 auto i = index.i;
                 auto j = index.j;
                 auto k = index.k;
 
-                auto h = 0.5 * (lsf->dummy->heaviside[i][j][k] + lsf->dummy->heaviside[i + 1][j][k]);
                 auto delta = 0.5 * (lsf->dummy->delta[i][j][k] + lsf->dummy->delta[i + 1][j][k]);
-                auto mu = h + (1.0 - h) * lsf->params->viscosity_ratio;
-                auto rho = h + (1.0 - h) * lsf->params->density_ratio;
+                auto mu = 0.5 * (lsf->dummy->viscosity[i][j][k] + lsf->dummy->viscosity[i + 1][j][k]);
+                auto rho = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i + 1][j][k]);
 
                 auto phix = 0.5 * (lsf->scalar->fx[i][j][k] + lsf->scalar->fx[i + 1][j][k]);
                 auto phiy = 0.5 * (lsf->scalar->fy[i][j][k] + lsf->scalar->fy[i + 1][j][k]);
@@ -80,15 +79,14 @@ void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, wrapper *nvel) 
         for (int J = 0; J < lsf->scalar->ny; ++J) {
             for (int K = 0; K < lsf->scalar->nz; ++K) {
 
-                auto index = lsf->scalar->index_mapping(I+1, J+1, K+1);
+                auto index = lsf->scalar->index_mapping(I + 1, J + 1, K + 1);
                 auto i = index.i;
                 auto j = index.j;
                 auto k = index.k;
 
-                auto h = 0.5 * (lsf->dummy->heaviside[i][j][k] + lsf->dummy->heaviside[i][j + 1][k]);
                 auto delta = 0.5 * (lsf->dummy->delta[i][j][k] + lsf->dummy->delta[i][j + 1][k]);
-                auto mu = h + (1.0 - h) * lsf->params->viscosity_ratio;
-                auto rho = h + (1.0 - h) * lsf->params->density_ratio;
+                auto mu = 0.5 * (lsf->dummy->viscosity[i][j][k] + lsf->dummy->viscosity[i][j + 1][k]);
+                auto rho = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j + 1][k]);
 
                 auto phix = 0.5 * (lsf->scalar->fx[i][j][k] + lsf->scalar->fx[i][j + 1][k]);
                 auto phiy = 0.5 * (lsf->scalar->fy[i][j][k] + lsf->scalar->fy[i][j + 1][k]);
@@ -130,15 +128,14 @@ void projection_method::add_stress_z(wrapper *vel, wrapper *lsf, wrapper *nvel) 
         for (int J = 0; J < lsf->scalar->ny; ++J) {
             for (int K = 0; K < lsf->scalar->nz; ++K) {
 
-                auto index = lsf->scalar->index_mapping(I+1, J+1, K+1);
+                auto index = lsf->scalar->index_mapping(I + 1, J + 1, K + 1);
                 auto i = index.i;
                 auto j = index.j;
                 auto k = index.k;
 
-                auto h = 0.5 * (lsf->dummy->heaviside[i][j][k] + lsf->dummy->heaviside[i][j][k + 1]);
                 auto delta = 0.5 * (lsf->dummy->delta[i][j][k] + lsf->dummy->delta[i][j][k + 1]);
-                auto mu = h + (1.0 - h) * lsf->params->viscosity_ratio;
-                auto rho = h + (1.0 - h) * lsf->params->density_ratio;
+                auto mu = 0.5 * (lsf->dummy->viscosity[i][j][k] + lsf->dummy->viscosity[i][j][k + 1]);
+                auto rho = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j][k + 1]);
 
                 auto phix = 0.5 * (lsf->scalar->fx[i][j][k] + lsf->scalar->fx[i][j][k + 1]);
                 auto phiy = 0.5 * (lsf->scalar->fy[i][j][k] + lsf->scalar->fy[i][j][k + 1]);
@@ -166,6 +163,70 @@ void projection_method::add_stress_z(wrapper *vel, wrapper *lsf, wrapper *nvel) 
     }
 }
 
+void projection_method::add_body_force(wrapper *lsf) const {
+
+    if (lsf->params->Froude_number > 0.0) {
+        if (lsf->scalar->ndim == 2) {
+            for (int i = 0; i < lsf->scalar->Nx; ++i) {
+                for (int j = 0; j < lsf->scalar->Ny; ++j) {
+                    for (int k = 0; k < lsf->scalar->Nz; ++k) {
+                        v_src[i][j][k] += -1.0 / lsf->params->Froude_number;
+                    }
+                }
+            }
+        } else if (lsf->scalar->ndim == 3) {
+            for (int i = 0; i < lsf->scalar->Nx; ++i) {
+                for (int j = 0; j < lsf->scalar->Ny; ++j) {
+                    for (int k = 0; k < lsf->scalar->Nz; ++k) {
+                        w_src[i][j][k] += -1.0 / lsf->params->Froude_number;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void projection_method::add_surface_force(wrapper *lsf) const {
+
+    if (lsf->params->Weber_number > 0.0) {
+
+        find_curvature(lsf);
+        find_gradient(lsf);
+        for (int i = 0; i < lsf->scalar->Nx - 1; ++i) {
+            for (int j = 0; j < lsf->scalar->Ny - 1; ++j) {
+                for (int k = 0; k < lsf->scalar->Nz; ++k) {
+                    auto curv = 0.5 * (lsf->dummy->curvature[i][j][k] + lsf->dummy->curvature[i + 1][j][k]);
+                    auto delta = 0.5 * (lsf->dummy->delta[i][j][k] + lsf->dummy->delta[i + 1][j][k]);
+                    auto phix = 0.5 * (lsf->scalar->fx[i][j][k] + lsf->scalar->fx[i + 1][j][k]);
+                    auto grad = 0.5 * (lsf->dummy->grad[i][j][k] + lsf->dummy->grad[i + 1][j][k]);
+                    auto rho = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i + 1][j][k]);
+
+                    u_src[i][j][k] += curv * delta * phix / (grad * lsf->params->Weber_number * rho);
+
+                    curv = 0.5 * (lsf->dummy->curvature[i][j][k] + lsf->dummy->curvature[i][j + 1][k]);
+                    delta = 0.5 * (lsf->dummy->delta[i][j][k] + lsf->dummy->delta[i][j + 1][k]);
+                    auto phiy = 0.5 * (lsf->scalar->fy[i][j][k] + lsf->scalar->fy[i][j + 1][k]);
+                    grad = 0.5 * (lsf->dummy->grad[i][j][k] + lsf->dummy->grad[i][j + 1][k]);
+                    rho = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j + 1][k]);
+
+                    v_src[i][j][k] += curv * delta * phiy / (grad * lsf->params->Weber_number * rho);
+
+                    if (lsf->scalar->ndim > 2 && k < lsf->scalar->Nz - 1) {
+                        curv = 0.5 * (lsf->dummy->curvature[i][j][k] + lsf->dummy->curvature[i][j][k + 1]);
+                        delta = 0.5 * (lsf->dummy->delta[i][j][k] + lsf->dummy->delta[i][j][k + 1]);
+                        auto phiz = 0.5 * (lsf->scalar->fz[i][j][k] + lsf->scalar->fz[i][j][k + 1]);
+                        grad = 0.5 * (lsf->dummy->grad[i][j][k] + lsf->dummy->grad[i][j][k + 1]);
+                        rho = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j][k + 1]);
+
+                        w_src[i][j][k] += curv * delta * phiz / (grad * lsf->params->Weber_number * rho);
+                    }
+
+                }
+            }
+        }
+    }
+}
+
 void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf) const {
 
 #pragma omp parallel for default(none) shared(vel, nvel, lsf) collapse(3)
@@ -182,7 +243,9 @@ void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf) c
     // prepare level set function
     find_delta(lsf);
     find_heavyside(lsf);
-    find_curvature(lsf);
+    find_density(lsf);
+    find_viscosity(lsf);
+    lsf->solvers->ccd->find_derivatives_all(lsf->scalar);
 
     all_to_face_x(vel, nvel);
     nvel->apply_vel_x_bc();
@@ -210,26 +273,58 @@ void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf) c
         add_stress_z(vel, lsf, nvel);
     }
 
-    // add gravity
-    if (lsf->params->Froude_number > 0.0) {
-        if (lsf->scalar->ndim == 2) {
-            for (int i = 0; i < lsf->scalar->Nx; ++i) {
-                for (int j = 0; j < lsf->scalar->Ny; ++j) {
-                    for (int k = 0; k < lsf->scalar->Nz; ++k) {
-                        v_src[i][j][k] += -1.0 / lsf->params->Froude_number;
-                    }
-                }
-            }
-        } else if (lsf->scalar->ndim == 3) {
-            for (int i = 0; i < lsf->scalar->Nx; ++i) {
-                for (int j = 0; j < lsf->scalar->Ny; ++j) {
-                    for (int k = 0; k < lsf->scalar->Nz; ++k) {
-                        w_src[i][j][k] += -1.0 / lsf->params->Froude_number;
-                    }
-                }
+    add_body_force(lsf);
+    add_surface_force(lsf);
+}
+
+void projection_method::find_source_sec(wrapper *vel, wrapper *nvel, wrapper *lsf) const {
+
+#pragma omp parallel for default(none) shared(vel, nvel, lsf) collapse(3)
+    for (int i = 0; i < vel->vector->x.Nx; ++i) {
+        for (int j = 0; j < vel->vector->x.Ny; ++j) {
+            for (int k = 0; k < vel->vector->x.Nz; ++k) {
+                u_src_old[i][j][k] = u_src[i][j][k];
+                v_src_old[i][j][k] = v_src[i][j][k];
+                w_src_old[i][j][k] = w_src[i][j][k];
             }
         }
     }
+
+    // prepare level set function
+    find_delta(lsf);
+    find_heavyside(lsf);
+    find_density(lsf);
+    find_viscosity(lsf);
+    lsf->solvers->secSol->find_derivatives_all(lsf->scalar);
+
+    all_to_face_x(vel, nvel);
+    nvel->apply_vel_x_bc();
+    vel->scalar = &vel->vector->x;
+    convection_sec(vel, nvel, u_src, identity_flux);
+    identity_flux(nvel->vector);
+    nvel->solvers->secSol->find_derivatives(&nvel->vector->y, nvel->vector);
+    add_stress_x(vel, lsf, nvel);
+
+    all_to_face_y(vel, nvel);
+    nvel->apply_vel_y_bc();
+    vel->scalar = &vel->vector->y;
+    convection_sec(vel, nvel, v_src, identity_flux);
+    identity_flux(nvel->vector);
+    nvel->solvers->secSol->find_derivatives(&nvel->vector->y, nvel->vector);
+    add_stress_y(vel, lsf, nvel);
+
+    if (lsf->scalar->ndim > 2) {
+        all_to_face_z(vel, nvel);
+        nvel->apply_vel_z_bc();
+        vel->scalar = &vel->vector->z;
+        convection_sec(vel, nvel, w_src, identity_flux);
+        identity_flux(nvel->vector);
+        nvel->solvers->secSol->find_derivatives(&nvel->vector->z, nvel->vector);
+        add_stress_z(vel, lsf, nvel);
+    }
+
+    add_body_force(lsf);
+    add_surface_force(lsf);
 }
 
 void projection_method::find_intermediate_velocity(wrapper *vel) const {
@@ -259,20 +354,15 @@ void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel)
         for (int J = 0; J < lsf->scalar->ny; ++J) {
             for (int K = 0; K < lsf->scalar->nz; ++K) {
 
-                auto index = lsf->scalar->index_mapping(I+1, J+1, K+1);
+                auto index = lsf->scalar->index_mapping(I + 1, J + 1, K + 1);
                 auto i = index.i;
                 auto j = index.j;
                 auto k = index.k;
 
-                auto R = 0.5 * (lsf->dummy->heaviside[i][j][k] + lsf->dummy->heaviside[i + 1][j][k]);
-                auto L = 0.5 * (lsf->dummy->heaviside[i][j][k] + lsf->dummy->heaviside[i - 1][j][k]);
-                auto U = 0.5 * (lsf->dummy->heaviside[i][j][k] + lsf->dummy->heaviside[i][j + 1][k]);
-                auto D = 0.5 * (lsf->dummy->heaviside[i][j][k] + lsf->dummy->heaviside[i][j - 1][k]);
-
-                R = R + (1.0 - R) * lsf->params->density_ratio;
-                L = L + (1.0 - L) * lsf->params->density_ratio;
-                U = U + (1.0 - U) * lsf->params->density_ratio;
-                D = D + (1.0 - D) * lsf->params->density_ratio;
+                auto R = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i + 1][j][k]);
+                auto L = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i - 1][j][k]);
+                auto U = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j + 1][k]);
+                auto D = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j - 1][k]);
 
                 CR[i][j][k] = 1.0 / R / pressure->geo->dx / pressure->geo->dx;
                 CL[i][j][k] = 1.0 / L / pressure->geo->dx / pressure->geo->dx;
@@ -295,11 +385,10 @@ void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel)
                     CU[i][j][k] = 0.0;
                 }
 
-                if (lsf->scalar->ndim > 2 and k > 0 and k < lsf->scalar->Nz - 1) {
-                    auto F = 0.5 * (lsf->dummy->heaviside[i][j][k] + lsf->dummy->heaviside[i][j][k + 1]);
-                    auto B = 0.5 * (lsf->dummy->heaviside[i][j][k] + lsf->dummy->heaviside[i][j][k - 1]);
-                    F = F + (1.0 - F) * lsf->params->density_ratio;
-                    B = B + (1.0 - B) * lsf->params->density_ratio;
+                if (lsf->scalar->ndim > 2) {
+                    auto F = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j][k + 1]);
+                    auto B = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j][k - 1]);
+
                     CF[i][j][k] = 1.0 / F / pressure->geo->dz / pressure->geo->dz;
                     CB[i][j][k] = 1.0 / B / pressure->geo->dz / pressure->geo->dz;
                     if (k == pressure->scalar->ghc) {
@@ -338,7 +427,7 @@ void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel)
         store_tmp(pressure);
         sump = 0.0;
         error = 0.0;
-#pragma omp parallel for default(none) shared(pressure, lsf) reduction(+:sump) collapse(3) reduction(max:error)
+#pragma omp parallel for default(none) shared(pressure, lsf) reduction(+:sump, error) collapse(3)
         for (int i = 0; i < pressure->scalar->nx; ++i) {
             for (int j = 0; j < pressure->scalar->ny; ++j) {
                 for (int k = 0; k < pressure->scalar->nz; ++k) {
@@ -361,15 +450,17 @@ void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel)
 
                     pressure->scalar->data[I][J][K] = 1.5 * pnew - 0.5 * pressure->scalar->data[I][J][K];
                     sump += pressure->scalar->data[I][J][K];
-                    error = fmax(error,
-                                 fabs(pnew * CC[I][J][K] - CC[I][J][K] * pressure->scalar->data[I][J][K]));
+                    error += pow(pnew * CC[I][J][K] - CC[I][J][K] * pressure->scalar->data[I][J][K], 2);
                 }
             }
         }
         sump = sump / (pressure->scalar->nx * pressure->scalar->ny);
+        error = error / (pressure->scalar->nx * pressure->scalar->ny);
         if (lsf->scalar->ndim > 2) {
             sump = sump / pressure->scalar->nz;
+            error = error / pressure->scalar->nz;
         }
+        error = sqrt(error);
 
 #pragma omp parallel for default(none) shared(pressure, sump) collapse(3)
         for (int i = 0; i < pressure->scalar->nx; ++i) {
@@ -391,30 +482,22 @@ void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel)
 void projection_method::find_final_velocity(wrapper *vel, wrapper *pressure, wrapper *lsf) {
 
 #pragma omp parallel for default(none) shared(vel, pressure, lsf) collapse(3)
-    for (int I = 0; I < lsf->scalar->nx; ++I) {
-        for (int J = 0; J < lsf->scalar->ny; ++J) {
-            for (int K = 0; K < lsf->scalar->nz; ++K) {
+    for (int i = 0; i < lsf->scalar->Nx - 1; ++i) {
+        for (int j = 0; j < lsf->scalar->Ny - 1; ++j) {
+            for (int k = 0; k < lsf->scalar->Nz; ++k) {
 
-                auto index = lsf->scalar->index_mapping(I+1, J+1, K+1);
-                auto i = index.i;
-                auto j = index.j;
-                auto k = index.k;
-
-                auto h = 0.5 * (lsf->dummy->heaviside[i][j][k] + lsf->dummy->heaviside[i + 1][j][k]);
-                auto density = (1.0 - h) * vel->params->density_ratio + h;
+                auto density = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i + 1][j][k]);
                 vel->vector->x.data[i][j][k] -= pressure->params->dt / pressure->geo->dx / density *
                                                 (pressure->scalar->data[i + 1][j][k] -
                                                  pressure->scalar->data[i][j][k]);
 
-                h = 0.5 * (lsf->dummy->heaviside[i][j][k] + lsf->dummy->heaviside[i][j + 1][k]);
-                density = (1.0 - h) * vel->params->density_ratio + h;
+                density = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j + 1][k]);
                 vel->vector->y.data[i][j][k] -= pressure->params->dt / pressure->geo->dy / density *
                                                 (pressure->scalar->data[i][j + 1][k] -
                                                  pressure->scalar->data[i][j][k]);
 
-                if (lsf->scalar->ndim > 2) {
-                    h = 0.5 * (lsf->dummy->heaviside[i][j][k] + lsf->dummy->heaviside[i][j][k + 1]);
-                    density = (1.0 - h) * vel->params->density_ratio + h;
+                if (lsf->scalar->ndim > 2 && k < lsf->scalar->Nz - 1) {
+                    density = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j][k + 1]);
                     vel->vector->z.data[i][j][k] -= pressure->params->dt / pressure->geo->dz / density *
                                                     (pressure->scalar->data[i][j][k + 1] -
                                                      pressure->scalar->data[i][j][k]);
@@ -428,6 +511,15 @@ void projection_method::find_final_velocity(wrapper *vel, wrapper *pressure, wra
 
 void projection_method::solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const {
     find_source(vel, nvel, lsf);
+    find_intermediate_velocity(vel);
+    solve_ppe(pressure, lsf, vel);
+    find_final_velocity(vel, pressure, lsf);
+    node_from_face(vel, nvel);
+    nvel->apply_nvel_bc();
+}
+
+void projection_method::solve_sec(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const {
+    find_source_sec(vel, nvel, lsf);
     find_intermediate_velocity(vel);
     solve_ppe(pressure, lsf, vel);
     find_final_velocity(vel, pressure, lsf);

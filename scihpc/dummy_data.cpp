@@ -25,5 +25,8 @@ dummy_data *dummy_data_alloc(scalar_data *f) {
     dummy->a_int = init_array(f->Nx, f->Ny, f->Nz);
     dummy->b_int = init_array(f->Nx, f->Ny, f->Nz);
 
+    dummy->density = init_array(f->Nx, f->Ny, f->Nz);
+    dummy->viscosity = init_array(f->Nx, f->Ny, f->Nz);
+
     return dummy;
 }

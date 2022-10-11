@@ -151,21 +151,89 @@ void second_order_solver::find_fz(scalar_data *f, vector_data *vel) const {
 
 void second_order_solver::find_derivatives(scalar_data *f) const {
     find_fx(f);
-    if (f->ndim > 1){
+    if (f->ndim > 1) {
         find_fy(f);
     }
-    if (f->ndim > 2){
+    if (f->ndim > 2) {
         find_fz(f);
     }
 }
 
 void second_order_solver::find_derivatives(scalar_data *f, vector_data *vel) const {
     find_fx(f, vel);
-    if (f->ndim > 1){
+    if (f->ndim > 1) {
         find_fy(f, vel);
     }
-    if (f->ndim > 2){
+    if (f->ndim > 2) {
         find_fz(f, vel);
+    }
+}
+
+void second_order_solver::mixed_xy(scalar_data *f) const {
+#pragma omp parallel for default(none) shared(f) collapse(3)
+    for (int i = 0; i < f->Nx; ++i) {
+        for (int j = 0; j < f->Ny; ++j) {
+            for (int k = 0; k < f->Nz; ++k) {
+                if (j == 0) {
+                    f->fxy[i][j][k] =
+                            (-1.5 * f->fx[i][j][k] + 2 * f->fx[i][j + 1][k] - 0.5 * f->fx[i][j + 2][k]) / dy;
+                } else if (j == f->Ny - 1) {
+                    f->fxy[i][j][k] =
+                            (1.5 * f->fx[i][j][k] - 2 * f->fx[i][j - 1][k] + 0.5 * f->fx[i][j - 2][k]) / dy;
+                } else {
+                    f->fxy[i][j][k] = (f->fx[i][j + 1][k] - f->fx[i][j - 1][k]) / (2 * dy);
+                }
+            }
+        }
+    }
+}
+
+void second_order_solver::mixed_yz(scalar_data *f) const {
+#pragma omp parallel for default(none) shared(f) collapse(3)
+    for (int i = 0; i < f->Nx; ++i) {
+        for (int j = 0; j < f->Ny; ++j) {
+            for (int k = 0; k < f->Nz; ++k) {
+                if (k == 0) {
+                    f->fyz[i][j][k] =
+                            (-1.5 * f->fy[i][j][k] + 2 * f->fy[i][j][k + 1] - 0.5 * f->fy[i][j][k + 2]) / dz;
+                } else if (k == f->Nz - 1) {
+                    f->fyz[i][j][k] =
+                            (1.5 * f->fy[i][j][k] - 2 * f->fy[i][j][k - 1] + 0.5 * f->fy[i][j][k - 2]) / dz;
+                } else {
+                    f->fyz[i][j][k] = (f->fy[i][j][k + 1] - f->fy[i][j][k - 1]) / (2 * dz);
+                }
+            }
+        }
+    }
+}
+
+void second_order_solver::mixed_zx(scalar_data *f) const {
+#pragma omp parallel for default(none) shared(f) collapse(3)
+    for (int i = 0; i < f->Nx; ++i) {
+        for (int j = 0; j < f->Ny; ++j) {
+            for (int k = 0; k < f->Nz; ++k) {
+                if (i == 0) {
+                    f->fzx[i][j][k] =
+                            (-1.5 * f->fz[i][j][k] + 2 * f->fz[i + 1][j][k] - 0.5 * f->fz[i + 2][j][k]) / dx;
+                } else if (i == f->Nx - 1) {
+                    f->fzx[i][j][k] =
+                            (1.5 * f->fz[i][j][k] - 2 * f->fz[i - 1][j][k] + 0.5 * f->fz[i - 2][j][k]) / dx;
+                } else {
+                    f->fzx[i][j][k] = (f->fz[i + 1][j][k] - f->fz[i - 1][j][k]) / (2 * dx);
+                }
+            }
+        }
+    }
+}
+
+void second_order_solver::find_derivatives_all(scalar_data *f) const {
+    find_derivatives(f);
+    if (f->ndim > 1){
+        mixed_xy(f);
+    }
+    if (f->ndim > 2){
+        mixed_yz(f);
+        mixed_zx(f);
     }
 }
 

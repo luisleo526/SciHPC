@@ -156,7 +156,6 @@ void ccd_solver::mixed_xy(scalar_data *f) const {
 
             for (int j = 0; j < f->Ny; ++j) {
                 f->fxy[i][j][k] = s[j];
-                f->fxyy[i][j][k] = ss[j];
             }
         }
     }
@@ -198,7 +197,6 @@ void ccd_solver::mixed_yz(scalar_data *f) const {
 
             for (int k = 0; k < f->Nz; ++k) {
                 f->fyz[i][j][k] = s[k];
-                f->fyzz[i][j][k] = ss[k];
             }
         }
     }
@@ -240,7 +238,6 @@ void ccd_solver::mixed_zx(scalar_data *f) const {
 
             for (int i = 0; i < f->Nx; ++i) {
                 f->fzx[i][j][k] = s[i];
-                f->fzxx[i][j][k] = ss[i];
             }
         }
     }

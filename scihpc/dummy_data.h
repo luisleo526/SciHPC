@@ -21,6 +21,8 @@ struct dummy_data {
     // for domain integration
     DataType ***a, ***b;
     DataType ***a_int, ***b_int;
+    // for NS
+    DataType ***density, ***viscosity;
 };
 
 dummy_data *dummy_data_alloc(scalar_data *f);

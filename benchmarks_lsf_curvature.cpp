@@ -4,6 +4,7 @@
 #include <chrono>
 #include <random>
 #include <ctime>
+#include <iomanip>
 
 #include "scihpc/wrapper.h"
 #include "scihpc/structured_grid.h"
@@ -20,17 +21,18 @@ int main() {
 
         auto n = 32 * static_cast<int>(pow(2, level));
 
+//        auto geo = structured_grid(axis{-1.0, 1.0, n},
+//                                   axis{-1.0, 1.0, n},
+//                                   axis{-1.0, 1.0, n});
+
         auto geo = structured_grid(axis{-1.0, 1.0, n},
-                                   axis{-1.0, 1.0, n},
                                    axis{-1.0, 1.0, n});
 
         auto phi = wrapper(true, &geo,
                            bc_info{NEUMANN}, bc_info{NEUMANN},
-                           bc_info{NEUMANN}, bc_info{NEUMANN},
                            bc_info{NEUMANN}, bc_info{NEUMANN});
 
         auto vel = wrapper(false, &geo,
-                           bc_info{NEUMANN}, bc_info{NEUMANN},
                            bc_info{NEUMANN}, bc_info{NEUMANN},
                            bc_info{NEUMANN}, bc_info{NEUMANN});
 
@@ -47,14 +49,18 @@ int main() {
             for (int j = 0; j < phi.scalar->ny; ++j) {
                 for (int k = 0; k < phi.scalar->nz; ++k) {
                     auto index = phi.scalar->index_mapping(i + 1, j + 1, k + 1);
+//                    phi.scalar->data[index.i][index.j][index.k] =
+//                            -sqrt(geo.xc[i] * geo.xc[i] + geo.yc[j] * geo.yc[j] + geo.zc[k] * geo.zc[k]) + 0.5;
                     phi.scalar->data[index.i][index.j][index.k] =
-                            -sqrt(geo.xc[i] * geo.xc[i] + geo.yc[j] * geo.yc[j] + geo.zc[k] * geo.zc[k]) + 0.5;
+                            -sqrt(geo.xc[i] * geo.xc[i] + geo.yc[j] * geo.yc[j]) + 0.5;
+
                 }
             }
         }
         phi.apply_scalar_bc();
 
         identity_flux(phi.scalar, vel.vector);
+        phi.solvers->secSol->find_derivatives_all(phi.scalar);
         find_curvature(&phi);
         find_delta(&phi);
 

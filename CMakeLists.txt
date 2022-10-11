@@ -1,11 +1,7 @@
 cmake_minimum_required(VERSION 3.21.0)
 project(SciHPC)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -openmp")
-else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -openmp")
-endif()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 set(CMAKE_CXX_STANDARD 17)
 
 include_directories(scihpc)
@@ -19,6 +15,7 @@ add_executable(SciHPC
 #        benchmarks_lsf_initialization.cpp
 #        benchmarks_lsf_curvature.cpp
 #        benchmarks_lid_driven_cavity.cpp
+#        benchmarks_dambreak.cpp
         scihpc/flux.cpp
         scihpc/flux.h
         scihpc/global.cpp

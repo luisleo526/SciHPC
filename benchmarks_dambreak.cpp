@@ -16,8 +16,8 @@
 
 int main() {
 
-    auto geo = structured_grid(axis{-1.0, 1.0, 64},
-                               axis{-1.0, 1.0, 64});
+    auto geo = structured_grid(axis{0.0, 5.0, 150},
+                               axis{0.0, 1.2, 40});
 
     auto phi = wrapper(true, &geo,
                        bc_info{NEUMANN}, bc_info{NEUMANN},
@@ -34,7 +34,7 @@ int main() {
 
     auto solver = runge_kutta(phi.scalar->Nx, phi.scalar->Ny, phi.scalar->Nz);
     auto flow_solver = projection_method(phi.scalar);
-    auto vtk = vtkWriter(&geo, "droplet");
+    auto vtk = vtkWriter(&geo, "dambreak");
 
     auto param = new problem_parameters{};
     auto deri_solvers = derivatives_solver_alloc(phi.scalar, &geo);
@@ -43,7 +43,11 @@ int main() {
     for (int i = 0; i < phi.scalar->nx; ++i) {
         for (int j = 0; j < phi.scalar->ny; ++j) {
             auto index = phi.scalar->index_mapping(i + 1, j + 1, 1);
-            phi.scalar->data[index.i][index.j][index.k] = -sqrt(geo.xc[i] * geo.xc[i] + geo.yc[j] * geo.yc[j]) + 0.5;
+            if (geo.xc[i] < 1.0 and geo.yc[j] < 1.0) {
+                phi.scalar->data[index.i][index.j][index.k] = 1.0;
+            } else {
+                phi.scalar->data[index.i][index.j][index.k] = -1.0;
+            }
         }
     }
     phi.apply_scalar_bc();
@@ -78,24 +82,24 @@ int main() {
 
     param->ls_width = 1.5 * geo.h;
     param->rdt = 0.1 * geo.h;
-    param->dt = 0.0001 * geo.h;
+    param->dt = 0.01 * geo.h;
     param->viscosity_ratio = 0.01;
     param->density_ratio = 0.001;
-    param->Froude_number = -1.0;
-    param->Reynolds_number = 100.0;
-    param->Weber_number = 10000.0;
+    param->Froude_number = 1.0;
+    param->Reynolds_number = 42792.0;
+    param->Weber_number = -0.68;
     param->ppe_tol = 1e-4;
 
     int step, instep;
 
     // Init phi
-//    find_sign(&phi);
-//    stabilized_upon_gradient(&phi, &geo);
-//    step = 0;
-//    do {
-//        store_tmp(&phi);
-//        solver.tvd_rk3(&phi, &vel, identity_flux, lsf_redistance_lambda);
-//    } while (++step * param->rdt < 5.0 and l2norm(&phi) > 1e-6);
+    find_sign(&phi);
+    stabilized_upon_gradient(&phi, &geo);
+    step = 0;
+    do {
+        store_tmp(&phi);
+        solver.tvd_rk3(&phi, &vel, identity_flux, lsf_redistance_lambda);
+    } while (++step * param->rdt < 5.0 and l2norm(&phi) > 1e-6);
 
     flow_solver.find_source_sec(&vel, &nvel, &phi);
     param->lsf_mass0 = lsf_mass(&phi);
@@ -134,14 +138,14 @@ int main() {
             };
         }
 
-        if (step % 50 == 0) {
+        if (step % 250 == 0) {
             vtk.create(pltid++);
             vtk.add_scalar(phi.scalar, "phi");
             vtk.add_scalar(pressure.scalar, "pressure");
             vtk.add_vector(nvel.vector, "nvel");
             vtk.close();
         }
-    } while (step * param->dt < 1.0);
+    } while (step * param->dt < 5.0);
 
     return 0;
 }

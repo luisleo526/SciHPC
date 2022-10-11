@@ -24,7 +24,13 @@ public:
 
     void add_stress_z(wrapper *vel, wrapper *lsf, wrapper *nvel) const;
 
+    void add_body_force(wrapper *lsf) const;
+
+    void add_surface_force(wrapper *lsf) const;
+
     void find_source(wrapper *vel, wrapper *nvel, wrapper *lsf) const;
+
+    void find_source_sec(wrapper *vel, wrapper *nvel, wrapper *lsf) const;
 
     void find_intermediate_velocity(wrapper *vel) const;
 
@@ -33,6 +39,8 @@ public:
     static void find_final_velocity(wrapper *vel, wrapper *pressure, wrapper *lsf);
 
     void solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const;
+
+    void solve_sec(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const;
 };
 
 

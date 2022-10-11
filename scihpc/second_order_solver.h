@@ -18,6 +18,12 @@ public:
 
     void find_fz(scalar_data *f) const;
 
+    void mixed_xy(scalar_data *f) const;
+
+    void mixed_yz(scalar_data *f) const;
+
+    void mixed_zx(scalar_data *f) const;
+
     void find_fx(scalar_data *f, vector_data *vel) const;
 
     void find_fy(scalar_data *f, vector_data *vel) const;
@@ -27,6 +33,8 @@ public:
     void find_derivatives(scalar_data *f) const;
 
     void find_derivatives(scalar_data *f, vector_data *vel) const;
+
+    void find_derivatives_all(scalar_data *f) const;
 
     second_order_solver(DataType _dx, DataType _dy, DataType _dz);
 };

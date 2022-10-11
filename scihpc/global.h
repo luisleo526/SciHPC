@@ -23,6 +23,7 @@ struct axis {
 };
 
 struct problem_parameters {
+    int n = 0;
     DataType dt{};
     DataType rdt{};
 

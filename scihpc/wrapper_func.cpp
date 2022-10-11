@@ -247,8 +247,6 @@ void integrate_b(wrapper *f) {
 
 void find_curvature(wrapper *lsf) {
 
-    lsf->solvers->ccd->find_derivatives_all(lsf->scalar);
-
     if (lsf->scalar->ndim == 2) {
 #pragma omp parallel for default(none) shared(lsf) collapse(3)
         for (int i = 0; i < lsf->scalar->Nx; ++i) {
@@ -452,4 +450,34 @@ DataType divergence(wrapper *vel) {
         }
     }
     return max_div;
+}
+
+void find_dt(wrapper *vel, wrapper *lsf) {
+
+    DataType max_u, max_v, max_w;
+
+}
+
+void find_density(wrapper *lsf) {
+#pragma omp parallel for default(none) shared(lsf) collapse(3)
+    for (int i = 0; i < lsf->scalar->Nx; ++i) {
+        for (int j = 0; j < lsf->scalar->Ny; ++j) {
+            for (int k = 0; k < lsf->scalar->Nz; ++k) {
+                auto h = Heaviside(lsf->scalar->data[i][j][k], lsf->params->ls_width);
+                lsf->dummy->density[i][j][k] = h + (1.0 - h) * lsf->params->density_ratio;
+            }
+        }
+    }
+}
+
+void find_viscosity(wrapper *lsf) {
+#pragma omp parallel for default(none) shared(lsf) collapse(3)
+    for (int i = 0; i < lsf->scalar->Nx; ++i) {
+        for (int j = 0; j < lsf->scalar->Ny; ++j) {
+            for (int k = 0; k < lsf->scalar->Nz; ++k) {
+                auto h = Heaviside(lsf->scalar->data[i][j][k], lsf->params->ls_width);
+                lsf->dummy->viscosity[i][j][k] = h + (1.0 - h) * lsf->params->viscosity_ratio;
+            }
+        }
+    }
 }
