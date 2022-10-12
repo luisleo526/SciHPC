@@ -321,7 +321,7 @@ DataType divergence(wrapper *vel) {
 void find_dt(wrapper *vel) {
 
     DataType max_u, max_v, max_w, max_curvature;
-    max_u = max_v = max_w = 0.0;
+    max_u = max_v = max_w = max_curvature = 0.0;
 #pragma omp parallel for default(none) shared(vel) reduction(max:max_u, max_v, max_w, max_curvature) collapse(3)
     for (int I = 0; I < vel->vector->x.nx; ++I) {
         for (int J = 0; J < vel->vector->x.ny; ++J) {
