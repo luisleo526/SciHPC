@@ -248,29 +248,48 @@ void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf) c
     identity_with_extrapolation(lsf->scalar);
     lsf->solvers->ccd->find_derivatives_all(lsf->scalar);
 
+    // Compute velocities at face x for convection part
     all_to_face_x(vel, nvel);
     nvel->apply_vel_x_bc();
+    // Compute convection source
     vel->scalar = &vel->vector->x;
     convection(vel, nvel, u_src, identity_with_extrapolation_face_x);
-    identity_flux(nvel->vector);
-    nvel->solvers->uccd->find_derivatives(&nvel->vector->y, nvel->vector);
+    // Compute derivatives of face x velocities for stress tensor at x direction
+    identity_with_extrapolation_face_x(nvel->vector);
+    nvel->solvers->uccd->find_fx(&nvel->vector->y, nvel->vector);
+    if (nvel->vector->x.ndim > 2){
+        nvel->solvers->uccd->find_fx(&nvel->vector->z, nvel->vector);
+    }
+    // Compute stress tensor at x direction
     add_stress_x(vel, lsf, nvel);
 
+    // Compute velocities at face y for convection part
     all_to_face_y(vel, nvel);
     nvel->apply_vel_y_bc();
+    // Compute convection source
     vel->scalar = &vel->vector->y;
     convection(vel, nvel, v_src, identity_with_extrapolation_face_y);
-    identity_flux(nvel->vector);
-    nvel->solvers->uccd->find_derivatives(&nvel->vector->y, nvel->vector);
+    // Compute derivatives of face y velocities for stress tensor at y direction
+    identity_with_extrapolation_face_y(nvel->vector);
+    nvel->solvers->uccd->find_fy(&nvel->vector->x, nvel->vector);
+    if (nvel->vector->x.ndim > 2){
+        nvel->solvers->uccd->find_fy(&nvel->vector->z, nvel->vector);
+    }
+    // Compute stress tensor at y direction
     add_stress_y(vel, lsf, nvel);
 
     if (lsf->scalar->ndim > 2) {
+        // Compute velocities at face z for convection part
         all_to_face_z(vel, nvel);
         nvel->apply_vel_z_bc();
+        // Compute convection source
         vel->scalar = &vel->vector->z;
         convection(vel, nvel, w_src, identity_with_extrapolation_face_z);
-        identity_flux(nvel->vector);
-        nvel->solvers->uccd->find_derivatives(&nvel->vector->z, nvel->vector);
+        // Compute derivatives of face z velocities for stress tensor at z direction
+        identity_with_extrapolation_face_z(nvel->vector);
+        nvel->solvers->uccd->find_fz(&nvel->vector->x, nvel->vector);
+        nvel->solvers->uccd->find_fz(&nvel->vector->y, nvel->vector);
+        // Compute stress tensor at z direction
         add_stress_z(vel, lsf, nvel);
     }
 
@@ -296,31 +315,51 @@ void projection_method::find_source_sec(wrapper *vel, wrapper *nvel, wrapper *ls
     find_heavyside(lsf);
     find_density(lsf);
     find_viscosity(lsf);
+    identity_with_extrapolation(lsf->scalar);
     lsf->solvers->secSol->find_derivatives_all(lsf->scalar);
 
+    // Compute velocities at face x for convection part
     all_to_face_x(vel, nvel);
     nvel->apply_vel_x_bc();
+    // Compute convection source
     vel->scalar = &vel->vector->x;
-    convection_sec(vel, nvel, u_src, identity_flux);
-    identity_flux(nvel->vector);
-    nvel->solvers->secSol->find_derivatives(&nvel->vector->y, nvel->vector);
+    convection_sec(vel, nvel, u_src, identity_with_extrapolation_face_x);
+    // Compute derivatives of face x velocities for stress tensor at x direction
+    identity_with_extrapolation_face_x(nvel->vector);
+    nvel->solvers->secSol->find_fx(&nvel->vector->y, nvel->vector);
+    if (nvel->vector->x.ndim > 2){
+        nvel->solvers->secSol->find_fx(&nvel->vector->z, nvel->vector);
+    }
+    // Compute stress tensor at x direction
     add_stress_x(vel, lsf, nvel);
 
+    // Compute velocities at face y for convection part
     all_to_face_y(vel, nvel);
     nvel->apply_vel_y_bc();
+    // Compute convection source
     vel->scalar = &vel->vector->y;
-    convection_sec(vel, nvel, v_src, identity_flux);
-    identity_flux(nvel->vector);
-    nvel->solvers->secSol->find_derivatives(&nvel->vector->y, nvel->vector);
+    convection_sec(vel, nvel, v_src, identity_with_extrapolation_face_y);
+    // Compute derivatives of face y velocities for stress tensor at y direction
+    identity_with_extrapolation_face_y(nvel->vector);
+    nvel->solvers->secSol->find_fy(&nvel->vector->x, nvel->vector);
+    if (nvel->vector->x.ndim > 2){
+        nvel->solvers->secSol->find_fy(&nvel->vector->z, nvel->vector);
+    }
+    // Compute stress tensor at y direction
     add_stress_y(vel, lsf, nvel);
 
     if (lsf->scalar->ndim > 2) {
+        // Compute velocities at face z for convection part
         all_to_face_z(vel, nvel);
         nvel->apply_vel_z_bc();
+        // Compute convection source
         vel->scalar = &vel->vector->z;
-        convection_sec(vel, nvel, w_src, identity_flux);
-        identity_flux(nvel->vector);
-        nvel->solvers->secSol->find_derivatives(&nvel->vector->z, nvel->vector);
+        convection_sec(vel, nvel, w_src, identity_with_extrapolation_face_z);
+        // Compute derivatives of face z velocities for stress tensor at z direction
+        identity_with_extrapolation_face_z(nvel->vector);
+        nvel->solvers->secSol->find_fz(&nvel->vector->x, nvel->vector);
+        nvel->solvers->secSol->find_fz(&nvel->vector->y, nvel->vector);
+        // Compute stress tensor at z direction
         add_stress_z(vel, lsf, nvel);
     }
 
@@ -449,7 +488,9 @@ void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel)
 
                     pnew /= CC[I][J][K];
 
-                    pressure->scalar->data[I][J][K] = 1.5 * pnew - 0.5 * pressure->scalar->data[I][J][K];
+                    pressure->scalar->data[I][J][K] = pressure->params->ppe_omega * pnew +
+                                                      (1.0 - pressure->params->ppe_omega) *
+                                                      pressure->scalar->data[I][J][K];
                     sump += pressure->scalar->data[I][J][K];
                     error += pow(pnew * CC[I][J][K] - CC[I][J][K] * pressure->scalar->data[I][J][K], 2);
                 }

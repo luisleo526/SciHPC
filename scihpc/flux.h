@@ -24,10 +24,11 @@ void identity_with_extrapolation(vector_data *vel);
 void burgers_flux(scalar_data *f, vector_data *vel);
 
 void identity_with_extrapolation_face_x(scalar_data *f);
-
+void identity_with_extrapolation_face_x(vector_data *f);
 void identity_with_extrapolation_face_y(scalar_data *f);
-
+void identity_with_extrapolation_face_y(vector_data *f);
 void identity_with_extrapolation_face_z(scalar_data *f);
+void identity_with_extrapolation_face_z(vector_data *f);
 
 void identity_with_extrapolation_face_x(scalar_data *f, vector_data *vel);
 

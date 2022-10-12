@@ -154,7 +154,7 @@ void mpls(wrapper *phi, wrapper *vel, DataType ***s, void (*flux)(scalar_data *,
 void
 lsf_redistance_no_lambda(wrapper *phi, wrapper *vel, DataType ***s, void (*flux)(scalar_data *, vector_data *)) {
 
-    godunov_gradient(phi, phi->geo);
+    godunov_gradient(phi);
 #pragma omp parallel for default(none) shared(phi, s) collapse(3)
     for (int i = 0; i < phi->scalar->Nx; ++i) {
         for (int j = 0; j < phi->scalar->Ny; ++j) {
@@ -194,6 +194,8 @@ void lsf_redistance_lambda(wrapper *phi, wrapper *vel, DataType ***s, void (*flu
                 auto a = 0.0;
                 auto b = 0.0;
                 if (phi->scalar->ndim == 2) {
+                    a = 16.0 * phi->dummy->a[i][j][k];
+                    b = 16.0 * phi->dummy->b[i][j][k];
                     for (int ii = -1; ii < 2; ++ii) {
                         for (int jj = -1; jj < 2; ++jj) {
                             if (ii != 0 && jj != 0) {
@@ -203,6 +205,8 @@ void lsf_redistance_lambda(wrapper *phi, wrapper *vel, DataType ***s, void (*flu
                         }
                     }
                 } else if (phi->scalar->ndim == 3) {
+                    a = 51.0 * phi->dummy->a[i][j][k];
+                    b = 51.0 * phi->dummy->b[i][j][k];
                     for (int ii = -1; ii < 2; ++ii) {
                         for (int jj = -1; jj < 2; ++jj) {
                             for (int kk = -1; kk < 2; ++kk) {
@@ -215,7 +219,7 @@ void lsf_redistance_lambda(wrapper *phi, wrapper *vel, DataType ***s, void (*flu
                     }
                 }
 
-                if (fabs(b) > epsilon) {
+                if (fabs(b) > 1e-8) {
                     s[i][j][k] += a / b *
                                   phi->dummy->delta[i][j][k] * phi->dummy->grad[i][j][k] * phi->params->rdt /
                                   phi->params->dt;

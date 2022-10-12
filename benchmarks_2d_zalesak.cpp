@@ -73,7 +73,7 @@ int main() {
     vtk.close();
 
     find_sign(&phi);
-    stabilized_upon_gradient(&phi, &geo);
+    stabilized_upon_gradient(&phi);
     DataType error = 0.0;
     int step = 0;
     do {

@@ -300,3 +300,33 @@ void identity_with_extrapolation_face_y(scalar_data *f, vector_data *vel) {
 void identity_with_extrapolation_face_z(scalar_data *f, vector_data *vel) {
     identity_with_extrapolation_face_z(f);
 }
+
+void identity_with_extrapolation_face_x(vector_data *f) {
+    identity_with_extrapolation_face_x(&f->x);
+    if (f->x.ndim > 1) {
+        identity_with_extrapolation_face_x(&f->y);
+    }
+    if (f->x.ndim > 2) {
+        identity_with_extrapolation_face_x(&f->z);
+    }
+}
+
+void identity_with_extrapolation_face_y(vector_data *f) {
+    identity_with_extrapolation_face_y(&f->x);
+    if (f->x.ndim > 1) {
+        identity_with_extrapolation_face_y(&f->y);
+    }
+    if (f->x.ndim > 2) {
+        identity_with_extrapolation_face_y(&f->z);
+    }
+}
+
+void identity_with_extrapolation_face_z(vector_data *f) {
+    identity_with_extrapolation_face_z(&f->x);
+    if (f->x.ndim > 1) {
+        identity_with_extrapolation_face_z(&f->y);
+    }
+    if (f->x.ndim > 2) {
+        identity_with_extrapolation_face_z(&f->z);
+    }
+}

@@ -11,8 +11,8 @@
 
 DataType weno5_for_godunov(DataType a, DataType b, DataType c, DataType d);
 
-void godunov_gradient(wrapper *f, structured_grid *geo);
+void godunov_gradient(wrapper *f);
 
-void stabilized_upon_gradient(wrapper *f, structured_grid *geo);
+void stabilized_upon_gradient(wrapper *f);
 
 #endif //SCIHPC_GODUNOV_GRADIENT_H

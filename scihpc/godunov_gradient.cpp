@@ -4,10 +4,10 @@
 
 #include "godunov_gradient.h"
 
-void godunov_gradient(wrapper *f, structured_grid *geo) {
+void godunov_gradient(wrapper *f) {
 
     // Initialized for gradient
-#pragma omp parallel for default(none) shared(f, geo) collapse(3)
+#pragma omp parallel for default(none) shared(f) collapse(3)
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
             for (int k = 0; k < f->scalar->Nz; ++k) {
@@ -20,7 +20,7 @@ void godunov_gradient(wrapper *f, structured_grid *geo) {
 
     auto phi = f->scalar->data;
 
-#pragma omp parallel for default(none) shared(f, geo, phi) collapse(3)
+#pragma omp parallel for default(none) shared(f, phi) collapse(3)
     for (int I = 0; I < f->scalar->nx; ++I) {
         for (int J = 0; J < f->scalar->ny; ++J) {
             for (int K = 0; K < f->scalar->nz; ++K) {
@@ -29,18 +29,18 @@ void godunov_gradient(wrapper *f, structured_grid *geo) {
                 auto j = index.j;
                 auto k = index.k;
 
-                auto v = 1.0 / (12.0 * geo->dx) * (-(phi[i - 1][j][k] - phi[i - 2][j][k])
-                                                   + 7.0 * (phi[i][j][k] - phi[i - 1][j][k])
-                                                   + 7.0 * (phi[i + 1][j][k] - phi[i][j][k])
-                                                   - (phi[i + 2][j][k] - phi[i + 1][j][k]));
+                auto v = 1.0 / (12.0 * f->geo->dx) * (-(phi[i - 1][j][k] - phi[i - 2][j][k])
+                                                      + 7.0 * (phi[i][j][k] - phi[i - 1][j][k])
+                                                      + 7.0 * (phi[i + 1][j][k] - phi[i][j][k])
+                                                      - (phi[i + 2][j][k] - phi[i + 1][j][k]));
 
-                auto up = v + 1.0 / geo->dx *
+                auto up = v + 1.0 / f->geo->dx *
                               weno5_for_godunov(phi[i + 3][j][k] - 2.0 * phi[i + 2][j][k] + phi[i + 1][j][k],
                                                 phi[i + 2][j][k] - 2.0 * phi[i + 1][j][k] + phi[i][j][k],
                                                 phi[i + 1][j][k] - 2.0 * phi[i][j][k] + phi[i - 1][j][k],
                                                 phi[i][j][k] - 2.0 * phi[i - 1][j][k] + phi[i - 2][j][k]);
 
-                auto um = v - 1.0 / geo->dx *
+                auto um = v - 1.0 / f->geo->dx *
                               weno5_for_godunov(phi[i - 3][j][k] - 2.0 * phi[i - 2][j][k] + phi[i - 1][j][k],
                                                 phi[i - 2][j][k] - 2.0 * phi[i - 1][j][k] + phi[i][j][k],
                                                 phi[i - 1][j][k] - 2.0 * phi[i][j][k] + phi[i + 1][j][k],
@@ -62,7 +62,7 @@ void godunov_gradient(wrapper *f, structured_grid *geo) {
 
     if (f->scalar->ndim > 1) {
         // y direction
-#pragma omp parallel for default(none) shared(f, geo, phi) collapse(3)
+#pragma omp parallel for default(none) shared(f, phi) collapse(3)
         for (int I = 0; I < f->scalar->nx; ++I) {
             for (int J = 0; J < f->scalar->ny; ++J) {
                 for (int K = 0; K < f->scalar->nz; ++K) {
@@ -71,18 +71,18 @@ void godunov_gradient(wrapper *f, structured_grid *geo) {
                     auto j = index.j;
                     auto k = index.k;
 
-                    auto v = 1.0 / (12.0 * geo->dy) * (-(phi[i][j - 1][k] - phi[i][j - 2][k])
-                                                       + 7.0 * (phi[i][j][k] - phi[i][j - 1][k])
-                                                       + 7.0 * (phi[i][j + 1][k] - phi[i][j][k])
-                                                       - (phi[i][j + 2][k] - phi[i][j + 1][k]));
+                    auto v = 1.0 / (12.0 * f->geo->dy) * (-(phi[i][j - 1][k] - phi[i][j - 2][k])
+                                                          + 7.0 * (phi[i][j][k] - phi[i][j - 1][k])
+                                                          + 7.0 * (phi[i][j + 1][k] - phi[i][j][k])
+                                                          - (phi[i][j + 2][k] - phi[i][j + 1][k]));
 
-                    auto vp = v + 1.0 / geo->dy *
+                    auto vp = v + 1.0 / f->geo->dy *
                                   weno5_for_godunov(phi[i][j + 3][k] - 2.0 * phi[i][j + 2][k] + phi[i][j + 1][k],
                                                     phi[i][j + 2][k] - 2.0 * phi[i][j + 1][k] + phi[i][j][k],
                                                     phi[i][j + 1][k] - 2.0 * phi[i][j][k] + phi[i][j - 1][k],
                                                     phi[i][j][k] - 2.0 * phi[i][j - 1][k] + phi[i][j - 2][k]);
 
-                    auto vm = v - 1.0 / geo->dy *
+                    auto vm = v - 1.0 / f->geo->dy *
                                   weno5_for_godunov(phi[i][j - 3][k] - 2.0 * phi[i][j - 2][k] + phi[i][j - 1][k],
                                                     phi[i][j - 2][k] - 2.0 * phi[i][j - 1][k] + phi[i][j][k],
                                                     phi[i][j - 1][k] - 2.0 * phi[i][j][k] + phi[i][j + 1][k],
@@ -104,7 +104,7 @@ void godunov_gradient(wrapper *f, structured_grid *geo) {
 
     if (f->scalar->ndim > 2) {
         // z direction
-#pragma omp parallel for default(none) shared(f, geo, phi) collapse(3)
+#pragma omp parallel for default(none) shared(f, phi) collapse(3)
         for (int I = 0; I < f->scalar->nx; ++I) {
             for (int J = 0; J < f->scalar->ny; ++J) {
                 for (int K = 0; K < f->scalar->nz; ++K) {
@@ -113,18 +113,18 @@ void godunov_gradient(wrapper *f, structured_grid *geo) {
                     auto j = index.j;
                     auto k = index.k;
 
-                    auto v = 1.0 / (12.0 * geo->dz) * (-(phi[i][j][k - 1] - phi[i][j][k - 2])
-                                                       + 7.0 * (phi[i][j][k] - phi[i][j][k - 1])
-                                                       + 7.0 * (phi[i][j][k + 1] - phi[i][j][k])
-                                                       - (phi[i][j][k + 2] - phi[i][j][k + 1]));
+                    auto v = 1.0 / (12.0 * f->geo->dz) * (-(phi[i][j][k - 1] - phi[i][j][k - 2])
+                                                          + 7.0 * (phi[i][j][k] - phi[i][j][k - 1])
+                                                          + 7.0 * (phi[i][j][k + 1] - phi[i][j][k])
+                                                          - (phi[i][j][k + 2] - phi[i][j][k + 1]));
 
-                    auto wp = v + 1.0 / geo->dz *
+                    auto wp = v + 1.0 / f->geo->dz *
                                   weno5_for_godunov(phi[i][j][k + 3] - 2.0 * phi[i][j][k + 2] + phi[i][j][k + 1],
                                                     phi[i][j][k + 2] - 2.0 * phi[i][j][k + 1] + phi[i][j][k],
                                                     phi[i][j][k + 1] - 2.0 * phi[i][j][k] + phi[i][j][k - 1],
                                                     phi[i][j][k] - 2.0 * phi[i][j][k - 1] + phi[i][j][k - 2]);
 
-                    auto wm = v - 1.0 / geo->dz *
+                    auto wm = v - 1.0 / f->geo->dz *
                                   weno5_for_godunov(phi[i][j][k - 3] - 2.0 * phi[i][j][k - 2] + phi[i][j][k - 1],
                                                     phi[i][j][k - 2] - 2.0 * phi[i][j][k - 1] + phi[i][j][k],
                                                     phi[i][j][k - 1] - 2.0 * phi[i][j][k] + phi[i][j][k + 1],
@@ -146,7 +146,7 @@ void godunov_gradient(wrapper *f, structured_grid *geo) {
     }
 
     // finalize for gradient
-#pragma omp parallel for default(none) shared(f, geo) collapse(3)
+#pragma omp parallel for default(none) shared(f) collapse(3)
     for (int i = 0; i < f->scalar->Nx; ++i) {
         for (int j = 0; j < f->scalar->Ny; ++j) {
             for (int k = 0; k < f->scalar->Nz; ++k) {
@@ -156,8 +156,8 @@ void godunov_gradient(wrapper *f, structured_grid *geo) {
     }
 }
 
-void stabilized_upon_gradient(wrapper *f, structured_grid *geo) {
-    godunov_gradient(f, geo);
+void stabilized_upon_gradient(wrapper *f) {
+    godunov_gradient(f);
     DataType max_grad = 0.0;
 
 #pragma omp parallel for reduction(max:max_grad) default(none) shared(f) collapse(3)

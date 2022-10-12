@@ -16,8 +16,8 @@
 
 int main() {
 
-    auto geo = structured_grid(axis{0.0, 1.0, 128},
-                               axis{-2.0, 2.0, 512});
+    auto geo = structured_grid(axis{0.0, 1.0, 32},
+                               axis{-2.0, 2.0, 128});
 
     auto phi = wrapper(true, &geo,
                        bc_info{NEUMANN}, bc_info{NEUMANN},
@@ -99,7 +99,7 @@ int main() {
 
     // Init phi
     find_sign(&phi);
-    stabilized_upon_gradient(&phi, &geo);
+    stabilized_upon_gradient(&phi);
     step = 0;
     do {
         store_tmp(&phi);

@@ -17,7 +17,7 @@
 int main() {
 
     auto geo = structured_grid(axis{0.0, 5.0, 150},
-                               axis{0.0, 1.2, 40});
+                               axis{0.0, 1.2, 36});
 
     auto phi = wrapper(true, &geo,
                        bc_info{NEUMANN}, bc_info{NEUMANN},
@@ -89,19 +89,21 @@ int main() {
     param->Reynolds_number = 42792.0;
     param->Weber_number = -0.68;
     param->ppe_tol = 1e-4;
+    param->ppe_omega = 1.5;
+    param->ppe_max_iter = 1000000;
 
     int step, instep;
 
     // Init phi
     find_sign(&phi);
-    stabilized_upon_gradient(&phi, &geo);
+    stabilized_upon_gradient(&phi);
     step = 0;
     do {
         store_tmp(&phi);
         solver.tvd_rk3(&phi, &vel, identity_flux, lsf_redistance_lambda);
     } while (++step * param->rdt < 5.0 and l2norm(&phi) > 1e-6);
 
-    flow_solver.find_source_sec(&vel, &nvel, &phi);
+    flow_solver.find_source(&vel, &nvel, &phi);
     param->lsf_mass0 = lsf_mass(&phi);
 
     vtk.create(0);
@@ -115,21 +117,21 @@ int main() {
     do {
         solver.tvd_rk3(&phi, &nvel, &identity_flux, &convection);
 
-        do {
-            solver.euler(&phi, &nvel, &identity_flux, &mpls);
-        } while (fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) > 1e-10);
+//        do {
+//            solver.euler(&phi, &nvel, &identity_flux, &mpls);
+//        } while (fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) > 1e-10);
 
-        flow_solver.solve_sec(&vel, &nvel, &pressure, &phi);
+        flow_solver.solve(&vel, &nvel, &pressure, &phi);
 
         if (++step % 10 == 0) {
             std::cout << "----------------------------------------" << std::endl;
             std::cout << " time: " << step * param->dt << std::endl;
-            std::cout << " mass loss ratio: " << fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) << std::endl;
+            std::cout << " mass loss ratio(%): " << fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) * 100 << std::endl;
             std::cout << " div: " << divergence(&vel) << std::endl;
             std::cout << " l2norm: " << l2norm(&pressure) << std::endl;
 
             instep = 0;
-            while (instep * param->rdt < 2.0 * param->ls_width and step % 20 == 0) {
+            while (instep * param->rdt < 2.0 * param->ls_width and step % 50 == 0) {
                 if (instep == 0) {
                     find_sign(&phi);
                 }
@@ -138,7 +140,7 @@ int main() {
             };
         }
 
-        if (step % 250 == 0) {
+        if (step * param->dt > pltid * 0.1) {
             vtk.create(pltid++);
             vtk.add_scalar(phi.scalar, "phi");
             vtk.add_scalar(pressure.scalar, "pressure");

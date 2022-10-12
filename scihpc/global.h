@@ -39,6 +39,7 @@ struct problem_parameters {
 
     DataType ppe_tol = 1e-4;
     int ppe_max_iter = 100000;
+    DataType ppe_omega = 0.5;
 };
 
 DataType ***init_array(int Nx, int Ny, int Nz);

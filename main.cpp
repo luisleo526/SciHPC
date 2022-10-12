@@ -99,7 +99,7 @@ int main() {
 
     // Init phi
     find_sign(&phi);
-    stabilized_upon_gradient(&phi, &geo);
+    stabilized_upon_gradient(&phi);
     step = 0;
     do {
         store_tmp(&phi);

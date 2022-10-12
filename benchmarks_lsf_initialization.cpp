@@ -71,13 +71,13 @@ int main() {
     vtk.close();
 
     find_sign(&phi);
-    stabilized_upon_gradient(&phi, &geo);
+    stabilized_upon_gradient(&phi);
     int step = 0;
     do {
         store_tmp(&phi);
         if (step % 100 == 0 and step < 500) {
             find_sign(&phi);
-            stabilized_upon_gradient(&phi, &geo);
+            stabilized_upon_gradient(&phi);
         }
         solver.tvd_rk3(&phi, &vel, &identity_flux, &lsf_redistance_lambda);
         std::cout << l2norm(&phi) << std::endl;
