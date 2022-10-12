@@ -37,6 +37,6 @@ void all_to_face_z(wrapper *ref, wrapper *tgt);
 
 void node_from_face(wrapper *ref, wrapper *tgt);
 
-void find_dt(wrapper* vel, wrapper* lsf);
+void find_dt(wrapper* vel);
 
 #endif //SCIHPC_WRAPPER_FUNC_H

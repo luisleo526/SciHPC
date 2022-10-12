@@ -16,8 +16,8 @@
 
 int main() {
 
-    auto geo = structured_grid(axis{0.0, 5.0, 150},
-                               axis{0.0, 1.2, 36});
+    auto geo = structured_grid(axis{0.0, 5.0, 200},
+                               axis{0.0, 1.2, 60});
 
     auto phi = wrapper(true, &geo,
                        bc_info{NEUMANN}, bc_info{NEUMANN},
@@ -36,7 +36,7 @@ int main() {
     auto flow_solver = projection_method(phi.scalar);
     auto vtk = vtkWriter(&geo, "dambreak");
 
-    auto param = new problem_parameters{};
+    auto param = set_air_water(0.0571);
     auto deri_solvers = derivatives_solver_alloc(phi.scalar, &geo);
     auto dummy = dummy_data_alloc(phi.scalar);
 
@@ -82,15 +82,12 @@ int main() {
 
     param->ls_width = 1.5 * geo.h;
     param->rdt = 0.1 * geo.h;
-    param->dt = 0.01 * geo.h;
-    param->viscosity_ratio = 0.01;
-    param->density_ratio = 0.001;
-    param->Froude_number = 1.0;
-    param->Reynolds_number = 42792.0;
-    param->Weber_number = -0.68;
-    param->ppe_tol = 1e-4;
-    param->ppe_omega = 1.5;
-    param->ppe_max_iter = 1000000;
+    param->max_CFL = 0.1;
+    param->Weber_number = -1.0;
+
+    std::cout << "Reynolds number: " << param->Reynolds_number << std::endl;
+    std::cout << "Weber number: " << param->Weber_number << std::endl;
+    std::cout << "Fround number: " << param->Froude_number << std::endl;
 
     int step, instep;
 
@@ -115,6 +112,10 @@ int main() {
     step = 0;
     int pltid = 1;
     do {
+
+        find_dt(&vel);
+        param->t += param->dt;
+
         solver.tvd_rk3(&phi, &nvel, &identity_flux, &convection);
 
 //        do {
@@ -125,13 +126,14 @@ int main() {
 
         if (++step % 10 == 0) {
             std::cout << "----------------------------------------" << std::endl;
-            std::cout << " time: " << step * param->dt << std::endl;
+            std::cout << " time: " << param->t << std::endl;
+            std::cout << " stable CFL: " << param->stable_CFL << std::endl;
             std::cout << " mass loss ratio(%): " << fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) * 100 << std::endl;
             std::cout << " div: " << divergence(&vel) << std::endl;
             std::cout << " l2norm: " << l2norm(&pressure) << std::endl;
 
             instep = 0;
-            while (instep * param->rdt < 2.0 * param->ls_width and step % 50 == 0) {
+            while (instep * param->rdt < 2.0 * param->ls_width and step % 20 == 0) {
                 if (instep == 0) {
                     find_sign(&phi);
                 }
@@ -140,14 +142,14 @@ int main() {
             };
         }
 
-        if (step * param->dt > pltid * 0.1) {
+        if (param->t > pltid * 0.1) {
             vtk.create(pltid++);
             vtk.add_scalar(phi.scalar, "phi");
             vtk.add_scalar(pressure.scalar, "pressure");
             vtk.add_vector(nvel.vector, "nvel");
             vtk.close();
         }
-    } while (step * param->dt < 5.0);
+    } while (param->t < 5.0);
 
     return 0;
 }

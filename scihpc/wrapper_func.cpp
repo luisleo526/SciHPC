@@ -3,6 +3,7 @@
 //
 
 #include "wrapper_func.h"
+#include <iostream>
 
 void find_heavyside(wrapper *lsf) {
 #pragma omp parallel for default(none) shared(lsf) collapse(3)
@@ -109,6 +110,7 @@ DataType l2norm(wrapper *f) {
 
     return error;
 }
+
 void find_curvature(wrapper *lsf) {
 
     if (lsf->scalar->ndim == 2) {
@@ -316,10 +318,53 @@ DataType divergence(wrapper *vel) {
     return max_div;
 }
 
-void find_dt(wrapper *vel, wrapper *lsf) {
+void find_dt(wrapper *vel) {
 
-    DataType max_u, max_v, max_w;
+    DataType max_u, max_v, max_w, max_curvature;
+    max_u = max_v = max_w = 0.0;
+#pragma omp parallel for default(none) shared(vel, lsf) reduction(max:max_u, max_v, max_w, max_curvature) collapse(3)
+    for (int I = 0; I < vel->vector->x.nx; ++I) {
+        for (int J = 0; J < vel->vector->x.ny; ++J) {
+            for (int K = 0; K < vel->vector->x.nz; ++K) {
+                auto index = vel->vector->x.index_mapping(I + 1, J + 1, K + 1);
+                auto i = index.i;
+                auto j = index.j;
+                auto k = index.k;
+                max_u = fmax(max_u, fabs(vel->vector->x.data[i][j][k]));
+                max_v = fmax(max_v, fabs(vel->vector->y.data[i][j][k]));
+                max_w = fmax(max_w, fabs(vel->vector->z.data[i][j][k]));
+                max_curvature = fmax(max_curvature, fabs(vel->dummy->curvature[i][j][k]));
+            }
+        }
+    }
 
+    DataType CFL_convection, CFL_gravity, CFL_surface_tension, CFL_diffusion, CFL;
+    CFL_convection = CFL_gravity = CFL_surface_tension = CFL_diffusion = CFL = 0.0;
+
+    CFL_convection = max_u / vel->geo->dx + max_v / vel->geo->dy;
+    if (vel->vector->x.ndim == 3) {
+        CFL_convection += max_w / vel->geo->dz;
+    }
+    CFL_diffusion = 2.0 / (vel->geo->dx * vel->geo->dx) + 2.0 / (vel->geo->dy * vel->geo->dy);
+    if (vel->vector->x.ndim == 3) {
+        CFL_diffusion += 2.0 / (vel->geo->dz * vel->geo->dz);
+    }
+    CFL_diffusion *= vel->params->viscosity_ratio / vel->params->density_ratio / vel->params->Reynolds_number;
+    if ( vel->params->Froude_number > 0.0 ){
+        CFL_gravity = sqrt(fabs(1.0 - vel->params->density_ratio) / (2 * vel->params->density_ratio)
+                           / vel->geo->h / vel->params->Froude_number);
+    }
+    if (vel->params->Weber_number > 0.0){
+        CFL_surface_tension = sqrt(max_curvature / pow(vel->geo->h, 2)
+                / vel->params->Weber_number / vel->params->density_ratio);
+    }
+
+    CFL = (CFL_convection + CFL_diffusion + sqrt(pow(CFL_convection + CFL_diffusion, 2)
+                                                 + 4 * pow(CFL_gravity, 2)
+                                                 + 4 * pow(CFL_surface_tension, 2)));
+
+    vel->params->stable_CFL = 1.0 / CFL / vel->geo->h;
+    vel->params->dt = fmin(vel->params->stable_CFL, vel->params->max_CFL) * vel->geo->h;
 }
 
 void find_density(wrapper *lsf) {

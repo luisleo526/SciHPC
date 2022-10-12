@@ -88,7 +88,6 @@ int main() {
 
     param->ls_width = 1.5 * geo.h;
     param->rdt = 0.5 * geo.h;
-    param->dt = 0.01 * geo.h;
     param->viscosity_ratio = 1.0;
     param->density_ratio = 1.0 / 3.0;
     param->Froude_number = 1.0;
@@ -118,6 +117,10 @@ int main() {
     step = 0;
     int pltid = 1;
     do {
+
+        find_dt(&vel);
+        param->t += param->dt;
+
         solver.tvd_rk3(&phi, &nvel, &identity_flux, &convection);
 
         do {
@@ -128,7 +131,8 @@ int main() {
 
         if (++step % 10 == 0) {
             std::cout << "----------------------------------------" << std::endl;
-            std::cout << " time: " << step * param->dt << std::endl;
+            std::cout << " time: " << param->t << std::endl;
+            std::cout << " stable CFL: " << param->stable_CFL << std::endl;
             std::cout << " mass loss ratio (%): " << (1.0 - lsf_mass(&phi) / param->lsf_mass0)*100 << std::endl;
             std::cout << " div: " << divergence(&vel) << std::endl;
             std::cout << " l2norm: " << l2norm(&pressure) << std::endl;
@@ -143,14 +147,14 @@ int main() {
             };
         }
 
-        if (step * param->dt >= 0.1 * pltid) {
+        if (param->t >= 0.1 * pltid) {
             vtk.create(pltid++);
             vtk.add_scalar(phi.scalar, "phi");
             vtk.add_scalar(pressure.scalar, "pressure");
             vtk.add_vector(nvel.vector, "nvel");
             vtk.close();
         }
-    } while (step * param->dt < 5.0);
+    } while (param->t < 5.0);
 
     return 0;
 }

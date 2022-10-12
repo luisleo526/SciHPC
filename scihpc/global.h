@@ -23,27 +23,45 @@ struct axis {
 };
 
 struct problem_parameters {
-    int n = 0;
-    DataType dt{};
+    DataType t = 0.0;
+    DataType dt = 1.0;
+    DataType max_CFL = 0.01;
+    DataType stable_CFL = 0.001;
     DataType rdt{};
 
-    DataType density_ratio{};
-    DataType viscosity_ratio{};
+    DataType density_ratio = 1.0;
+    DataType viscosity_ratio = 1.0;
 
     DataType ls_width{};
     DataType lsf_mass0{};
 
+    DataType Lc{};
+    DataType Uc{};
+    DataType Tc{};
     DataType Reynolds_number{};
     DataType Froude_number = -1.0;
     DataType Weber_number = -1.0;
 
     DataType ppe_tol = 1e-4;
-    int ppe_max_iter = 100000;
-    DataType ppe_omega = 0.5;
+    int ppe_max_iter = 1000000;
+    DataType ppe_omega = 1.5;
 };
 
 DataType ***init_array(int Nx, int Ny, int Nz);
 
 void delete3d(DataType ***arr, int Nx, int Ny);
+
+problem_parameters* set_parameters(DataType rho1, DataType rho2,
+                                   DataType mu1, DataType mu2,
+                                   DataType surface_tension,
+                                   DataType gravity, DataType length);
+
+problem_parameters* set_parameters(DataType rho1, DataType rho2,
+                                   DataType mu1, DataType mu2,
+                                   DataType surface_tension,
+                                   DataType gravity, DataType length, DataType velocity);
+
+problem_parameters* set_air_water(DataType length);
+problem_parameters* set_air_water(DataType length, DataType velocity);
 
 #endif //SCIHPC_GLOBAL_H

@@ -27,3 +27,55 @@ void delete3d(DataType ***arr, int Nx, int Ny) {
     }
     delete[] arr;
 }
+
+problem_parameters *
+set_parameters(DataType rho1, DataType rho2, DataType mu1, DataType mu2, DataType surface_tension, DataType gravity,
+               DataType length) {
+    auto param = new problem_parameters();
+    param->density_ratio = rho2 / rho1;
+    param->viscosity_ratio = mu2 / mu1;
+
+    auto Lc = length;
+    auto Uc = sqrt(gravity * Lc);
+
+    param->Lc = length;
+    param->Uc = sqrt(gravity * param->Lc);
+    param->Tc = param->Lc / param->Uc;
+
+    param->Reynolds_number = rho1 * param->Uc * param->Lc / mu1;
+    param->Froude_number = param->Uc / sqrt(gravity * param->Lc);
+    param->Weber_number = rho1 * param->Uc * param->Uc * param->Lc / surface_tension;
+
+    return param;
+}
+
+problem_parameters *
+set_parameters(DataType rho1, DataType rho2, DataType mu1, DataType mu2, DataType surface_tension, DataType gravity,
+               DataType length, DataType velocity) {
+    auto param = new problem_parameters();
+    param->density_ratio = rho2 / rho1;
+    param->viscosity_ratio = mu2 / mu1;
+
+    auto Lc = length;
+    auto Uc = sqrt(gravity * Lc);
+
+    param->Lc = length;
+    param->Uc = velocity;
+    param->Tc = param->Lc / param->Uc;
+
+    param->Reynolds_number = rho1 * param->Uc * param->Lc / mu1;
+    param->Froude_number = param->Uc / sqrt(gravity * param->Lc);
+    param->Weber_number = rho1 * param->Uc * param->Uc * param->Lc / surface_tension;
+
+    return param;
+}
+
+problem_parameters *set_air_water(DataType length) {
+    return set_parameters(1000.0, 1.226, 1.137e-3, 1.78e-5,
+                          0.0728, 9.81, length);
+}
+
+problem_parameters *set_air_water(DataType length, DataType velocity) {
+    return set_parameters(1000.0, 1.226, 1.137e-3, 1.78e-5,
+                          0.0728, 9.81, length, velocity);
+}
