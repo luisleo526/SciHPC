@@ -84,6 +84,9 @@ int main() {
     param->rdt = 0.1 * geo.h;
     param->max_CFL = 0.1;
     param->Weber_number = -1.0;
+    param->ppe_tol = 1e-3;
+    param->ppe_initer = 3;
+    param->ppe_tol2 = 1e-10;
 
     std::cout << "Reynolds number: " << param->Reynolds_number << std::endl;
     std::cout << "Weber number: " << param->Weber_number << std::endl;

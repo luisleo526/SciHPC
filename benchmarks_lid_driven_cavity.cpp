@@ -8,11 +8,11 @@
 #include <random>
 #include <ctime>
 
-#include "wrapper.h"
-#include "structured_grid.h"
+#include "scihpc/wrapper.h"
+#include "scihpc/structured_grid.h"
 #include "scihpc/flux.h"
-#include "wrapper_func.h"
-#include "runge_kutta.h"
+#include "scihpc/wrapper_func.h"
+#include "scihpc/runge_kutta.h"
 #include "scihpc/projection_method.h"
 #include "scihpc/vtkWriter.h"
 
