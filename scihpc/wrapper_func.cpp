@@ -346,7 +346,7 @@ void find_dt(wrapper *vel) {
                 max_u = fmax(max_u, fabs(vel->vector->x.data[i][j][k]));
                 max_v = fmax(max_v, fabs(vel->vector->y.data[i][j][k]));
                 max_w = fmax(max_w, fabs(vel->vector->z.data[i][j][k]));
-                max_curvature = fmax(max_curvature, fabs(vel->dummy->curvature[i][j][k]));
+                max_curvature = fmax(vel->dummy->delta[i][j][k] * max_curvature, fabs(vel->dummy->curvature[i][j][k]));
             }
         }
     }
