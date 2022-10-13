@@ -514,8 +514,8 @@ void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel)
             }
         }
         pressure->apply_scalar_bc();
-        if (++iter % 5000 == 0) {
-            std::cout << "iter: " << iter << " error: " << error << " sump: " << sump << std::endl;
+        if (++iter % 10000 == 0) {
+            std::cout << "iter: " << iter << " error: " << error << " linfity-p: " << linfity(pressure) << std::endl;
         }
     } while (iter < pressure->params->ppe_max_iter and error > pressure->params->ppe_tol and
              linfity(pressure) > pressure->params->ppe_tol2);

@@ -81,6 +81,8 @@ int main() {
     param->density_ratio = 1.0;
     param->Reynolds_number = 100.0;
     param->Froude_number = -1.0;
+    param->ppe_omega = 1.5;
+    param->ppe_tol2 = 1e-6;
 
     flow_solver.find_source(&vel, &nvel, &phi);
 
@@ -94,7 +96,7 @@ int main() {
     do {
         step++;
         store_tmp(&vel);
-        flow_solver.find_source(&vel, &nvel, &phi);
+        flow_solver.solve(&vel, &nvel, &pressure, &phi);
         error = l2norm(&vel);
         std::cout << "------------------------------------" << std::endl;
         std::cout << "time : " << step * param->dt << std::endl;
