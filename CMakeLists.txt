@@ -18,9 +18,9 @@ add_executable(SciHPC
 #        benchmarks_2d_vortex.cpp
 #        benchmarks_2d_zalesak.cpp
 #        benchmarks_lsf_initialization.cpp
-#        benchmarks_lsf_curvature.cpp
+        benchmarks_lsf_curvature.cpp
 #        benchmarks_lid_driven_cavity.cpp
-        benchmarks_2d_dambreak.cpp
+#        benchmarks_2d_dambreak.cpp
 #        benchmarks_RayleighTaylorInstability.cpp
         scihpc/flux.cpp
         scihpc/flux.h

@@ -1,9 +1,5 @@
 #include <iostream>
 #include <cmath>
-#include <fstream>
-#include <chrono>
-#include <random>
-#include <ctime>
 #include <iomanip>
 
 #include "scihpc/wrapper.h"
@@ -60,7 +56,7 @@ int main() {
         phi.apply_scalar_bc();
 
         identity_flux(phi.scalar, vel.vector);
-        phi.solvers->secSol->find_derivatives_all(phi.scalar);
+        phi.solvers->ccd->find_derivatives_all(phi.scalar);
         find_curvature(&phi);
         find_delta(&phi);
 
