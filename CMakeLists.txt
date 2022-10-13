@@ -12,10 +12,10 @@ set(CMAKE_CXX_STANDARD 17)
 include_directories(scihpc)
 
 add_executable(SciHPC
-        main.cpp
+#        main.cpp
 #        benchmarks_1d_wave.cpp
 #        benchmarks_1d_IBE.cpp
-#        benchmarks_2d_vortex.cpp
+        benchmarks_2d_vortex.cpp
 #        benchmarks_2d_zalesak.cpp
 #        benchmarks_lsf_initialization.cpp
 #        benchmarks_lsf_curvature.cpp

@@ -14,6 +14,7 @@
 #include "scihpc/derivatives_solver.h"
 #include "scihpc/wrapper.h"
 #include "scihpc/lsm.h"
+#include "wrapper_func.h"
 
 int main() {
 
@@ -64,7 +65,7 @@ int main() {
 
     param->lsf_mass0 = lsf_mass(&phi);
 
-    DataType period = 4.0;
+    DataType period = 16.0;
     int cnt = 0;
     int plt_id = 1;
 

@@ -42,41 +42,42 @@ DataType Sign(const DataType &x, const DataType &ls_width) {
 
 }
 
-DataType lsf_mass(wrapper *f) {
-    DataType mass = 0.0;
-
-#pragma omp parallel for default(none) shared(f) reduction(+:mass) collapse(3)
-    for (int i = 0; i < f->scalar->nx; ++i) {
-        for (int j = 0; j < f->scalar->ny; ++j) {
-            for (int k = 0; k < f->scalar->nz; ++k) {
-                auto index = f->scalar->index_mapping(i + 1, j + 1, k + 1);
-                auto h = Heaviside(f->scalar->data[index.i][index.j][index.k], f->params->ls_width);
-                DataType rho = h + (1.0 - h) * f->params->density_ratio;
-                if (!f->params->positive_ref) {
-                    rho = (1.0 - h) + h * f->params->density_ratio;
-                }
-                mass += rho * h;
-            }
-        }
-    }
-    return mass;
-}
-
-DataType lsf_volume(wrapper *f) {
-    DataType volume = 0;
-
-#pragma omp parallel for default(none) shared(f) reduction(+:volume) collapse(3)
-    for (int i = 0; i < f->scalar->nx; ++i) {
-        for (int j = 0; j < f->scalar->ny; ++j) {
-            for (int k = 0; k < f->scalar->nz; ++k) {
-                auto index = f->scalar->index_mapping(i + 1, j + 1, k + 1);
-                auto h = Heaviside(f->scalar->data[index.i][index.j][index.k], f->params->ls_width);
-                volume += h;
-            }
-        }
-    }
-    return volume;
-}
+//DataType lsf_mass(wrapper *f) {
+//    DataType mass = 0.0;
+//
+//#pragma omp parallel for default(none) shared(f) reduction(+:mass) collapse(3)
+//    for (int i = 0; i < f->scalar->nx; ++i) {
+//        for (int j = 0; j < f->scalar->ny; ++j) {
+//            for (int k = 0; k < f->scalar->nz; ++k) {
+//                auto index = f->scalar->index_mapping(i + 1, j + 1, k + 1);
+//                auto h = Heaviside(f->scalar->data[index.i][index.j][index.k], f->params->ls_width);
+//                DataType rho = h + (1.0 - h) * f->params->density_ratio;
+//                if (!f->params->positive_ref) {
+//                    rho = (1.0 - h) + h * f->params->density_ratio;
+//                }
+//                mass += rho * h;
+//            }
+//        }
+//    }
+//    return mass;
+//}
+//
+//
+//DataType lsf_volume(wrapper *f) {
+//    DataType volume = 0;
+//
+//#pragma omp parallel for default(none) shared(f) reduction(+:volume) collapse(3)
+//    for (int i = 0; i < f->scalar->nx; ++i) {
+//        for (int j = 0; j < f->scalar->ny; ++j) {
+//            for (int k = 0; k < f->scalar->nz; ++k) {
+//                auto index = f->scalar->index_mapping(i + 1, j + 1, k + 1);
+//                auto h = Heaviside(f->scalar->data[index.i][index.j][index.k], f->params->ls_width);
+//                volume += h;
+//            }
+//        }
+//    }
+//    return volume;
+//}
 
 
 

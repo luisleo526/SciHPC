@@ -2,6 +2,7 @@
 // Created by leo on 10/4/22.
 //
 
+#include "lsm.h"
 #include "wrapper_func.h"
 #include <iostream>
 
@@ -441,4 +442,128 @@ DataType linfity(wrapper *f) {
     }
 
     return error;
+}
+
+DataType lsf_mass(wrapper *lsf) {
+    DataType mass = 0.0;
+
+    find_heavyside(lsf);
+    find_density(lsf);
+
+    if (lsf->scalar->ndim == 2) {
+#pragma omp parallel for default(none) shared(lsf) reduction(+:mass) collapse(3)
+        for (int I = 0; I < lsf->scalar->nx; ++I) {
+            for (int J = 0; J < lsf->scalar->ny; ++J) {
+                for (int K = 0; K < lsf->scalar->nz; ++K) {
+                    auto index = lsf->scalar->index_mapping(I + 1, J + 1, K + 1);
+                    auto i = index.i;
+                    auto j = index.j;
+                    auto k = index.k;
+                    if (I != 0 and I != lsf->scalar->nx - 1 and J != 0 and J != lsf->scalar->ny - 1) {
+                        auto local_mass = 15.0 * lsf->dummy->density[i][j][k] * lsf->dummy->heaviside[i][j][k];
+                        for (int ii = -1; ii < 2; ++ii) {
+                            for (int jj = -1; jj < 2; ++jj) {
+                                local_mass +=
+                                        lsf->dummy->density[i + ii][j + jj][k] *
+                                        lsf->dummy->heaviside[i + ii][j + jj][k];
+                            }
+                        }
+                        mass += local_mass / 24.0;
+                    } else {
+                        mass += lsf->dummy->density[i][j][k] * lsf->dummy->heaviside[i][j][k];
+                    }
+                }
+            }
+        }
+    } else {
+#pragma omp parallel for default(none) shared(lsf) reduction(+:mass) collapse(3)
+        for (int I = 0; I < lsf->scalar->nx; ++I) {
+            for (int J = 0; J < lsf->scalar->ny; ++J) {
+                for (int K = 0; K < lsf->scalar->nz; ++K) {
+                    auto index = lsf->scalar->index_mapping(I + 1, J + 1, K + 1);
+                    auto i = index.i;
+                    auto j = index.j;
+                    auto k = index.k;
+                    if (I != 0 and I != lsf->scalar->nx - 1 and J != 0 and J != lsf->scalar->ny - 1 and K != 0 and
+                        K != lsf->scalar->nz - 1) {
+                        auto local_mass = 50.0 * lsf->dummy->density[i][j][k] * lsf->dummy->heaviside[i][j][k];
+                        for (int ii = -1; ii < 2; ++ii) {
+                            for (int jj = -1; jj < 2; ++jj) {
+                                for (int kk = -1; kk < 2; ++kk) {
+                                    local_mass += lsf->dummy->density[i + ii][j + jj][k + kk] *
+                                                  lsf->dummy->heaviside[i + ii][j + jj][k + kk];
+                                }
+                            }
+                        }
+                        mass += local_mass * lsf->geo->dv / 77.0;
+                    } else {
+                        mass += lsf->dummy->density[i][j][k] * lsf->dummy->heaviside[i][j][k] * lsf->geo->dv;
+                    }
+                }
+            }
+        }
+    }
+
+    return mass * lsf->geo->dv;
+}
+
+DataType lsf_volume(wrapper *lsf) {
+
+    DataType volume = 0;
+    find_heavyside(lsf);
+    find_density(lsf);
+
+    if (lsf->scalar->ndim == 2) {
+#pragma omp parallel for default(none) shared(lsf) reduction(+:volume) collapse(3)
+        for (int I = 0; I < lsf->scalar->nx; ++I) {
+            for (int J = 0; J < lsf->scalar->ny; ++J) {
+                for (int K = 0; K < lsf->scalar->nz; ++K) {
+                    auto index = lsf->scalar->index_mapping(I + 1, J + 1, K + 1);
+                    auto i = index.i;
+                    auto j = index.j;
+                    auto k = index.k;
+                    auto local_volume = 15.0 * lsf->dummy->heaviside[i][j][k];
+                    if (I != 0 and I != lsf->scalar->nx - 1 and J != 0 and J != lsf->scalar->ny - 1) {
+                        for (int ii = -1; ii < 2; ++ii) {
+                            for (int jj = -1; jj < 2; ++jj) {
+                                local_volume += lsf->dummy->heaviside[i + ii][j + jj][k];
+                            }
+                        }
+                        volume += local_volume / 24.0;
+                    } else {
+                        volume += lsf->dummy->heaviside[i][j][k];
+                    }
+                }
+            }
+        }
+    } else {
+#pragma omp parallel for default(none) shared(lsf) reduction(+:volume) collapse(3)
+        for (int I = 0; I < lsf->scalar->nx; ++I) {
+            for (int J = 0; J < lsf->scalar->ny; ++J) {
+                for (int K = 0; K < lsf->scalar->nz; ++K) {
+                    auto index = lsf->scalar->index_mapping(I + 1, J + 1, K + 1);
+                    auto i = index.i;
+                    auto j = index.j;
+                    auto k = index.k;
+                    auto local_volume = 50.0 * lsf->dummy->heaviside[i][j][k];
+                    if (I != 0 and I != lsf->scalar->nx - 1 and J != 0 and J != lsf->scalar->ny - 1 and K != 0 and
+                        K != lsf->scalar->nz - 1) {
+                        for (int ii = -1; ii < 2; ++ii) {
+                            for (int jj = -1; jj < 2; ++jj) {
+                                for (int kk = -1; kk < 2; ++kk) {
+                                    local_volume += lsf->dummy->heaviside[i + ii][j + jj][k + kk];
+                                }
+                            }
+                        }
+                        volume += local_volume / 77.0;
+                    } else {
+                        volume += lsf->dummy->heaviside[i][j][k];
+                    }
+                    volume += local_volume / 77.0;
+                }
+            }
+        }
+    }
+
+    return volume * lsf->geo->dv;
 }

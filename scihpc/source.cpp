@@ -3,6 +3,7 @@
 //
 
 #include "source.h"
+#include "wrapper_func.h"
 
 void convection(wrapper *f, wrapper *vel, DataType ***s, void (*flux)(scalar_data *, vector_data *)) {
     flux(f->scalar, vel->vector);
@@ -137,7 +138,7 @@ void mpls(wrapper *phi, wrapper *vel, DataType ***s, void (*flux)(scalar_data *,
         }
     }
 
-    eta = (phi->params->lsf_mass0 - mass) / (eta * phi->params->dt);
+    eta = (phi->params->lsf_mass0 - mass) / (eta * phi->geo->dv * phi->params->dt);
 
 #pragma omp parallel for default(none) shared(s, phi, eta) collapse(3)
     for (int i = 0; i < phi->scalar->Nx; ++i) {

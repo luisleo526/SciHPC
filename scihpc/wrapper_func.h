@@ -5,6 +5,8 @@
 #ifndef SCIHPC_WRAPPER_FUNC_H
 #define SCIHPC_WRAPPER_FUNC_H
 
+#include <cmath>
+#include "global.h"
 #include "wrapper.h"
 #include "lsm.h"
 #include "structured_grid.h"
@@ -40,5 +42,9 @@ void all_to_face_z(wrapper *ref, wrapper *tgt);
 void node_from_face(wrapper *ref, wrapper *tgt);
 
 void find_dt(wrapper* vel);
+
+DataType lsf_mass(wrapper *f);
+
+DataType lsf_volume(wrapper *f);
 
 #endif //SCIHPC_WRAPPER_FUNC_H
