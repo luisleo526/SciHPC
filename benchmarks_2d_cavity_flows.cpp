@@ -46,19 +46,6 @@ int main() {
     auto deri_solvers = derivatives_solver_alloc(phi.scalar, &geo);
     auto dummy = dummy_data_alloc(phi.scalar);
 
-    for (int i = 0; i < phi.scalar->Nx; ++i) {
-        for (int j = 0; j < phi.scalar->Ny; ++j) {
-            vel.vector->x.data[i][j][0] = 0.0;
-            vel.vector->y.data[i][j][0] = 0.0;
-            vel.vector->z.data[i][j][0] = 0.0;
-            nvel.vector->x.data[i][j][0] = 0.0;
-            nvel.vector->y.data[i][j][0] = 0.0;
-            nvel.vector->z.data[i][j][0] = 0.0;
-            pressure.scalar->data[i][j][0] = 0.0;
-            phi.scalar->data[i][j][0] = 1.0;
-        }
-    }
-
     phi.link_params(param);
     phi.link_solvers(deri_solvers);
     phi.link_dummy(dummy);

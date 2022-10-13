@@ -17,6 +17,7 @@
 int main() {
 
     auto geo = structured_grid(axis{0.0, 5.0, 200},
+                               axis{0.0, 1.0, 60},
                                axis{0.0, 1.2, 60});
 
     auto phi = wrapper(true, &geo,
@@ -42,11 +43,13 @@ int main() {
 
     for (int i = 0; i < phi.scalar->nx; ++i) {
         for (int j = 0; j < phi.scalar->ny; ++j) {
-            auto index = phi.scalar->index_mapping(i + 1, j + 1, 1);
-            if (geo.xc[i] < 1.0 and geo.yc[j] < 1.0) {
-                phi.scalar->data[index.i][index.j][index.k] = 1.0;
-            } else {
-                phi.scalar->data[index.i][index.j][index.k] = -1.0;
+            for (int k = 0; k < phi.scalar->nz; ++k) {
+                auto index = phi.scalar->index_mapping(i + 1, j + 1, k + 1);
+                if (geo.xc[i] < 1.0 and geo.yc[j] < 1.0 and geo.zc[k] < 1.0) {
+                    phi.scalar->data[index.i][index.j][index.k] = 1.0;
+                } else {
+                    phi.scalar->data[index.i][index.j][index.k] = -1.0;
+                }
             }
         }
     }
@@ -72,8 +75,8 @@ int main() {
     param->rdt = 0.1 * geo.h;
     param->max_CFL = 0.1;
     param->Weber_number = -1.0;
-    param->ppe_tol = 1e-3;
-    param->ppe_initer = 3;
+    param->ppe_tol = 1e-4;
+    param->ppe_initer = 1;
     param->ppe_tol2 = 1e-10;
 
     std::cout << "Reynolds number: " << param->Reynolds_number << std::endl;
