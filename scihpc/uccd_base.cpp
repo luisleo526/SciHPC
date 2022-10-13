@@ -54,54 +54,61 @@ void uccd_base::init_coefficients() const {
         downwind->bb[2][i] = -1.0 / 8.0;
 
     }
+    DataType alpha_1, alpha_2;
+    DataType beta_1, beta_2;
+
+    alpha_1 = 2.0;
+    beta_1 = -1.0;
+    alpha_2 = 5.0;
+    beta_2 = -6.0;
 
     upwind->a[0][0] = 0.0;
     upwind->a[1][0] = 1.0;
-    upwind->a[2][0] = 2.0;
+    upwind->a[2][0] = alpha_1;
     upwind->b[0][0] = 0.0;
     upwind->b[1][0] = 0.0;
-    upwind->b[2][0] = -h;
+    upwind->b[2][0] = beta_1 * h;
     upwind->aa[0][0] = 0.0;
     upwind->aa[1][0] = 0.0;
-    upwind->aa[2][0] = -2.5 / h;
+    upwind->aa[2][0] = beta_2 / h;
     upwind->bb[0][0] = 0.0;
     upwind->bb[1][0] = 1.0;
-    upwind->bb[2][0] = 8.5;
-    upwind->a[0][n - 1] = 2.0;
+    upwind->bb[2][0] = alpha_2;
+    upwind->a[0][n - 1] = alpha_1;
     upwind->a[1][n - 1] = 1.0;
     upwind->a[2][n - 1] = 0.0;
-    upwind->b[0][n - 1] = h;
+    upwind->b[0][n - 1] = -beta_1 * h;
     upwind->b[1][n - 1] = 0.0;
     upwind->b[2][n - 1] = 0.0;
-    upwind->aa[0][n - 1] = 2.5 / h;
+    upwind->aa[0][n - 1] = -beta_2 / h;
     upwind->aa[1][n - 1] = 0.0;
     upwind->aa[2][n - 1] = 0.0;
-    upwind->bb[0][n - 1] = 8.5;
+    upwind->bb[0][n - 1] = alpha_2;
     upwind->bb[1][n - 1] = 1.0;
     upwind->bb[2][n - 1] = 0.0;
 
     downwind->a[0][0] = 0.0;
     downwind->a[1][0] = 1.0;
-    downwind->a[2][0] = 2.0;
+    downwind->a[2][0] = alpha_1;
     downwind->b[0][0] = 0.0;
     downwind->b[1][0] = 0.0;
-    downwind->b[2][0] = -h;
+    downwind->b[2][0] = beta_1 * h;
     downwind->aa[0][0] = 0.0;
     downwind->aa[1][0] = 0.0;
-    downwind->aa[2][0] = -2.5 / h;
+    downwind->aa[2][0] = beta_2 / h;
     downwind->bb[0][0] = 0.0;
     downwind->bb[1][0] = 1.0;
-    downwind->bb[2][0] = 8.5;
-    downwind->a[0][n - 1] = 2.0;
+    downwind->bb[2][0] = alpha_2;
+    downwind->a[0][n - 1] = alpha_1;
     downwind->a[1][n - 1] = 1.0;
     downwind->a[2][n - 1] = 0.0;
-    downwind->b[0][n - 1] = h;
+    downwind->b[0][n - 1] = -beta_1 * h;
     downwind->b[1][n - 1] = 0.0;
     downwind->b[2][n - 1] = 0.0;
-    downwind->aa[0][n - 1] = 2.5 / h;
+    downwind->aa[0][n - 1] = -beta_2 / h;
     downwind->aa[1][n - 1] = 0.0;
     downwind->aa[2][n - 1] = 0.0;
-    downwind->bb[0][n - 1] = 8.5;
+    downwind->bb[0][n - 1] = alpha_2;
     downwind->bb[1][n - 1] = 1.0;
     downwind->bb[2][n - 1] = 0.0;
 
