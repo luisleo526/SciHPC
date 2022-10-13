@@ -115,7 +115,7 @@ int main() {
             solver.euler(&phi, &nvel, &identity_flux, &mpls);
         } while (fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) > 1e-10);
 
-        flow_solver.solve(&vel, &nvel, &pressure, &phi);
+        flow_solver.ab_solve(&vel, &nvel, &pressure, &phi);
 
         if (++step % 10 == 0) {
             std::cout << "----------------------------------------" << std::endl;

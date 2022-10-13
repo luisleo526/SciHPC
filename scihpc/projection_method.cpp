@@ -563,7 +563,7 @@ void projection_method::find_final_velocity(wrapper *vel, wrapper *pressure, wra
     vel->apply_vel_bc();
 }
 
-void projection_method::solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const {
+void projection_method::ab_solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const {
     find_source(vel, nvel, lsf);
     find_intermediate_velocity(vel);
     for (int i = 0; i < vel->params->ppe_initer; ++i) {
@@ -574,7 +574,7 @@ void projection_method::solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wr
     nvel->apply_nvel_bc();
 }
 
-void projection_method::solve_sec(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const {
+void projection_method::ab_solve_sec(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const {
     find_source_sec(vel, nvel, lsf);
     find_intermediate_velocity(vel);
     for (int i = 0; i < vel->params->ppe_initer; ++i) {

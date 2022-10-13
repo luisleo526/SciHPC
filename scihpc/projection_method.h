@@ -38,9 +38,9 @@ public:
 
     static void find_final_velocity(wrapper *vel, wrapper *pressure, wrapper *lsf);
 
-    void solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const;
+    void ab_solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const;
 
-    void solve_sec(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const;
+    void ab_solve_sec(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const;
 };
 
 

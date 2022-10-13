@@ -83,7 +83,7 @@ int main() {
     do {
         step++;
         store_tmp(&vel);
-        flow_solver.solve(&vel, &nvel, &pressure, &phi);
+        flow_solver.ab_solve(&vel, &nvel, &pressure, &phi);
         error = l2norm(&vel);
         std::cout << "------------------------------------" << std::endl;
         std::cout << "time : " << step * param->dt << std::endl;
