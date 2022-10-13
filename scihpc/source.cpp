@@ -129,9 +129,10 @@ void mpls(wrapper *phi, wrapper *vel, DataType ***s, void (*flux)(scalar_data *,
                 auto heavy = phi->dummy->heaviside[index.i][index.j][index.k];
                 auto delta = phi->dummy->delta[index.i][index.j][index.k];
                 auto g = delta * (2.0 * (1.0 - phi->params->density_ratio) * heavy + phi->params->density_ratio);
-
+                if (!phi->params->positive_ref) {
+                    g = delta * (2.0 * (phi->params->density_ratio - 1.0) * heavy + 1.0);
+                }
                 eta += g * delta * gradient;
-
             }
         }
     }

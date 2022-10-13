@@ -34,6 +34,7 @@ struct problem_parameters {
 
     DataType ls_width{};
     DataType lsf_mass0{};
+    bool positive_ref = true;
 
     DataType Lc{};
     DataType Uc{};
@@ -53,17 +54,18 @@ DataType ***init_array(int Nx, int Ny, int Nz);
 
 void delete3d(DataType ***arr, int Nx, int Ny);
 
-problem_parameters* set_parameters(DataType rho1, DataType rho2,
+problem_parameters *set_parameters(DataType rho1, DataType rho2,
                                    DataType mu1, DataType mu2,
                                    DataType surface_tension,
                                    DataType gravity, DataType length);
 
-problem_parameters* set_parameters(DataType rho1, DataType rho2,
+problem_parameters *set_parameters(DataType rho1, DataType rho2,
                                    DataType mu1, DataType mu2,
                                    DataType surface_tension,
                                    DataType gravity, DataType length, DataType velocity);
 
-problem_parameters* set_air_water(DataType length);
-problem_parameters* set_air_water(DataType length, DataType velocity);
+problem_parameters *set_air_water(DataType length);
+
+problem_parameters *set_air_water(DataType length, DataType velocity);
 
 #endif //SCIHPC_GLOBAL_H

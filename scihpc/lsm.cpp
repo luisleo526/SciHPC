@@ -51,7 +51,10 @@ DataType lsf_mass(wrapper *f) {
             for (int k = 0; k < f->scalar->nz; ++k) {
                 auto index = f->scalar->index_mapping(i + 1, j + 1, k + 1);
                 auto h = Heaviside(f->scalar->data[index.i][index.j][index.k], f->params->ls_width);
-                auto rho = h + (1.0 - h) * f->params->density_ratio;
+                DataType rho = h + (1.0 - h) * f->params->density_ratio;
+                if (!f->params->positive_ref) {
+                    rho = (1.0 - h) + h * f->params->density_ratio;
+                }
                 mass += rho * h;
             }
         }

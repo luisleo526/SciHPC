@@ -27,7 +27,12 @@ projection_method::projection_method(scalar_data *f) {
 
 void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, wrapper *nvel) const {
 
-#pragma omp parallel for default(none) shared(vel, lsf, nvel) collapse(3)
+    auto ref = 1.0;
+    if (!lsf->params->positive_ref) {
+        ref = -1.0;
+    }
+
+#pragma omp parallel for default(none) shared(vel, lsf, nvel, ref) collapse(3)
     for (int I = 0; I < lsf->scalar->nx; ++I) {
         for (int J = 0; J < lsf->scalar->ny; ++J) {
             for (int K = 0; K < lsf->scalar->nz; ++K) {
@@ -64,7 +69,7 @@ void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, wrapper *nvel) 
                 }
 
                 stress_part1 *= mu;
-                stress_part2 *= delta * (1.0 - lsf->params->viscosity_ratio);
+                stress_part2 *= ref * delta * (1.0 - lsf->params->viscosity_ratio);
 
                 u_src[i][j][k] += (stress_part1 + stress_part2) / lsf->params->Reynolds_number / rho;
             }
@@ -74,7 +79,12 @@ void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, wrapper *nvel) 
 
 void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, wrapper *nvel) const {
 
-#pragma omp parallel for default(none) shared(vel, lsf, nvel) collapse(3)
+    auto ref = 1.0;
+    if (!lsf->params->positive_ref) {
+        ref = -1.0;
+    }
+
+#pragma omp parallel for default(none) shared(vel, lsf, nvel, ref) collapse(3)
     for (int I = 0; I < lsf->scalar->nx; ++I) {
         for (int J = 0; J < lsf->scalar->ny; ++J) {
             for (int K = 0; K < lsf->scalar->nz; ++K) {
@@ -111,7 +121,7 @@ void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, wrapper *nvel) 
                 }
 
                 stress_part1 *= mu;
-                stress_part2 *= delta * (1.0 - lsf->params->viscosity_ratio);
+                stress_part2 *= ref * delta * (1.0 - lsf->params->viscosity_ratio);
 
                 v_src[i][j][k] += (stress_part1 + stress_part2) / lsf->params->Reynolds_number / rho;
 
@@ -123,7 +133,12 @@ void projection_method::add_stress_y(wrapper *vel, wrapper *lsf, wrapper *nvel) 
 
 void projection_method::add_stress_z(wrapper *vel, wrapper *lsf, wrapper *nvel) const {
 
-#pragma omp parallel for default(none) shared(vel, lsf, nvel) collapse(3)
+    auto ref = 1.0;
+    if (!lsf->params->positive_ref) {
+        ref = -1.0;
+    }
+
+#pragma omp parallel for default(none) shared(vel, lsf, nvel, ref) collapse(3)
     for (int I = 0; I < lsf->scalar->nx; ++I) {
         for (int J = 0; J < lsf->scalar->ny; ++J) {
             for (int K = 0; K < lsf->scalar->nz; ++K) {
@@ -154,7 +169,7 @@ void projection_method::add_stress_z(wrapper *vel, wrapper *lsf, wrapper *nvel) 
                 auto stress_part2 = 2.0 * phiz * wz + phix * (wx + uz) + phiy * (wy + vz);
 
                 stress_part1 *= mu;
-                stress_part2 *= delta * (1.0 - lsf->params->viscosity_ratio);
+                stress_part2 *= ref * delta * (1.0 - lsf->params->viscosity_ratio);
 
                 w_src[i][j][k] += (stress_part1 + stress_part2) / lsf->params->Reynolds_number / rho;
 
@@ -191,34 +206,30 @@ void projection_method::add_surface_force(wrapper *lsf) const {
     if (lsf->params->Weber_number > 0.0) {
 
         find_curvature(lsf);
-        find_gradient(lsf);
         for (int i = 0; i < lsf->scalar->Nx - 1; ++i) {
             for (int j = 0; j < lsf->scalar->Ny - 1; ++j) {
                 for (int k = 0; k < lsf->scalar->Nz; ++k) {
                     auto curv = 0.5 * (lsf->dummy->curvature[i][j][k] + lsf->dummy->curvature[i + 1][j][k]);
                     auto delta = 0.5 * (lsf->dummy->delta[i][j][k] + lsf->dummy->delta[i + 1][j][k]);
                     auto phix = 0.5 * (lsf->scalar->fx[i][j][k] + lsf->scalar->fx[i + 1][j][k]);
-                    auto grad = 0.5 * (lsf->dummy->grad[i][j][k] + lsf->dummy->grad[i + 1][j][k]);
                     auto rho = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i + 1][j][k]);
 
-                    u_src[i][j][k] += curv * delta * phix / (grad * lsf->params->Weber_number * rho);
+                    u_src[i][j][k] -= curv * delta * phix / (lsf->params->Weber_number * rho);
 
                     curv = 0.5 * (lsf->dummy->curvature[i][j][k] + lsf->dummy->curvature[i][j + 1][k]);
                     delta = 0.5 * (lsf->dummy->delta[i][j][k] + lsf->dummy->delta[i][j + 1][k]);
                     auto phiy = 0.5 * (lsf->scalar->fy[i][j][k] + lsf->scalar->fy[i][j + 1][k]);
-                    grad = 0.5 * (lsf->dummy->grad[i][j][k] + lsf->dummy->grad[i][j + 1][k]);
                     rho = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j + 1][k]);
 
-                    v_src[i][j][k] += curv * delta * phiy / (grad * lsf->params->Weber_number * rho);
+                    v_src[i][j][k] -= curv * delta * phiy / (lsf->params->Weber_number * rho);
 
                     if (lsf->scalar->ndim > 2 && k < lsf->scalar->Nz - 1) {
                         curv = 0.5 * (lsf->dummy->curvature[i][j][k] + lsf->dummy->curvature[i][j][k + 1]);
                         delta = 0.5 * (lsf->dummy->delta[i][j][k] + lsf->dummy->delta[i][j][k + 1]);
                         auto phiz = 0.5 * (lsf->scalar->fz[i][j][k] + lsf->scalar->fz[i][j][k + 1]);
-                        grad = 0.5 * (lsf->dummy->grad[i][j][k] + lsf->dummy->grad[i][j][k + 1]);
                         rho = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j][k + 1]);
 
-                        w_src[i][j][k] += curv * delta * phiz / (grad * lsf->params->Weber_number * rho);
+                        w_src[i][j][k] -= curv * delta * phiz / (lsf->params->Weber_number * rho);
                     }
 
                 }

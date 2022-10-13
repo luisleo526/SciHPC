@@ -123,12 +123,18 @@ void find_curvature(wrapper *lsf) {
                     auto fxx = lsf->scalar->fxx[i][j][k];
                     auto fyy = lsf->scalar->fyy[i][j][k];
                     auto fxy = lsf->scalar->fxy[i][j][k];
-                    lsf->dummy->curvature[i][j][k] = -(fxx * fy * fy + fyy * fx * fx - 2.0 * fxy * fx * fy) /
+                    lsf->dummy->curvature[i][j][k] = (fxx * fy * fy + fyy * fx * fx - 2.0 * fxy * fx * fy) /
                                                      pow(fx * fx + fy * fy, 1.5);
 
                     //Correction
-                    lsf->dummy->curvature[i][j][k] =
-                            1.0 / (1.0 / lsf->dummy->curvature[i][j][k] + lsf->scalar->data[i][j][k]);
+                    if (lsf->dummy->curvature[i][j][k] > 0.0) {
+                        lsf->dummy->curvature[i][j][k] =
+                                1.0 / (1.0 / lsf->dummy->curvature[i][j][k] + lsf->scalar->data[i][j][k]);
+                    } else {
+                        lsf->dummy->curvature[i][j][k] =
+                                -1.0 / (-1.0 / lsf->dummy->curvature[i][j][k] + lsf->scalar->data[i][j][k]);
+                    }
+
                 }
             }
         }
@@ -147,18 +153,25 @@ void find_curvature(wrapper *lsf) {
                     auto fxz = lsf->scalar->fzx[i][j][k];
                     auto fyz = lsf->scalar->fyz[i][j][k];
                     lsf->dummy->curvature[i][j][k] =
-                            -(fx * fx * (fyy + fzz) + fy * fy * (fxx + fzz) + fz * fz * (fxx + fyy)
-                              - 2.0 * (fx * fy * fxy + fx * fz * fxz + fy * fz * fyz)) /
+                            (fx * fx * (fyy + fzz) + fy * fy * (fxx + fzz) + fz * fz * (fxx + fyy)
+                             - 2.0 * (fx * fy * fxy + fx * fz * fxz + fy * fz * fyz)) /
                             pow(fx * fx + fy * fy + fz * fz, 1.5);
 
                     //Correction
-                    lsf->dummy->curvature[i][j][k] =
-                            1.0 / (2.0 / lsf->dummy->curvature[i][j][k] + lsf->scalar->data[i][j][k]);
+                    if (lsf->dummy->curvature[i][j][k] > 0.0) {
+                        lsf->dummy->curvature[i][j][k] =
+                                1.0 / (2.0 / lsf->dummy->curvature[i][j][k] + lsf->scalar->data[i][j][k]);
+                    } else {
+                        lsf->dummy->curvature[i][j][k] =
+                                -1.0 / (-2.0 / lsf->dummy->curvature[i][j][k] + lsf->scalar->data[i][j][k]);
+                    }
+
                 }
             }
         }
     }
 }
+
 
 void all_to_face_x(wrapper *ref, wrapper *tgt) {
     if (ref->vector->x.ndim == 1) {
@@ -373,7 +386,12 @@ void find_density(wrapper *lsf) {
         for (int j = 0; j < lsf->scalar->Ny; ++j) {
             for (int k = 0; k < lsf->scalar->Nz; ++k) {
                 auto h = Heaviside(lsf->scalar->data[i][j][k], lsf->params->ls_width);
-                lsf->dummy->density[i][j][k] = h + (1.0 - h) * lsf->params->density_ratio;
+                if (lsf->params->positive_ref) {
+                    lsf->dummy->density[i][j][k] = h + (1.0 - h) * lsf->params->density_ratio;
+                } else {
+                    lsf->dummy->density[i][j][k] = (1.0 - h) + h * lsf->params->density_ratio;
+                }
+
             }
         }
     }
@@ -385,7 +403,11 @@ void find_viscosity(wrapper *lsf) {
         for (int j = 0; j < lsf->scalar->Ny; ++j) {
             for (int k = 0; k < lsf->scalar->Nz; ++k) {
                 auto h = Heaviside(lsf->scalar->data[i][j][k], lsf->params->ls_width);
-                lsf->dummy->viscosity[i][j][k] = h + (1.0 - h) * lsf->params->viscosity_ratio;
+                if (lsf->params->positive_ref) {
+                    lsf->dummy->viscosity[i][j][k] = h + (1.0 - h) * lsf->params->viscosity_ratio;
+                } else {
+                    lsf->dummy->viscosity[i][j][k] = (1.0 - h) + h * lsf->params->viscosity_ratio;
+                }
             }
         }
     }
