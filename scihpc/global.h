@@ -43,8 +43,10 @@ struct problem_parameters {
     DataType Weber_number = -1.0;
 
     DataType ppe_tol = 1e-4;
+    DataType ppe_tol2 = 1e-7;
     int ppe_max_iter = 1000000;
     DataType ppe_omega = 1.5;
+    int ppe_initer = 10;
 };
 
 DataType ***init_array(int Nx, int Ny, int Nz);

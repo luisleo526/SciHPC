@@ -19,22 +19,22 @@
 
 int main() {
 
-    auto geo = structured_grid(axis{0.0, 5.0, 128},
-                               axis{0.0, 2.0, 128});
+    auto geo = structured_grid(axis{0.0, 1.0, 64},
+                               axis{0.0, 1.0, 64});
 
     auto phi = wrapper(true, &geo,
                        bc_info{NEUMANN}, bc_info{NEUMANN},
                        bc_info{NEUMANN}, bc_info{NEUMANN});
     auto vel = wrapper(false, &geo,
                        bc_info{NO_SLIP}, bc_info{NO_SLIP},
-                       bc_info{NO_SLIP}, bc_info{NO_SLIP});
-    vel.bcFactoryV->yrbc.type = DIRICHLET;
-    vel.bcFactoryV->yrbc.value = 1.0;
+                       bc_info{NO_SLIP}, bc_info{DIRICHLET});
+    vel.bcFactoryU->yrbc.value = 1.0;
+    vel.bcFactoryV->yrbc.value = 0.0;
     auto nvel = wrapper(false, &geo,
                         bc_info{NO_SLIP}, bc_info{NO_SLIP},
-                        bc_info{NO_SLIP}, bc_info{NO_SLIP});
-    nvel.bcFactoryV->yrbc.type = DIRICHLET;
-    nvel.bcFactoryV->yrbc.value = 1.0;
+                        bc_info{NO_SLIP}, bc_info{DIRICHLET});
+    nvel.bcFactoryU->yrbc.value = 1.0;
+    nvel.bcFactoryV->yrbc.value = 0.0;
     auto pressure = wrapper(true, &geo,
                             bc_info{NEUMANN}, bc_info{NEUMANN},
                             bc_info{NEUMANN}, bc_info{NEUMANN});
@@ -76,7 +76,7 @@ int main() {
     nvel.link_dummy(dummy);
 
     param->ls_width = 1.5 * geo.h;
-    param->dt = 0.01 * geo.h;
+    param->dt = 0.1 * geo.h;
     param->viscosity_ratio = 1.0;
     param->density_ratio = 1.0;
     param->Reynolds_number = 100.0;
@@ -85,27 +85,27 @@ int main() {
     flow_solver.find_source(&vel, &nvel, &phi);
 
     vtk.create(0);
+    vtk.add_scalar(pressure.scalar, "pressure");
     vtk.add_vector(nvel.vector, "nvel");
     vtk.close();
 
     DataType error = 0.0;
+    int step = 0, pltid = 1;
     do {
+        step++;
         store_tmp(&vel);
         flow_solver.find_source(&vel, &nvel, &phi);
-        for (int i = 0; i < phi.scalar->Nx; ++i) {
-            for (int j = 0; j < phi.scalar->Ny; ++j) {
-                for (int k = 0; k < phi.scalar->Nz; ++k) {
-                    vel.vector->x.data[i][j][k] += param->dt * flow_solver.u_src[i][j][k];
-                    vel.vector->y.data[i][j][k] += param->dt * flow_solver.v_src[i][j][k];
-                    vel.vector->z.data[i][j][k] += param->dt * flow_solver.w_src[i][j][k];
-                }
-            }
-        }
-        vel.apply_vel_bc();
-        flow_solver.solve_ppe(&pressure, &phi, &vel);
-        projection_method::find_final_velocity(&vel, &pressure, &phi);
         error = l2norm(&vel);
-        std::cout << error << std::endl;
+        std::cout << "------------------------------------" << std::endl;
+        std::cout << "time : " << step * param->dt << std::endl;
+        std::cout << "error: " << error << std::endl;
+        std::cout << "div: " << divergence(&vel) << std::endl;
+        if (step % 50 == 0) {
+            vtk.create(pltid++);
+            vtk.add_scalar(pressure.scalar, "pressure");
+            vtk.add_vector(nvel.vector, "nvel");
+            vtk.close();
+        }
     } while (error > 1.0e-10);
 
     return 0;

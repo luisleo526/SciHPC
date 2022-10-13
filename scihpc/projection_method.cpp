@@ -257,7 +257,7 @@ void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf) c
     // Compute derivatives of face x velocities for stress tensor at x direction
     identity_with_extrapolation_face_x(nvel->vector);
     nvel->solvers->uccd->find_fx(&nvel->vector->y, nvel->vector);
-    if (nvel->vector->x.ndim > 2){
+    if (nvel->vector->x.ndim > 2) {
         nvel->solvers->uccd->find_fx(&nvel->vector->z, nvel->vector);
     }
     // Compute stress tensor at x direction
@@ -272,7 +272,7 @@ void projection_method::find_source(wrapper *vel, wrapper *nvel, wrapper *lsf) c
     // Compute derivatives of face y velocities for stress tensor at y direction
     identity_with_extrapolation_face_y(nvel->vector);
     nvel->solvers->uccd->find_fy(&nvel->vector->x, nvel->vector);
-    if (nvel->vector->x.ndim > 2){
+    if (nvel->vector->x.ndim > 2) {
         nvel->solvers->uccd->find_fy(&nvel->vector->z, nvel->vector);
     }
     // Compute stress tensor at y direction
@@ -327,7 +327,7 @@ void projection_method::find_source_sec(wrapper *vel, wrapper *nvel, wrapper *ls
     // Compute derivatives of face x velocities for stress tensor at x direction
     identity_with_extrapolation_face_x(nvel->vector);
     nvel->solvers->secSol->find_fx(&nvel->vector->y, nvel->vector);
-    if (nvel->vector->x.ndim > 2){
+    if (nvel->vector->x.ndim > 2) {
         nvel->solvers->secSol->find_fx(&nvel->vector->z, nvel->vector);
     }
     // Compute stress tensor at x direction
@@ -342,7 +342,7 @@ void projection_method::find_source_sec(wrapper *vel, wrapper *nvel, wrapper *ls
     // Compute derivatives of face y velocities for stress tensor at y direction
     identity_with_extrapolation_face_y(nvel->vector);
     nvel->solvers->secSol->find_fy(&nvel->vector->x, nvel->vector);
-    if (nvel->vector->x.ndim > 2){
+    if (nvel->vector->x.ndim > 2) {
         nvel->solvers->secSol->find_fy(&nvel->vector->z, nvel->vector);
     }
     // Compute stress tensor at y direction
@@ -517,7 +517,8 @@ void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel)
         if (++iter % 5000 == 0) {
             std::cout << "iter: " << iter << " error: " << error << " sump: " << sump << std::endl;
         }
-    } while (iter < pressure->params->ppe_max_iter and error > pressure->params->ppe_tol);
+    } while (iter < pressure->params->ppe_max_iter and error > pressure->params->ppe_tol and
+             linfity(pressure) > pressure->params->ppe_tol2);
 
 }
 
@@ -554,8 +555,10 @@ void projection_method::find_final_velocity(wrapper *vel, wrapper *pressure, wra
 void projection_method::solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const {
     find_source(vel, nvel, lsf);
     find_intermediate_velocity(vel);
-    solve_ppe(pressure, lsf, vel);
-    find_final_velocity(vel, pressure, lsf);
+    for (int i = 0; i < vel->params->ppe_initer; ++i) {
+        solve_ppe(pressure, lsf, vel);
+        find_final_velocity(vel, pressure, lsf);
+    }
     node_from_face(vel, nvel);
     nvel->apply_nvel_bc();
 }
@@ -563,8 +566,10 @@ void projection_method::solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wr
 void projection_method::solve_sec(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const {
     find_source_sec(vel, nvel, lsf);
     find_intermediate_velocity(vel);
-    solve_ppe(pressure, lsf, vel);
-    find_final_velocity(vel, pressure, lsf);
+    for (int i = 0; i < vel->params->ppe_initer; ++i) {
+        solve_ppe(pressure, lsf, vel);
+        find_final_velocity(vel, pressure, lsf);
+    }
     node_from_face(vel, nvel);
     nvel->apply_nvel_bc();
 }

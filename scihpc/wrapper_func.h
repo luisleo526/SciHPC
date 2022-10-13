@@ -27,6 +27,8 @@ void store_tmp(wrapper *f);
 
 DataType l2norm(wrapper *f);
 
+DataType linfity(wrapper *f);
+
 DataType divergence(wrapper *vel);
 
 void all_to_face_x(wrapper *ref, wrapper *tgt);

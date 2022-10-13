@@ -350,13 +350,13 @@ void find_dt(wrapper *vel) {
         CFL_diffusion += 2.0 / (vel->geo->dz * vel->geo->dz);
     }
     CFL_diffusion *= vel->params->viscosity_ratio / vel->params->density_ratio / vel->params->Reynolds_number;
-    if ( vel->params->Froude_number > 0.0 ){
+    if (vel->params->Froude_number > 0.0) {
         CFL_gravity = sqrt(fabs(1.0 - vel->params->density_ratio) / (2 * vel->params->density_ratio)
                            / vel->geo->h / vel->params->Froude_number);
     }
-    if (vel->params->Weber_number > 0.0){
+    if (vel->params->Weber_number > 0.0) {
         CFL_surface_tension = sqrt(max_curvature / pow(vel->geo->h, 2)
-                / vel->params->Weber_number / vel->params->density_ratio);
+                                   / vel->params->Weber_number / vel->params->density_ratio);
     }
 
     CFL = (CFL_convection + CFL_diffusion + sqrt(pow(CFL_convection + CFL_diffusion, 2)
@@ -389,4 +389,34 @@ void find_viscosity(wrapper *lsf) {
             }
         }
     }
+}
+
+DataType linfity(wrapper *f) {
+    DataType error = 0.0;
+
+    if (f->is_scalar) {
+#pragma omp parallel for default(none) shared(f) reduction(max:error) collapse(3)
+        for (int i = 0; i < f->scalar->Nx; ++i) {
+            for (int j = 0; j < f->scalar->Ny; ++j) {
+                for (int k = 0; k < f->scalar->Nz; ++k) {
+                    error = fmax(error, fabs(f->dummy->tmp[i][j][k] - f->scalar->data[i][j][k]));
+                }
+            }
+        }
+        error = sqrt(error / (f->scalar->Nx * f->scalar->Ny * f->scalar->Nz));
+    } else {
+#pragma omp parallel for default(none) shared(f) reduction(+:error) collapse(3)
+        for (int i = 0; i < f->vector->x.Nx; ++i) {
+            for (int j = 0; j < f->vector->x.Ny; ++j) {
+                for (int k = 0; k < f->vector->x.Nz; ++k) {
+                    error = fmax(error, fabs(f->dummy->u_tmp[i][j][k] - f->vector->x.data[i][j][k]));
+                    error = fmax(error, fabs(f->dummy->v_tmp[i][j][k] - f->vector->y.data[i][j][k]));
+                    error = fmax(error, fabs(f->dummy->w_tmp[i][j][k] - f->vector->z.data[i][j][k]));
+                }
+            }
+        }
+        error = sqrt(error / (f->vector->x.Nx * f->vector->x.Ny * f->vector->x.Nz));
+    }
+
+    return error;
 }
