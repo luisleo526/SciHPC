@@ -21,6 +21,7 @@ void multigrid_base::init3d(int _nx, int _ny, int _nz, int _degree, DataType _dx
     D = new DataType[nx * ny * nz];
     oD = new SparseMatrix(n, n);
 
+#pragma omp parallel for default(none) shared(oD) collapse(3)
     for (int i = 0; i < nx; ++i) {
         for (int j = 0; j < ny; ++j) {
             for (int k = 0; k < nz; ++k) {
@@ -73,6 +74,7 @@ void multigrid_base::init2d(int _nx, int _ny, int _degree, DataType _dx, DataTyp
     D = new DataType[nx * ny];
     oD = new SparseMatrix(n, n);
 
+#pragma omp parallel for default(none) shared(oD collapse(2)
     for (int i = 0; i < nx; ++i) {
         for (int j = 0; j < ny; ++j) {
             DataType cc = 0.0;
@@ -155,14 +157,14 @@ void multigrid_base::compatibility_condition(DataType *f) {
 
     DataType sum = 0.0;
 
-#pragma omp parallel for default(none) reduction(+:sum)
+#pragma omp parallel for default(none) reduction(+:sum) shared(f)
     for (int i = 0; i < n; ++i) {
         sum += f[i];
     }
 
     sum = sum / n;
 
-#pragma omp parallel for default(none) shared(sum)
+#pragma omp parallel for default(none) shared(sum, f)
     for (int i = 0; i < n; ++i) {
         f[i] -= sum;
     }
@@ -185,7 +187,7 @@ void multigrid_base::restriction(multigrid_base &coarse) {
     residual();
     auto r = coarse.degree / degree;
     if (ndim == 2) {
-#pragma omp parallel for default(none) shared(r) collapse(2)
+#pragma omp parallel for default(none) shared(r, coarse) collapse(2)
         for (int i = 0; i < coarse.nx; ++i) {
             for (int j = 0; j < coarse.ny; ++j) {
                 coarse.rhs[coarse.of(i, j)] = 0.0;
@@ -223,7 +225,7 @@ void multigrid_base::restriction(multigrid_base &coarse) {
 void multigrid_base::prolongation(multigrid_base &dense) {
     auto r = dense.degree / degree;
     if (ndim == 2) {
-#pragma omp parallel for default(none) shared(r) collapse(2)
+#pragma omp parallel for default(none) shared(r, dense) collapse(2)
         for (int i = 0; i < nx; ++i) {
             for (int j = 0; j < ny; ++j) {
 
@@ -259,7 +261,7 @@ void multigrid_base::prolongation(multigrid_base &dense) {
             }
         }
     } else if (ndim == 3) {
-#pragma omp parallel for default(none) shared(r) collapse(3)
+#pragma omp parallel for default(none) shared(r, dense) collapse(3)
         for (int i = 0; i < nx; ++i) {
             for (int j = 0; j < ny; ++j) {
                 for (int k = 0; k < nz; ++k) {
@@ -333,6 +335,7 @@ void multigrid_base::init_full() {
         cc = 2.0 / dx / dx + 2.0 / dy / dy + 2.0 / dz / dz;
     }
 
+#pragma omp parallel for default(none) shared(cc)
     for (int i = 0; i < n; ++i) {
         D[i] = -cc;
     }
