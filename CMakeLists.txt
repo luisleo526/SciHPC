@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.21.0)
 project(SciHPC)
 
 if(APPLE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -openmp")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -openmp -O3")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -O3")
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
@@ -82,8 +82,9 @@ add_executable(SciHPC
         scihpc/second_order_solver.h
         scihpc/multigrid.cpp
         scihpc/multigrid.h
-#        scihpc/multigrid_base.cpp
-#        scihpc/multigrid_base.h
-        scihpc/SparseMatrix.cpp
+        scihpc/multigrid_base.cpp
+        scihpc/multigrid_base.h
         scihpc/SparseMatrix.h
-        scihpc/SparseMatrixExceptions.h)
+        scihpc/SparseMatrix.cpp
+        scihpc/exceptions.h
+        )

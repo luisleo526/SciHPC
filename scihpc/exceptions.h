@@ -1,10 +1,14 @@
-//
-// Created by 溫晧良 on 2022/10/14.
-//
+/**
+ * This file is part of the SparseMatrix library
+ *
+ * @license  MIT
+ * @author   Petr Kessler (https://kesspess.cz)
+ * @link     https://github.com/uestla/Sparse-Matrix
+ */
 
-#ifndef SCIHPC_SPARSEMATRIXEXCEPTIONS_H
-#define SCIHPC_SPARSEMATRIXEXCEPTIONS_H
+#ifndef __SPARSEMATRIX_EXCEPTIONS_H__
 
+#define    __SPARSEMATRIX_EXCEPTIONS_H__
 
 #include <exception>
 
@@ -49,4 +53,4 @@ public:
 };
 
 
-#endif //SCIHPC_SPARSEMATRIXEXCEPTIONS_H
+#endif

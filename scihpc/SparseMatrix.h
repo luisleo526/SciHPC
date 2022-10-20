@@ -1,84 +1,70 @@
-//
-// Created by 溫晧良 on 2022/10/14.
-//
+/**
+ * This file is part of the SparseMatrix library
+ *
+ * @license  MIT
+ * @author   Petr Kessler (https://kesspess.cz)
+ * @link     https://github.com/uestla/Sparse-Matrix
+ */
 
-#ifndef SCIHPC_SPARSEMATRIX_H
-#define SCIHPC_SPARSEMATRIX_H
+#ifndef __SPARSEMATRIX_H__
+
+#define    __SPARSEMATRIX_H__
 
 #include <vector>
 #include <iostream>
+#include "global.h"
 
-
-template<typename T>
 class SparseMatrix {
 
 public:
 
+    DataType *buffer;
+
     // === CREATION ==============================================
 
-    SparseMatrix(int n); // square matrix n×n
+    explicit SparseMatrix(int n); // square matrix n×n
     SparseMatrix(int rows, int columns); // general matrix
 
-    SparseMatrix(const SparseMatrix<T> &m);
+    SparseMatrix(SparseMatrix &m); // copy constructor
+    SparseMatrix &operator=(SparseMatrix &m);
 
-    SparseMatrix();
-
-    // copy constructor
-    SparseMatrix<T> &operator=(const SparseMatrix<T> &m);
-
-    ~SparseMatrix(void);
+    ~SparseMatrix();
 
 
     // === GETTERS / SETTERS ==============================================
 
-    int getRowCount(void) const;
+    [[nodiscard]] int getRowCount() const;
 
-    int getColumnCount(void) const;
+    [[nodiscard]] int getColumnCount() const;
 
 
     // === VALUES ==============================================
 
-    T get(int row, int col) const;
+    [[nodiscard]] DataType get(int row, int col) const;
 
-    SparseMatrix &set(T val, int row, int col);
+    SparseMatrix &set(DataType val, int row, int col);
 
 
     // === OPERATIONS ==============================================
 
-    std::vector<T> multiply(const std::vector<T> &x) const;
+    void multiply(const DataType *x) const;
 
-    std::vector<T> operator*(const std::vector<T> &x) const;
-
-    SparseMatrix<T> multiply(const SparseMatrix<T> &m) const;
-
-    SparseMatrix<T> operator*(const SparseMatrix<T> &m) const;
-
-    SparseMatrix<T> add(const SparseMatrix<T> &m) const;
-
-    SparseMatrix<T> operator+(const SparseMatrix<T> &m) const;
-
-    SparseMatrix<T> subtract(const SparseMatrix<T> &m) const;
-
-    SparseMatrix<T> operator-(const SparseMatrix<T> &m) const;
-
+    void operator*(DataType *x) const;
 
     // === FRIEND FUNCTIONS =========================================
 
-    template<typename X>
-    friend bool operator==(const SparseMatrix<X> &a, const SparseMatrix<X> &b);
+    friend bool operator==(const SparseMatrix &a, const SparseMatrix &b);
 
-    template<typename X>
-    friend bool operator!=(const SparseMatrix<X> &a, const SparseMatrix<X> &b);
+    friend bool operator!=(const SparseMatrix &a, const SparseMatrix &b);
 
-    template<typename X>
-    friend std::ostream &operator<<(std::ostream &os, const SparseMatrix<X> &matrix);
+    friend std::ostream &operator<<(std::ostream &os, const SparseMatrix &matrix);
 
 
 protected:
 
     int m, n;
 
-    std::vector<T> *vals;
+    std::vector<DataType> *vals;
     std::vector<int> *rows, *cols;
 
 
@@ -86,16 +72,17 @@ protected:
 
     void construct(int m, int n);
 
-    void destruct(void);
+    void destruct();
 
-    void deepCopy(const SparseMatrix<T> &m);
+    void deepCopy(const SparseMatrix &m);
 
     void validateCoordinates(int row, int col) const;
 
-    void insert(int index, int row, int col, T val);
+    void insert(int index, int row, int col, DataType val);
 
     void remove(int index, int row);
 
 };
 
-#endif //SCIHPC_SPARSEMATRIX_H
+
+#endif
