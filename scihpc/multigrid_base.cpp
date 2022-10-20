@@ -74,7 +74,7 @@ void multigrid_base::init2d(int _nx, int _ny, int _degree, DataType _dx, DataTyp
     D = new DataType[nx * ny];
     oD = new SparseMatrix(n, n);
 
-#pragma omp parallel for default(none) shared(oD collapse(2)
+#pragma omp parallel for default(none) shared(oD) collapse(2)
     for (int i = 0; i < nx; ++i) {
         for (int j = 0; j < ny; ++j) {
             DataType cc = 0.0;
