@@ -4,103 +4,6 @@
 
 #include "multigrid_base.h"
 
-void multigrid_base::init3d(int _nx, int _ny, int _nz, int _degree, DataType _dx, DataType _dy, DataType _dz) {
-    nx = _nx;
-    ny = _ny;
-    nz = _nz;
-    degree = _degree;
-    ndim = 3;
-    dx = _dx;
-    dy = _dy;
-    dz = _dz;
-    n = nx * ny * nz;
-
-    rhs = new DataType[nx * ny * nz];
-    sol = new DataType[nx * ny * nz];
-    res = new DataType[nx * ny * nz];
-    D = new DataType[nx * ny * nz];
-    oD = new SparseMatrix(n, n);
-
-#pragma omp parallel for default(none) shared(oD) collapse(3)
-    for (int i = 0; i < nx; ++i) {
-        for (int j = 0; j < ny; ++j) {
-            for (int k = 0; k < nz; ++k) {
-                DataType cc = 0.0;
-                if (i > 0) {
-                    oD->set(1.0 / dx / dx, of(i, j, k) + 1, of(i - 1, j, k) + 1);
-                    cc += 1.0 / dx / dx;
-                }
-                if (i < nx - 1) {
-                    oD->set(1.0 / dx / dx, of(i, j, k) + 1, of(i + 1, j, k) + 1);
-                    cc += 1.0 / dx / dx;
-                }
-                if (j > 0) {
-                    oD->set(1.0 / dy / dy, of(i, j, k) + 1, of(i, j - 1, k) + 1);
-                    cc += 1.0 / dy / dy;
-                }
-                if (j < ny - 1) {
-                    oD->set(1.0 / dy / dy, of(i, j, k) + 1, of(i, j + 1, k) + 1);
-                    cc += 1.0 / dy / dy;
-                }
-                if (k > 0) {
-                    oD->set(1.0 / dz / dz, of(i, j, k) + 1, of(i, j, k - 1) + 1);
-                    cc += 1.0 / dz / dz;
-                }
-                if (k < nz - 1) {
-                    oD->set(1.0 / dz / dz, of(i, j, k) + 1, of(i, j, k + 1) + 1);
-                    cc += 1.0 / dz / dz;
-                }
-
-                D[of(i, j, k)] = -cc;
-            }
-        }
-    }
-}
-
-void multigrid_base::init2d(int _nx, int _ny, int _degree, DataType _dx, DataType _dy) {
-    nx = _nx;
-    ny = _ny;
-    nz = 1;
-    degree = _degree;
-    ndim = 2;
-    dx = _dx;
-    dy = _dy;
-    dz = 1.0;
-    n = nx * ny;
-
-    rhs = new DataType[nx * ny];
-    sol = new DataType[nx * ny];
-    res = new DataType[nx * ny];
-    D = new DataType[nx * ny];
-    oD = new SparseMatrix(n, n);
-
-#pragma omp parallel for default(none) shared(oD) collapse(2)
-    for (int i = 0; i < nx; ++i) {
-        for (int j = 0; j < ny; ++j) {
-            DataType cc = 0.0;
-            if (i > 0) {
-                oD->set(1.0 / dx / dx, of(i, j) + 1, of(i - 1, j) + 1);
-                cc += 1.0 / dx / dx;
-            }
-            if (i < nx - 1) {
-                oD->set(1.0 / dx / dx, of(i, j) + 1, of(i + 1, j) + 1);
-                cc += 1.0 / dx / dx;
-            }
-            if (j > 0) {
-                oD->set(1.0 / dy / dy, of(i, j) + 1, of(i, j - 1) + 1);
-                cc += 1.0 / dy / dy;
-            }
-            if (j < ny - 1) {
-                oD->set(1.0 / dy / dy, of(i, j) + 1, of(i, j + 1) + 1);
-                cc += 1.0 / dy / dy;
-            }
-
-            D[of(i, j)] = -cc;
-        }
-    }
-
-}
-
 int multigrid_base::of(int i, int j, int k) {
     return i + j * nx + k * nx * ny;
 }
@@ -113,6 +16,7 @@ void multigrid_base::relax(int iter) {
 
     DataType rdot, alpha;
 
+    // Conjugate gradient
     for (int cnt = 0; cnt < iter; ++cnt) {
         if (residual() < 1e-16) {
             break;
@@ -122,30 +26,28 @@ void multigrid_base::relax(int iter) {
         for (int i = 0; i < n; ++i) {
             rdot += res[i] * res[i];
         }
-        oD->multiply(res);
+        Ax(res);
         alpha = 0.0;
 #pragma omp parallel for default(none) reduction(+:alpha)
         for (int i = 0; i < n; ++i) {
-            alpha += res[i] * (oD->buffer[i] + D[i] * res[i]);
+            alpha += res[i] * buffer[i];
         }
         alpha = rdot / alpha;
 #pragma omp parallel for default(none) shared(alpha)
         for (int i = 0; i < n; ++i) {
-
             sol[i] += alpha * res[i];
         }
         compatibility_condition(sol);
     }
 
-// Jacobi iteration
-//    for (int cnt = 0; cnt < iter; ++cnt) {
-//        (*oD) * sol;
-//#pragma omp parallel for default(none) shared(sol, rhs, D, oD, omega)
-//        for (int i = 0; i < n; ++i) {
-//            sol[i] = omega * (rhs[i] - oD->buffer[i]) / D[i] + (1.0 - omega) * sol[i];
-//        }
-//        compatibility_condition(sol);
-//    }
+    // Jacobi iteration
+    for (int cnt = 0; cnt < 2; ++cnt) {
+        Ax(sol);
+        for (int i = 0; i < n; ++i) {
+            sol[i] = 0.5 * (-rhs[i] - buffer[i] + cc[i] * sol[i]) / cc[i] + 0.5 * sol[i];
+        }
+        compatibility_condition(sol);
+    }
 
 }
 
@@ -172,18 +74,18 @@ void multigrid_base::compatibility_condition(DataType *f) {
 }
 
 DataType multigrid_base::residual() {
-    (*oD) * sol;
+    Ax(sol);
     DataType error = 0.0;
 #pragma omp parallel for default(none) reduction(+:error)
     for (int i = 0; i < n; ++i) {
-        res[i] = rhs[i] - oD->buffer[i] - D[i] * sol[i];
+        res[i] = -rhs[i] - buffer[i];
         error += fabs(res[i]);
     }
     return error;
 }
 
 void multigrid_base::restriction(multigrid_base &coarse) {
-    relax(100);
+    relax(base_step);
     residual();
     auto r = coarse.degree / degree;
     if (ndim == 2) {
@@ -312,32 +214,213 @@ void multigrid_base::prolongation(multigrid_base &dense) {
             }
         }
     }
-    dense.relax(100);
+    dense.relax(base_step);
 }
 
 void multigrid_base::solve(DataType tol) {
     DataType error = residual();
     while (error > tol) {
-        relax(20);
+        relax(base_step);
         error = residual();
     }
 }
 
-multigrid_base::multigrid_base() {
+void multigrid_base::init_full() const {
+
+    if (ndim == 2) {
+        for (int i = 0; i < n; ++i) {
+            cc[i] = 2.0 / dx / dx + 2.0 / dy / dy;
+        }
+    } else {
+        for (int i = 0; i < n; ++i) {
+            cc[i] = 2.0 / dx / dx + 2.0 / dy / dy + 2.0 / dz / dz;
+        }
+    }
+
 }
 
-void multigrid_base::init_full() {
+multigrid_base::multigrid_base(int _nx, int _ny, int _nz, int _degree, DataType _dx, DataType _dy, DataType _dz) {
 
-    DataType cc = 0.0;
+    nx = _nx;
+    ny = _ny;
+    nz = _nz;
+    degree = _degree;
+    ndim = 3;
+    dx = _dx;
+    dy = _dy;
+    dz = _dz;
+    n = nx * ny * nz;
+
+    rhs = new DataType[n];
+    sol = new DataType[n];
+    res = new DataType[n];
+
+    buffer = new DataType[n];
+
+    cc = new DataType[n];
+    cr = new DataType[n];
+    cl = new DataType[n];
+    cu = new DataType[n];
+    cd = new DataType[n];
+    cf = new DataType[n];
+    cb = new DataType[n];
+
+#pragma omp parallel for default(none) collapse(3)
+    for (int i = 0; i < nx; ++i) {
+        for (int j = 0; j < ny; ++j) {
+            for (int k = 0; k < nz; ++k) {
+
+                cc[of(i, j, k)] = 0.0;
+                cr[of(i, j, k)] = 0.0;
+                cl[of(i, j, k)] = 0.0;
+                cu[of(i, j, k)] = 0.0;
+                cd[of(i, j, k)] = 0.0;
+                cf[of(i, j, k)] = 0.0;
+                cb[of(i, j, k)] = 0.0;
+
+                if (i > 0) {
+                    cl[of(i, j, k)] = -1.0 / dx / dx;
+                    cc[of(i, j, k)] += cl[of(i, j, k)];
+                }
+
+                if (i < nx - 1) {
+                    cr[of(i, j, k)] = -1.0 / dx / dx;
+                    cc[of(i, j, k)] += cr[of(i, j, k)];
+                }
+
+                if (j > 0) {
+                    cd[of(i, j, k)] = -1.0 / dy / dy;
+                    cc[of(i, j, k)] += cd[of(i, j, k)];
+                }
+
+                if (j < ny - 1) {
+                    cu[of(i, j, k)] = -1.0 / dy / dy;
+                    cc[of(i, j, k)] += cu[of(i, j, k)];
+                }
+
+                if (k > 0) {
+                    cb[of(i, j, k)] = -1.0 / dz / dz;
+                    cc[of(i, j, k)] += cb[of(i, j, k)];
+                }
+
+                if (k < nz - 1) {
+                    cf[of(i, j, k)] = -1.0 / dz / dz;
+                    cc[of(i, j, k)] += cf[of(i, j, k)];
+                }
+
+            }
+        }
+    }
+}
+
+multigrid_base::multigrid_base(int _nx, int _ny, int _degree, DataType _dx, DataType _dy) {
+    nx = _nx;
+    ny = _ny;
+    nz = 1;
+    degree = _degree;
+    ndim = 2;
+    dx = _dx;
+    dy = _dy;
+    dz = 1.0;
+    n = nx * ny;
+
+    rhs = new DataType[n];
+    sol = new DataType[n];
+    res = new DataType[n];
+
+    buffer = new DataType[n];
+
+    cc = new DataType[n];
+    cr = new DataType[n];
+    cl = new DataType[n];
+    cu = new DataType[n];
+    cd = new DataType[n];
+    cf = new DataType[n];
+    cb = new DataType[n];
+
+#pragma omp parallel for default(none) collapse(2)
+    for (int i = 0; i < nx; ++i) {
+        for (int j = 0; j < ny; ++j) {
+            cc[of(i, j)] = 0.0;
+            cr[of(i, j)] = 0.0;
+            cl[of(i, j)] = 0.0;
+            cu[of(i, j)] = 0.0;
+            cd[of(i, j)] = 0.0;
+            cf[of(i, j)] = 0.0;
+            cb[of(i, j)] = 0.0;
+
+            if (i > 0) {
+                cl[of(i, j)] = -1.0 / dx / dx;
+                cc[of(i, j)] += cl[of(i, j)];
+            }
+
+            if (i < nx - 1) {
+                cr[of(i, j)] = -1.0 / dx / dx;
+                cc[of(i, j)] += cr[of(i, j)];
+            }
+
+            if (j > 0) {
+                cd[of(i, j)] = -1.0 / dy / dy;
+                cc[of(i, j)] += cd[of(i, j)];
+            }
+
+            if (j < ny - 1) {
+                cu[of(i, j)] = -1.0 / dy / dy;
+                cc[of(i, j)] += cu[of(i, j)];
+            }
+        }
+    }
+}
+
+void multigrid_base::Ax(const DataType *x) {
+
     if (ndim == 2) {
-        cc = 2.0 / dx / dx + 2.0 / dy / dy;
+#pragma omp parallel for default(none) collapse(2) shared(x)
+        for (int i = 0; i < nx; ++i) {
+            for (int j = 0; j < ny; ++j) {
+                buffer[of(i, j)] = cc[of(i, j)] * x[of(i, j)];
+                if (i > 0) {
+                    buffer[of(i, j)] += cl[of(i, j)] * x[of(i - 1, j)];
+                }
+                if (i < nx - 1) {
+                    buffer[of(i, j)] += cr[of(i, j)] * x[of(i + 1, j)];
+                }
+                if (j > 0) {
+                    buffer[of(i, j)] += cd[of(i, j)] * x[of(i, j - 1)];
+                }
+                if (j < ny - 1) {
+                    buffer[of(i, j)] += cu[of(i, j)] * x[of(i, j + 1)];
+                }
+            }
+        }
     } else {
-        cc = 2.0 / dx / dx + 2.0 / dy / dy + 2.0 / dz / dz;
+#pragma omp parallel for default(none) collapse(3) shared(x)
+        for (int i = 0; i < nx; ++i) {
+            for (int j = 0; j < ny; ++j) {
+                for (int k = 0; k < nz; ++k) {
+                    buffer[of(i, j, k)] = cc[of(i, j, k)] * x[of(i, j, k)];
+                    if (i > 0) {
+                        buffer[of(i, j, k)] += cl[of(i, j, k)] * x[of(i - 1, j, k)];
+                    }
+                    if (i < nx - 1) {
+                        buffer[of(i, j, k)] += cr[of(i, j, k)] * x[of(i + 1, j, k)];
+                    }
+                    if (j > 0) {
+                        buffer[of(i, j, k)] += cd[of(i, j, k)] * x[of(i, j - 1, k)];
+                    }
+                    if (j < ny - 1) {
+                        buffer[of(i, j, k)] += cu[of(i, j, k)] * x[of(i, j + 1, k)];
+                    }
+                    if (k > 0) {
+                        buffer[of(i, j, k)] += cb[of(i, j, k)] * x[of(i, j, k - 1)];
+                    }
+                    if (k < nz - 1) {
+                        buffer[of(i, j, k)] += cf[of(i, j, k)] * x[of(i, j, k + 1)];
+                    }
+                }
+            }
+        }
     }
 
-#pragma omp parallel for default(none) shared(cc)
-    for (int i = 0; i < n; ++i) {
-        D[i] = -cc;
-    }
 }
 

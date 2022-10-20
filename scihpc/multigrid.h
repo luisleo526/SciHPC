@@ -17,9 +17,12 @@ private:
 
 public:
     multigrid(wrapper *var);
+
     unsigned int level_num;
-    std::vector<multigrid_base> at;
+    multigrid_base **at;
+
     void v_cycle();
+
     void full_cycle();
 };
 

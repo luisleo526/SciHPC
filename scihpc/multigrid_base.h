@@ -5,27 +5,30 @@
 #ifndef SCIHPC_MULTIGRID_BASE_H
 #define SCIHPC_MULTIGRID_BASE_H
 
-#include "SparseMatrix.h"
+#include "global.h"
 
 class multigrid_base {
 public:
-    multigrid_base();
 
-    void init3d(int _nx, int _ny, int _nz, int _degree, DataType _dx, DataType _dy, DataType _dz);
+    multigrid_base(int _nx, int _ny, int _degree, DataType _dx, DataType _dy);
 
-    void init2d(int _nx, int _ny, int _degree, DataType _dx, DataType _dy);
+    multigrid_base(int _nx, int _ny, int _nz, int _degree, DataType _dx, DataType _dy, DataType _dz);
 
-    void init_full();
+    void init_full() const;
 
-    SparseMatrix *oD;
-    DataType *rhs, *sol, *D, *res;
+    DataType *rhs, *sol, *res, *buffer;
+    DataType *cc, *cr, *cl, *cu, *cd, *cb, *cf;
     int nx, ny, nz, degree, ndim, n;
     DataType dx, dy, dz;
     bool no_compatibility = false;
 
+    int base_step = 20;
+
     int of(int i, int j, int k);
 
     int of(int i, int j);
+
+    void Ax(const DataType *x);
 
     void compatibility_condition(DataType *f);
 
