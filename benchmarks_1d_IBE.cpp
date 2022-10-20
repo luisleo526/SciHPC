@@ -11,7 +11,7 @@
 #include "scihpc/runge_kutta.h"
 #include "scihpc/source.h"
 #include "scihpc/flux.h"
-#include "scihpc/derivatives_solver.h"
+#include "scihpc/SharedSolvers.h"
 #include "scihpc/wrapper.h"
 
 int main() {

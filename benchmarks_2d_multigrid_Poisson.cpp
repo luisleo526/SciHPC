@@ -38,8 +38,8 @@ int main() {
 
     int step = 0;
     while (mg.at[0]->residual() > 1e-8) {
-//        mg.full_cycle();
-        mg.v_cycle();
+        mg.full_cycle();
+//        mg.v_cycle();
         std::cout << step++ << "," << mg.at[0]->residual() << "," << mg.at[mg.level_num - 1]->residual() << std::endl;
     }
 

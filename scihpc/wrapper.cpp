@@ -6,7 +6,7 @@
 #include <cassert>
 #include <utility>
 
-void wrapper::link_solvers(derivatives_solver *_solvers) {
+void wrapper::link_solvers(SharedSolvers *_solvers) {
     solvers = _solvers;
 }
 

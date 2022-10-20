@@ -23,7 +23,7 @@ add_executable(SciHPC
 #        benchmarks_2d_dambreak.cpp
 #        benchmarks_2d_RayleighTaylorInstability.cpp
 #        benchmarks_2d_bubble_rising.cpp
-        benchmarks_2d_multigrid_Poisson.cpp
+#        benchmarks_2d_multigrid_Poisson.cpp
 #        benchmarks_3d_dambreak.cpp
 #        benchmarks_3d_multigrid_Poisson.cpp
         scihpc/flux.cpp
@@ -54,7 +54,7 @@ add_executable(SciHPC
         scihpc/uccd_base.h
         scihpc/uccd_solver.cpp
         scihpc/uccd_solver.h
-        scihpc/derivatives_solver.h
+        scihpc/SharedSolvers.h
         scihpc/wrapper.cpp
         scihpc/wrapper.h
         scihpc/dummy_data.h

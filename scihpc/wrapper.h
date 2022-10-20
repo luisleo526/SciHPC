@@ -6,7 +6,7 @@
 #define SCIHPC_WRAPPER_H
 
 #include "global.h"
-#include "derivatives_solver.h"
+#include "SharedSolvers.h"
 #include "scalar_data.h"
 #include "vector_data.h"
 #include "dummy_data.h"
@@ -29,12 +29,12 @@ public:
     bc_factory *bcFactoryU, *bcFactoryV, *bcFactoryW;
 
     //shared data
-    derivatives_solver *solvers{};
+    SharedSolvers *solvers{};
     problem_parameters *params{};
     dummy_data *dummy{};
     structured_grid* geo;
 
-    void link_solvers(derivatives_solver *_solvers);
+    void link_solvers(SharedSolvers *_solvers);
     void link_params(problem_parameters *_params);
     void link_dummy(dummy_data *_dummy);
 

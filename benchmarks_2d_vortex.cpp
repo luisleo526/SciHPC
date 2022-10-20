@@ -11,7 +11,7 @@
 #include "scihpc/source.h"
 #include "scihpc/flux.h"
 #include "scihpc/vtkWriter.h"
-#include "scihpc/derivatives_solver.h"
+#include "scihpc/SharedSolvers.h"
 #include "scihpc/wrapper.h"
 #include "scihpc/lsm.h"
 #include "wrapper_func.h"
