@@ -201,7 +201,7 @@ void multigrid_base::restriction(multigrid_base &coarse) {
             }
         }
     } else if (ndim == 3) {
-#pragma omp parallel for default(none) shared(r) collapse(3)
+#pragma omp parallel for default(none) shared(r, coarse) collapse(3)
         for (int i = 0; i < coarse.nx; ++i) {
             for (int j = 0; j < coarse.ny; ++j) {
                 for (int k = 0; k < coarse.nz; ++k) {
