@@ -15,15 +15,42 @@ int multigrid_base::of(int i, int j) {
 
 void multigrid_base::relax(int iter) {
 
-    if (cg == nullptr) {
-        cg = new CGSolver();
-        cg->compute(A);
-        cg->setMaxIterations(1);
-    }
+//    if (cg == nullptr) {
+//        cg = new CGSolver();
+//        cg->compute(A);
+//        cg->setMaxIterations(1);
+//    }
+//    for (int cnt = 0; cnt < iter; ++cnt) {
+//        sol = cg->solveWithGuess(-rhs, sol);
+//        compatibility_condition(sol);
+//    }
+    DataType rdot, alpha;
+
+    // Conjugate gradient
     for (int cnt = 0; cnt < iter; ++cnt) {
-        sol = cg->solveWithGuess(-rhs, sol);
+        if (residual() < 1e-16) {
+            break;
+        }
+        rdot = 0.0;
+#pragma omp parallel for default(none) reduction(+:rdot)
+        for (int i = 0; i < n; ++i) {
+            rdot += res[i] * res[i];
+        }
+        Ax(res);
+        alpha = 0.0;
+#pragma omp parallel for default(none) reduction(+:alpha)
+        for (int i = 0; i < n; ++i) {
+            alpha += res[i] * buffer[i];
+        }
+        alpha = rdot / alpha;
+#pragma omp parallel for default(none) shared(alpha)
+        for (int i = 0; i < n; ++i) {
+            sol[i] += alpha * res[i];
+        }
         compatibility_condition(sol);
     }
+
+
 }
 
 void multigrid_base::compatibility_condition(VectorX &f) {
@@ -196,7 +223,7 @@ void multigrid_base::solve(DataType tol) {
 
     sol = solver->solve(-rhs);
     compatibility_condition(sol);
-    while (residual() > 1e-16) {
+    while (residual() > 1e-10) {
         sol += solver->solve(res);
         compatibility_condition(sol);
     }
