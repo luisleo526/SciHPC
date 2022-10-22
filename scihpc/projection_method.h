@@ -9,8 +9,12 @@
 #include "flux.h"
 #include "source.h"
 #include "structured_grid.h"
+#include <Eigen/Sparse>
 
 class projection_method {
+private:
+    int nx, ny, nz;
+    int pos(int i, int j, int k);
 public:
     explicit projection_method(scalar_data *f);
 
@@ -34,13 +38,13 @@ public:
 
     void find_intermediate_velocity(wrapper *vel) const;
 
-    void solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel) const;
+    void projection(wrapper *pressure, wrapper *lsf, wrapper *vel) const;
 
-    static void find_final_velocity(wrapper *vel, wrapper *pressure, wrapper *lsf);
+    static void fast_pressure_correction(wrapper *pressure, wrapper *lsf, wrapper *vel);
 
-    void ab_solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const;
+    void ab_solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf);
 
-    void ab_solve_sec(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const;
+    void ab_solve_sec(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf);
 };
 
 

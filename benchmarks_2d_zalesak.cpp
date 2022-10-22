@@ -27,7 +27,7 @@ int main() {
     auto solver = runge_kutta(phi.scalar->Nx, phi.scalar->Ny, phi.scalar->Nz);
     auto vtk = vtkWriter(&geo, "zalesak_disk");
     auto param = new problem_parameters{};
-    auto deri_solvers = derivatives_solver_alloc(phi.scalar, &geo);
+    auto deri_solvers = SharedSolvers_alloc(phi.scalar, &geo);
     auto dummy = dummy_data_alloc(phi.scalar);
     phi.link_params(param);
     phi.link_solvers(deri_solvers);

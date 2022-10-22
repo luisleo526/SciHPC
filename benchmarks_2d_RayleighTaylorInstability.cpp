@@ -37,7 +37,7 @@ int main() {
     auto vtk = vtkWriter(&geo, "RTI");
 
     auto param = new problem_parameters{};
-    auto deri_solvers = derivatives_solver_alloc(phi.scalar, &geo);
+    auto deri_solvers = SharedSolvers_alloc(phi.scalar, &geo);
     auto dummy = dummy_data_alloc(phi.scalar);
 
     for (int i = 0; i < phi.scalar->nx; ++i) {
@@ -106,6 +106,7 @@ int main() {
     int pltid = 1;
     do {
 
+        param->iter++;
         find_dt(&vel);
         param->t += param->dt;
 

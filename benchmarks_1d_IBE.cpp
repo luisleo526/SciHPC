@@ -39,7 +39,7 @@ int main() {
         auto params = new problem_parameters;
         params->dt = 0.01 * geo.h;
 
-        auto deri_solvers = derivatives_solver_alloc(phi.scalar, &geo);
+        auto deri_solvers = SharedSolvers_alloc(phi.scalar, &geo);
 
         phi.link_solvers(deri_solvers);
         phi.link_params(params);

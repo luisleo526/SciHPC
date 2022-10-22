@@ -33,7 +33,7 @@ int main() {
                            bc_info{NEUMANN}, bc_info{NEUMANN});
 
         auto param = new problem_parameters{};
-        auto deri_solvers = derivatives_solver_alloc(phi.scalar, &geo);
+        auto deri_solvers = SharedSolvers_alloc(phi.scalar, &geo);
         auto dummy = dummy_data_alloc(phi.scalar);
         phi.link_params(param);
         phi.link_solvers(deri_solvers);

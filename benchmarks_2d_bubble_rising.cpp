@@ -16,8 +16,8 @@
 
 int main() {
 
-    auto geo = structured_grid(axis{-2.0, 2.0, 120},
-                               axis{-1.5, 4.5, 180});
+    auto geo = structured_grid(axis{-2.0, 2.0, 128},
+                               axis{-1.5, 4.5, 192});
 
     auto phi = wrapper(true, &geo,
                        bc_info{NEUMANN}, bc_info{NEUMANN},
@@ -36,9 +36,8 @@ int main() {
     auto flow_solver = projection_method(phi.scalar);
     auto vtk = vtkWriter(&geo, "BubbleRising");
 
-//    auto param = set_air_water(0.0571);
     auto param = new problem_parameters{};
-    auto deri_solvers = derivatives_solver_alloc(phi.scalar, &geo);
+    auto deri_solvers = SharedSolvers_alloc(phi.scalar, &geo);
     auto dummy = dummy_data_alloc(phi.scalar);
 
     for (int i = 0; i < phi.scalar->nx; ++i) {
@@ -71,12 +70,13 @@ int main() {
     param->Weber_number = 100.0;
     param->Froude_number = 1.0;
     param->ls_width = 1.5 * geo.h;
-    param->rdt = 0.1 * geo.h;
-    param->max_CFL = 0.1;
-    param->ppe_tol = 1e-4;
+    param->rdt = 0.5 * geo.h;
+    param->max_CFL = 0.25;
+    param->ppe_tol = 1e-3;
     param->ppe_initer = 1;
     param->ppe_tol2 = 1e-10;
     param->positive_ref = false;
+    param->dt = 0.01 * geo.h;
 
     std::cout << "Reynolds number: " << param->Reynolds_number << std::endl;
     std::cout << "Weber number: " << param->Weber_number << std::endl;
@@ -84,20 +84,12 @@ int main() {
 
     int step, instep;
 
-    // Init phi
-//    find_sign(&phi);
-//    stabilized_upon_gradient(&phi);
-//    step = 0;
-//    do {
-//        store_tmp(&phi);
-//        solver.tvd_rk3(&phi, &vel, identity_flux, lsf_redistance_lambda);
-//    } while (++step * param->rdt < 5.0 and l2norm(&phi) > 1e-6);
-
-    flow_solver.find_source(&vel, &nvel, &phi);
+    flow_solver.find_source_sec(&vel, &nvel, &phi);
     param->lsf_mass0 = lsf_mass(&phi);
 
     vtk.create(0);
     vtk.add_scalar(phi.scalar, "phi");
+    vtk.add_scalar(dummy->density, phi.scalar,"density");
     vtk.add_scalar(pressure.scalar, "pressure");
     vtk.add_vector(nvel.vector, "nvel");
     vtk.close();
@@ -106,18 +98,19 @@ int main() {
     int pltid = 1;
     do {
 
-        find_dt(&vel);
+//        find_dt(&vel);
         param->t += param->dt;
+        param->iter++;
 
         solver.tvd_rk3(&phi, &nvel, &identity_flux, &convection);
 
-        do {
-            solver.euler(&phi, &nvel, &identity_flux, &mpls);
-        } while (fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) > 1e-10);
+//        do {
+//            solver.euler(&phi, &nvel, &identity_flux, &mpls);
+//        } while (fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) > 1e-10);
 
-        flow_solver.ab_solve(&vel, &nvel, &pressure, &phi);
+        flow_solver.ab_solve_sec(&vel, &nvel, &pressure, &phi);
 
-        if (++step % 10 == 0) {
+        if (++step % 1 == 0) {
             std::cout << "----------------------------------------" << std::endl;
             std::cout << " time: " << param->t << std::endl;
             std::cout << " stable CFL: " << param->stable_CFL << std::endl;

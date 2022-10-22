@@ -185,13 +185,12 @@ DataType weno5_for_godunov(DataType a, DataType b, DataType c, DataType d) {
     auto is0 = 13.0 * pow(a - b, 2.0) + 3.0 * pow(a - 3.0 * b, 2.0);
     auto is1 = 13.0 * pow(b - c, 2.0) + 3.0 * pow(b + c, 2.0);
     auto is2 = 13.0 * pow(c - d, 2.0) + 3.0 * pow(3.0 * c - d, 2.0);
-//    auto alp0 = 1.0 / pow(eps + is0, 2.0);
-//    auto alp1 = 6.0 / pow(eps + is1, 2.0);
-//    auto alp2 = 3.0 / pow(eps + is2, 2.0);
-
-    auto alp0 = 1.0 * (1.0 + fabs(is0 - is2) / (epsilon + is0));
-    auto alp1 = 6.0 * (1.0 + fabs(is0 - is2) / (epsilon + is1));
-    auto alp2 = 3.0 * (1.0 + fabs(is0 - is2) / (epsilon + is2));
+    auto alp0 = 1.0 / pow(eps + is0, 2.0);
+    auto alp1 = 6.0 / pow(eps + is1, 2.0);
+    auto alp2 = 3.0 / pow(eps + is2, 2.0);
+//    auto alp0 = 1.0 * (1.0 + fabs(is0 - is2) / (epsilon + is0));
+//    auto alp1 = 6.0 * (1.0 + fabs(is0 - is2) / (epsilon + is1));
+//    auto alp2 = 3.0 * (1.0 + fabs(is0 - is2) / (epsilon + is2));
 
     auto w0 = alp0 / (alp0 + alp1 + alp2);
     auto w2 = alp2 / (alp0 + alp1 + alp2);

@@ -14,7 +14,7 @@ public:
     int nx, ny, nz;
     int ndim;
 
-    DataType ***data, ***flux;
+    DataType ***data, ***flux, ***old, ***old2;
     DataType ***fx, ***fy, ***fz;
     DataType ***fxx, ***fyy, ***fzz;
     DataType ***fxy, ***fyz, ***fzx;
@@ -26,6 +26,8 @@ public:
     scalar_data(int _nx, int _ny, int _nz);
 
     indices index_mapping(int i, int j, int k);
+
+    void store() const;
 
 };
 

@@ -14,7 +14,7 @@ int main() {
                        bc_info{NEUMANN}, bc_info{NEUMANN},
                        bc_info{NEUMANN}, bc_info{NEUMANN});
 
-    auto mg = multigrid(&phi);
+    auto mg = multigrid(phi.scalar, &geo);
 
     auto vtk = vtkWriter(&geo, "multigrid_test");
 

@@ -23,6 +23,7 @@ struct axis {
 };
 
 struct problem_parameters {
+    int iter = 0;
     DataType t = 0.0;
     DataType dt = 1.0;
     DataType max_CFL = 0.01;

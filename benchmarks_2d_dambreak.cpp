@@ -37,7 +37,7 @@ int main() {
     auto vtk = vtkWriter(&geo, "dambreak");
 
     auto param = set_air_water(0.0571);
-    auto deri_solvers = derivatives_solver_alloc(phi.scalar, &geo);
+    auto deri_solvers = SharedSolvers_alloc(phi.scalar, &geo);
     auto dummy = dummy_data_alloc(phi.scalar);
 
     for (int i = 0; i < phi.scalar->nx; ++i) {

@@ -4,6 +4,7 @@
 
 #include "projection_method.h"
 #include <iostream>
+#include <cassert>
 
 projection_method::projection_method(scalar_data *f) {
     u_src = init_array(f->Nx, f->Ny, f->Nz);
@@ -23,6 +24,11 @@ projection_method::projection_method(scalar_data *f) {
     CF = init_array(f->Nx, f->Ny, f->Nz);
     CB = init_array(f->Nx, f->Ny, f->Nz);
     RHS = init_array(f->Nx, f->Ny, f->Nz);
+
+    nx = f->nx;
+    ny = f->ny;
+    nz = f->nz;
+
 }
 
 void projection_method::add_stress_x(wrapper *vel, wrapper *lsf, wrapper *nvel) const {
@@ -398,7 +404,7 @@ void projection_method::find_intermediate_velocity(wrapper *vel) const {
 
 }
 
-void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel) const {
+void projection_method::projection(wrapper *pressure, wrapper *lsf, wrapper *vel) const {
 
 #pragma omp parallel for default(none) shared(pressure, lsf, vel) collapse(3)
     for (int I = 0; I < lsf->scalar->nx; ++I) {
@@ -503,17 +509,14 @@ void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel)
                                                       (1.0 - pressure->params->ppe_omega) *
                                                       pressure->scalar->data[I][J][K];
                     sump += pressure->scalar->data[I][J][K];
-                    error += pow(pnew * CC[I][J][K] - CC[I][J][K] * pressure->scalar->data[I][J][K], 2);
+                    error += fabs(pnew * CC[I][J][K] - CC[I][J][K] * pressure->scalar->data[I][J][K]);
                 }
             }
         }
         sump = sump / (pressure->scalar->nx * pressure->scalar->ny);
-        error = error / (pressure->scalar->nx * pressure->scalar->ny);
         if (lsf->scalar->ndim > 2) {
             sump = sump / pressure->scalar->nz;
-            error = error / pressure->scalar->nz;
         }
-        error = sqrt(error);
 
 #pragma omp parallel for default(none) shared(pressure, sump) collapse(3)
         for (int i = 0; i < pressure->scalar->nx; ++i) {
@@ -531,9 +534,7 @@ void projection_method::solve_ppe(wrapper *pressure, wrapper *lsf, wrapper *vel)
     } while (iter < pressure->params->ppe_max_iter and error > pressure->params->ppe_tol and
              linfity(pressure) > pressure->params->ppe_tol2);
 
-}
-
-void projection_method::find_final_velocity(wrapper *vel, wrapper *pressure, wrapper *lsf) {
+    // update velocity
 
 #pragma omp parallel for default(none) shared(vel, pressure, lsf) collapse(3)
     for (int i = 0; i < lsf->scalar->Nx - 1; ++i) {
@@ -561,26 +562,254 @@ void projection_method::find_final_velocity(wrapper *vel, wrapper *pressure, wra
         }
     }
     vel->apply_vel_bc();
+
 }
 
-void projection_method::ab_solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const {
+void projection_method::fast_pressure_correction(wrapper *pressure, wrapper *lsf, wrapper *vel) {
+
+    auto dx = pressure->geo->dx;
+    auto dy = pressure->geo->dy;
+    auto dz = pressure->geo->dz;
+    auto dt = pressure->params->dt;
+    auto rho12 = pressure->params->density_ratio;
+
+    if (pressure->scalar->ndim == 2) {
+        for (int I = 0; I < pressure->scalar->nx; ++I) {
+            for (int J = 0; J < pressure->scalar->ny; ++J) {
+                auto index = pressure->scalar->index_mapping(I + 1, J + 1, 1);
+                auto i = index.i;
+                auto j = index.j;
+                auto k = index.k;
+                auto pos = pressure->solvers->mg->at[0]->of(I, J);
+                auto div = (vel->vector->x.data[i][j][k] - vel->vector->x.data[i - 1][j][k]) / dx +
+                           (vel->vector->y.data[i][j][k] - vel->vector->y.data[i][j - 1][k]) / dy;
+                auto cr = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i + 1][j][k] + lsf->dummy->density[i][j][k]);
+                auto cl = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i - 1][j][k] + lsf->dummy->density[i][j][k]);
+                auto cu = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i][j + 1][k] + lsf->dummy->density[i][j][k]);
+                auto cd = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i][j - 1][k] + lsf->dummy->density[i][j][k]);
+
+                cr = cr / dx / dx;
+                cl = cl / dx / dx;
+                cu = cu / dy / dy;
+                cd = cd / dy / dy;
+
+                if (I == 0) {
+                    cl = 0.0;
+                }
+
+                if (I == pressure->scalar->nx - 1) {
+                    cr = 0.0;
+                }
+
+                if (J == 0) {
+                    cd = 0.0;
+                }
+
+                if (J == pressure->scalar->ny - 1) {
+                    cu = 0.0;
+                }
+
+                auto cc = -(cr + cl + cu + cd);
+
+                pressure->solvers->mg->at[0]->rhs[pos] = div / dt * rho12;
+                pressure->solvers->mg->at[0]->rhs[pos] += cc * pressure->scalar->flux[i][j][k];
+                pressure->solvers->mg->at[0]->rhs[pos] += cr * pressure->scalar->flux[i + 1][j][k];
+                pressure->solvers->mg->at[0]->rhs[pos] += cl * pressure->scalar->flux[i - 1][j][k];
+                pressure->solvers->mg->at[0]->rhs[pos] += cu * pressure->scalar->flux[i][j + 1][k];
+                pressure->solvers->mg->at[0]->rhs[pos] += cd * pressure->scalar->flux[i][j - 1][k];
+
+                pressure->solvers->mg->at[0]->sol[pos] = pressure->scalar->data[i][j][k];
+            }
+        }
+    } else {
+        for (int I = 0; I < pressure->scalar->nx; ++I) {
+            for (int J = 0; J < pressure->scalar->ny; ++J) {
+                for (int K = 0; K < pressure->scalar->nz; ++K) {
+                    auto index = pressure->scalar->index_mapping(I + 1, J + 1, K + 1);
+                    auto i = index.i;
+                    auto j = index.j;
+                    auto k = index.k;
+                    auto pos = pressure->solvers->mg->at[0]->of(I, J, K);
+                    auto div = (vel->vector->x.data[i][j][k] - vel->vector->x.data[i - 1][j][k]) / dx +
+                               (vel->vector->y.data[i][j][k] - vel->vector->y.data[i][j - 1][k]) / dy +
+                               (vel->vector->z.data[i][j][k] - vel->vector->z.data[i][j][k - 1]) / dz;
+                    auto cr = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i + 1][j][k] + lsf->dummy->density[i][j][k]);
+                    auto cl = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i - 1][j][k] + lsf->dummy->density[i][j][k]);
+                    auto cu = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i][j + 1][k] + lsf->dummy->density[i][j][k]);
+                    auto cd = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i][j - 1][k] + lsf->dummy->density[i][j][k]);
+                    auto cf = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i][j][k + 1] + lsf->dummy->density[i][j][k]);
+                    auto cb = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i][j][k - 1] + lsf->dummy->density[i][j][k]);
+
+                    cr = cr / dx / dx;
+                    cl = cl / dx / dx;
+                    cu = cu / dy / dy;
+                    cd = cd / dy / dy;
+                    cf = cf / dz / dz;
+                    cb = cb / dz / dz;
+
+                    if (I == 0) {
+                        cl = 0.0;
+                    }
+
+                    if (I == pressure->scalar->nx - 1) {
+                        cr = 0.0;
+                    }
+
+                    if (J == 0) {
+                        cd = 0.0;
+                    }
+
+                    if (J == pressure->scalar->ny - 1) {
+                        cu = 0.0;
+                    }
+
+                    if (K == 0) {
+                        cb = 0.0;
+                    }
+
+                    if (K == pressure->scalar->nz - 1) {
+                        cf = 0.0;
+                    }
+
+                    auto cc = -(cr + cl + cu + cd + cf + cb);
+
+                    pressure->solvers->mg->at[0]->rhs[pos] = div / dt * rho12;
+                    pressure->solvers->mg->at[0]->rhs[pos] += cc * pressure->scalar->flux[i][j][k];
+                    pressure->solvers->mg->at[0]->rhs[pos] += cr * pressure->scalar->flux[i + 1][j][k];
+                    pressure->solvers->mg->at[0]->rhs[pos] += cl * pressure->scalar->flux[i - 1][j][k];
+                    pressure->solvers->mg->at[0]->rhs[pos] += cu * pressure->scalar->flux[i][j + 1][k];
+                    pressure->solvers->mg->at[0]->rhs[pos] += cd * pressure->scalar->flux[i][j - 1][k];
+                    pressure->solvers->mg->at[0]->rhs[pos] += cf * pressure->scalar->flux[i][j][k + 1];
+                    pressure->solvers->mg->at[0]->rhs[pos] += cb * pressure->scalar->flux[i][j][k - 1];
+
+                    pressure->solvers->mg->at[0]->sol[pos] = pressure->scalar->data[i][j][k];
+
+                }
+            }
+        }
+    }
+
+    auto error = pressure->solvers->mg->at[0]->residual();
+    int iter = 0;
+
+    auto error0 = error;
+    while (error > pressure->params->ppe_tol && iter < pressure->params->ppe_max_iter) {
+        iter++;
+        error0 = error;
+        pressure->solvers->mg->full_cycle();
+        error = pressure->solvers->mg->at[0]->residual();
+        if (iter % 100 == 0) {
+            std::cout << "PPE residual from MG: " << error << ","
+                      << pressure->solvers->mg->at[pressure->solvers->mg->level_num - 1]->residual() << std::endl;
+        }
+    }
+
+    for (int I = 0; I < pressure->scalar->nx; ++I) {
+        for (int J = 0; J < pressure->scalar->ny; ++J) {
+            for (int K = 0; K < pressure->scalar->nz; ++K) {
+                auto index = pressure->scalar->index_mapping(I + 1, J + 1, K + 1);
+                auto i = index.i;
+                auto j = index.j;
+                auto k = index.k;
+                auto pos = pressure->solvers->mg->at[0]->of(I, J, K);
+                pressure->scalar->data[i][j][k] = pressure->solvers->mg->at[0]->sol[pos];
+            }
+        }
+    }
+    pressure->apply_scalar_bc();
+
+    if (pressure->scalar->ndim == 2) {
+
+        for (int i = 0; i < lsf->scalar->Nx - 1; ++i) {
+            for (int j = 0; j < lsf->scalar->Ny - 1; ++j) {
+                for (int k = 0; k < lsf->scalar->Nz; ++k) {
+
+                    auto density = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i + 1][j][k]);
+                    auto px = (pressure->scalar->data[i + 1][j][k] - pressure->scalar->data[i][j][k]) / dx;
+                    auto px2 = (pressure->scalar->flux[i + 1][j][k] + pressure->scalar->flux[i][j][k]) / dx;
+
+                    vel->vector->x.data[i][j][k] -= dt * (px / rho12 + (1.0 / density - 1.0 / rho12) * px2);
+
+                    density = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j + 1][k]);
+                    auto py = (pressure->scalar->data[i][j + 1][k] - pressure->scalar->data[i][j][k]) / dy;
+                    auto py2 = (pressure->scalar->flux[i][j + 1][k] + pressure->scalar->flux[i][j][k]) / dy;
+
+                    vel->vector->y.data[i][j][k] -= dt * (py / rho12 + (1.0 / density - 1.0 / rho12) * py2);
+                }
+            }
+        }
+
+    } else {
+
+        for (int i = 0; i < lsf->scalar->Nx - 1; ++i) {
+            for (int j = 0; j < lsf->scalar->Ny - 1; ++j) {
+                for (int k = 0; k < lsf->scalar->Nz - 1; ++k) {
+
+                    auto density = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i + 1][j][k]);
+                    auto px = (pressure->scalar->data[i + 1][j][k] - pressure->scalar->data[i][j][k]) / dx;
+                    auto px2 = (pressure->scalar->flux[i + 1][j][k] + pressure->scalar->flux[i][j][k]) / dx;
+
+                    vel->vector->x.data[i][j][k] -= dt * (px / rho12 + (1.0 / density - 1.0 / rho12) * px2);
+
+                    density = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j + 1][k]);
+                    auto py = (pressure->scalar->data[i][j + 1][k] - pressure->scalar->data[i][j][k]) / dy;
+                    auto py2 = (pressure->scalar->flux[i][j + 1][k] + pressure->scalar->flux[i][j][k]) / dy;
+
+                    vel->vector->y.data[i][j][k] -= dt * (py / rho12 + (1.0 / density - 1.0 / rho12) * py2);
+
+                    density = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j][k + 1]);
+                    auto pz = (pressure->scalar->data[i][j][k + 1] - pressure->scalar->data[i][j][k]) / dz;
+                    auto pz2 = (pressure->scalar->flux[i][j][k + 1] + pressure->scalar->flux[i][j][k]) / dz;
+
+                    vel->vector->z.data[i][j][k] -= dt * (pz / rho12 + (1.0 / density - 1.0 / rho12) * pz2);
+
+                }
+            }
+        }
+    }
+
+    vel->apply_vel_bc();
+
+}
+
+void projection_method::ab_solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) {
+    pressure->scalar->store();
     find_source(vel, nvel, lsf);
     find_intermediate_velocity(vel);
-    for (int i = 0; i < vel->params->ppe_initer; ++i) {
-        solve_ppe(pressure, lsf, vel);
-        find_final_velocity(vel, pressure, lsf);
+
+    for (int cnt = 0; cnt < pressure->params->ppe_initer; ++cnt) {
+        if (pressure->params->iter < 0) {
+            identity_flux(pressure->scalar);
+            projection(pressure, lsf, vel);
+        } else {
+            identity_flux(pressure->scalar);
+            fast_pressure_correction(pressure, lsf, vel);
+        }
     }
+
     node_from_face(vel, nvel);
     nvel->apply_nvel_bc();
 }
 
-void projection_method::ab_solve_sec(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) const {
+void projection_method::ab_solve_sec(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf) {
+    pressure->scalar->store();
     find_source_sec(vel, nvel, lsf);
     find_intermediate_velocity(vel);
-    for (int i = 0; i < vel->params->ppe_initer; ++i) {
-        solve_ppe(pressure, lsf, vel);
-        find_final_velocity(vel, pressure, lsf);
+
+    for (int cnt = 0; cnt < pressure->params->ppe_initer; ++cnt) {
+        if (pressure->params->iter < 0) {
+            identity_flux(pressure->scalar);
+            projection(pressure, lsf, vel);
+        } else {
+            identity_flux(pressure->scalar);
+            fast_pressure_correction(pressure, lsf, vel);
+        }
     }
+
     node_from_face(vel, nvel);
     nvel->apply_nvel_bc();
+}
+
+int projection_method::pos(int i, int j, int k) {
+    return i + j * nx + k * nx * ny;
 }

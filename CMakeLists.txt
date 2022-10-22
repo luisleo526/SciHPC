@@ -10,6 +10,7 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 
 include_directories(scihpc)
+include_directories(/usr/local/include/eigen3)
 
 add_executable(SciHPC
 #        main.cpp
@@ -22,8 +23,9 @@ add_executable(SciHPC
 #        benchmarks_2d_cavity_flows.cpp
 #        benchmarks_2d_dambreak.cpp
 #        benchmarks_2d_RayleighTaylorInstability.cpp
-#        benchmarks_2d_bubble_rising.cpp
-#        benchmarks_2d_multigrid_Poisson.cpp
+        benchmarks_2d_bubble_rising.cpp
+#        benchmarks_2d_multigrid_Poisson_Dirichlet.cpp
+#        benchmarks_2d_multigrid_Poisson_Neumann.cpp
 #        benchmarks_3d_dambreak.cpp
 #        benchmarks_3d_multigrid_Poisson.cpp
         scihpc/flux.cpp
@@ -61,7 +63,7 @@ add_executable(SciHPC
         scihpc/dummy_data.cpp
         scihpc/weno_solver.cpp
         scihpc/weno_solver.h
-        scihpc/derivatives_solver.cpp
+        scihpc/SharedSolvers.cpp
         scihpc/godunov_gradient.cpp
         scihpc/godunov_gradient.h
         scihpc/wrapper_func.cpp

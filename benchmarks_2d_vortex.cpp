@@ -56,7 +56,7 @@ int main() {
     param->viscosity_ratio = 1.0;
     param->ls_width = 1.5 * geo.h;
     param->dt = 0.1 * geo.h;
-    auto deri_solvers = derivatives_solver_alloc(phi.scalar, &geo);
+    auto deri_solvers = SharedSolvers_alloc(phi.scalar, &geo);
     auto dummy = dummy_data_alloc(phi.scalar);
     phi.link_params(param);
     phi.link_solvers(deri_solvers);

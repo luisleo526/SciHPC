@@ -6,22 +6,24 @@
 
 int main() {
 
-    auto geo = structured_grid(axis{0.0, 1.0, 144},
-                               axis{-0.5, 0.5, 144});
+    auto geo = structured_grid(axis{0.0, 1.0, 128},
+                               axis{-0.5, 0.5, 128});
     auto phi = wrapper(true, &geo,
                        bc_info{NEUMANN}, bc_info{NEUMANN},
                        bc_info{NEUMANN}, bc_info{NEUMANN});
 
-    auto mg = multigrid(&phi);
+    auto mg = multigrid(phi.scalar, &geo);
 
-    auto vtk = vtkWriter(&geo, "multigrid_test");
+    auto vtk = vtkWriter(&geo, "multigrid_Dirichlet");
 
     for (int i = 0; i < mg.level_num; ++i) {
         // For Dirichlet BC, the boundary value is 0.0
         mg.at[i]->no_compatibility = true;
         mg.at[i]->init_full();
-        std::cout << mg.at[i]->ndim << " " << mg.at[i]->nx << " " << mg.at[i]->ny << " " << mg.at[i]->nz << std::endl;
+        std::cout << mg.at[i]->degree << " " << mg.at[i]->nx << " " << mg.at[i]->ny << " " << mg.at[i]->nz << std::endl;
     }
+
+    std::cout << mg.at[mg.level_num-1]->A.innerSize() << std::endl;
 
     std::cout << "Assigning initial values..." << std::endl;
 
@@ -40,6 +42,7 @@ int main() {
     while (mg.at[0]->residual() > 1e-8) {
         mg.full_cycle();
 //        mg.v_cycle();
+//        mg.at[0]->relax(1);
         std::cout << step++ << "," << mg.at[0]->residual() << "," << mg.at[mg.level_num - 1]->residual() << std::endl;
     }
 
