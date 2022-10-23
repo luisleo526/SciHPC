@@ -6,8 +6,8 @@
 
 int main() {
 
-    auto geo = structured_grid(axis{-0.5, 0.5, 128},
-                               axis{-0.5, 0.5, 128});
+    auto geo = structured_grid(axis{-0.5, 0.5, 144},
+                               axis{-0.5, 0.5, 144});
     auto phi = wrapper(true, &geo,
                        bc_info{NEUMANN}, bc_info{NEUMANN},
                        bc_info{NEUMANN}, bc_info{NEUMANN});
@@ -35,8 +35,8 @@ int main() {
 
     int step = 0;
     while (mg.at[0]->residual() > 1e-8) {
-//        mg.full_cycle();
-        mg.v_cycle();
+        mg.full_cycle();
+//        mg.v_cycle();
 //        mg.at[0]->relax(1);
         std::cout << step++ << "," << mg.at[0]->residual() << "," << mg.at[mg.level_num - 1]->residual() << std::endl;
     }

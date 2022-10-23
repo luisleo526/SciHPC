@@ -12,9 +12,18 @@ int multigrid::check2d(std::vector<int> &nx, std::vector<int> &ny) {
         nx.push_back(nx.back() / 2);
         ny.push_back(ny.back() / 2);
         return 2;
+    } else if (nx.back() % 3 == 0 && ny.back() % 3 == 0 && nx.back() / 3 > min_grid && ny.back() / 3 > min_grid) {
+        nx.push_back(nx.back() / 3);
+        ny.push_back(ny.back() / 3);
+        return 3;
+    } else if (nx.back() % 5 == 0 && ny.back() % 5 == 0 && nx.back() / 5 > min_grid && ny.back() / 5 > min_grid) {
+        nx.push_back(nx.back() / 5);
+        ny.push_back(ny.back() / 5);
+        return 5;
     } else {
-        return 1;
+        return 0;
     }
+
 }
 
 int multigrid::check3d(std::vector<int> &nx, std::vector<int> &ny, std::vector<int> &nz) {
@@ -24,21 +33,33 @@ int multigrid::check3d(std::vector<int> &nx, std::vector<int> &ny, std::vector<i
         ny.push_back(ny.back() / 2);
         nz.push_back(nz.back() / 2);
         return 2;
+    } else if (nx.back() % 3 == 0 && ny.back() % 3 == 0 && nz.back() % 3 == 0 && nx.back() / 3 > min_grid &&
+               ny.back() / 3 > min_grid && nz.back() / 3 > min_grid) {
+        nx.push_back(nx.back() / 3);
+        ny.push_back(ny.back() / 3);
+        nz.push_back(nz.back() / 3);
+        return 3;
+    } else if (nx.back() % 5 == 0 && ny.back() % 5 == 0 && nz.back() % 5 == 0 && nx.back() / 5 > min_grid &&
+               ny.back() / 5 > min_grid && nz.back() / 5 > min_grid) {
+        nx.push_back(nx.back() / 5);
+        ny.push_back(ny.back() / 5);
+        nz.push_back(nz.back() / 5);
+        return 5;
     } else {
-        return 1;
+        return 0;
     }
 }
 
 void multigrid::v_cycle() {
 
     for (int i = 0; i < level_num - 1; ++i) {
-        at[i]->restriction(*at[i + 1]);
+        at[i]->restriction(at[i + 1]);
     }
 
     at[level_num - 1]->solve(1e-16);
 
     for (int i = int(level_num) - 1; i > 0; --i) {
-        at[i]->prolongation(*at[i - 1]);
+        at[i]->prolongation(at[i - 1]);
     }
 
 }
@@ -46,23 +67,23 @@ void multigrid::v_cycle() {
 void multigrid::full_cycle() {
 
     for (int i = 0; i < level_num - 1; ++i) {
-        at[i]->restriction(*at[i + 1]);
+        at[i]->restriction(at[i + 1]);
     }
 
     at[level_num - 1]->solve(1e-16);
 
     for (int iter = 1; iter < level_num; ++iter) {
         for (int i = int(level_num) - 1; i < int(level_num) - 1 - iter; --i) {
-            at[i]->prolongation(*at[i - 1]);
+            at[i]->prolongation(at[i - 1]);
         }
         for (int i = int(level_num) - 1 - iter; i < level_num - 1; ++i) {
-            at[i]->restriction(*at[i + 1]);
+            at[i]->restriction(at[i + 1]);
         }
         at[level_num - 1]->solve(1e-16);
     }
 
     for (int i = int(level_num) - 1; i > 0; --i) {
-        at[i]->prolongation(*at[i - 1]);
+        at[i]->prolongation(at[i - 1]);
     }
 
 }

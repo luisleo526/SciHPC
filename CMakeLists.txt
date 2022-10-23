@@ -24,8 +24,8 @@ add_executable(SciHPC
 #        benchmarks_2d_dambreak.cpp
 #        benchmarks_2d_RayleighTaylorInstability.cpp
 #        benchmarks_2d_bubble_rising.cpp
-        benchmarks_2d_multigrid_Poisson_Dirichlet.cpp
-#        benchmarks_2d_multigrid_Poisson_Neumann.cpp
+#        benchmarks_2d_multigrid_Poisson_Dirichlet.cpp
+        benchmarks_2d_multigrid_Poisson_Neumann.cpp
 #        benchmarks_3d_dambreak.cpp
 #        benchmarks_3d_multigrid_Poisson.cpp
         scihpc/flux.cpp

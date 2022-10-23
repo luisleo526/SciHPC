@@ -4,6 +4,8 @@
 
 #include "multigrid_base.h"
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 int multigrid_base::of(int i, int j, int k) {
     return i + j * nx + k * nx * ny;
@@ -15,15 +17,6 @@ int multigrid_base::of(int i, int j) {
 
 void multigrid_base::relax(int iter) {
 
-//    if (cg == nullptr) {
-//        cg = new CGSolver();
-//        cg->compute(A);
-//        cg->setMaxIterations(1);
-//    }
-//    for (int cnt = 0; cnt < iter; ++cnt) {
-//        sol = cg->solveWithGuess(-rhs, sol);
-//        compatibility_condition(sol);
-//    }
     DataType rdot, alpha;
 
     // Conjugate gradient
@@ -76,52 +69,55 @@ void multigrid_base::compatibility_condition(VectorX &f) {
 }
 
 DataType multigrid_base::residual() {
-    res = -rhs - A * sol;
+    res = rhs - A * sol;
     return res.norm();
 }
 
-void multigrid_base::restriction(multigrid_base &coarse) {
+void multigrid_base::restriction(multigrid_base *coarse) {
     relax(base_step);
     residual();
-    auto r = coarse.degree / degree;
+    auto r = coarse->degree / degree;
+
     if (ndim == 2) {
 #pragma omp parallel for default(none) shared(r, coarse) collapse(2)
-        for (int i = 0; i < coarse.nx; ++i) {
-            for (int j = 0; j < coarse.ny; ++j) {
-                coarse.rhs[coarse.of(i, j)] = 0.0;
+        for (int i = 0; i < coarse->nx; ++i) {
+            for (int j = 0; j < coarse->ny; ++j) {
+                coarse->rhs[coarse->of(i, j)] = 0.0;
                 for (int ii = 0; ii < r; ++ii) {
                     for (int jj = 0; jj < r; ++jj) {
-                        coarse.rhs[coarse.of(i, j)] += res[of(i * r + ii, j * r + jj)];
+                        coarse->rhs[coarse->of(i, j)] += res[of(i * r + ii, j * r + jj)];
                     }
                 }
-                coarse.rhs[coarse.of(i, j)] /= r * r;
-                coarse.sol[coarse.of(i, j)] = 0.0;
+                coarse->rhs[coarse->of(i, j)] /= r * r;
+                coarse->sol[coarse->of(i, j)] = 0.0;
             }
         }
     } else if (ndim == 3) {
 #pragma omp parallel for default(none) shared(r, coarse) collapse(3)
-        for (int i = 0; i < coarse.nx; ++i) {
-            for (int j = 0; j < coarse.ny; ++j) {
-                for (int k = 0; k < coarse.nz; ++k) {
-                    coarse.rhs[coarse.of(i, j, k)] = 0.0;
+        for (int i = 0; i < coarse->nx; ++i) {
+            for (int j = 0; j < coarse->ny; ++j) {
+                for (int k = 0; k < coarse->nz; ++k) {
+                    coarse->rhs[coarse->of(i, j, k)] = 0.0;
                     for (int ii = 0; ii < r; ++ii) {
                         for (int jj = 0; jj < r; ++jj) {
                             for (int kk = 0; kk < r; ++kk) {
-                                coarse.rhs[coarse.of(i, j, k)] += res[of(i * r + ii, j * r + jj, k * r + kk)];
+                                coarse->rhs[coarse->of(i, j, k)] += res[of(i * r + ii, j * r + jj, k * r + kk)];
                             }
                         }
                     }
-                    coarse.rhs[coarse.of(i, j, k)] /= r * r * r;
-                    coarse.sol[coarse.of(i, j, k)] = 0.0;
+                    coarse->rhs[coarse->of(i, j, k)] /= r * r * r;
+                    coarse->sol[coarse->of(i, j, k)] = 0.0;
                 }
             }
         }
     }
-    coarse.compatibility_condition(coarse.rhs);
+    coarse->compatibility_condition(coarse->rhs);
 }
 
-void multigrid_base::prolongation(multigrid_base &dense) {
-    auto r = dense.degree / degree;
+void multigrid_base::prolongation(multigrid_base *dense) {
+    auto r = degree / dense->degree;
+
+    DataType tmp1, tmp2;
     if (ndim == 2) {
 #pragma omp parallel for default(none) shared(r, dense) collapse(2)
         for (int i = 0; i < nx; ++i) {
@@ -150,12 +146,15 @@ void multigrid_base::prolongation(multigrid_base &dense) {
 
                 for (int ii = 0; ii < r; ++ii) {
                     for (int jj = 0; jj < r; ++jj) {
-                        auto x = (0.5 + ii) * dense.dx;
-                        auto y = (0.5 + jj) * dense.dy;
-                        dense.sol[dense.of(i * r + ii, j * r + jj)] +=
+                        auto x = (0.5 + ii) * dense->dx;
+                        auto y = (0.5 + jj) * dense->dy;
+                        tmp1 = x;
+                        tmp2 = y;
+                        dense->sol[dense->of(i * r + ii, j * r + jj)] +=
                                 sol[of(i, j)] + fx * (x - 0.5 * dx) + fy * (y - 0.5 * dy);
                     }
                 }
+
             }
         }
     } else if (ndim == 3) {
@@ -197,10 +196,10 @@ void multigrid_base::prolongation(multigrid_base &dense) {
                     for (int ii = 0; ii < r; ++ii) {
                         for (int jj = 0; jj < r; ++jj) {
                             for (int kk = 0; kk < r; ++kk) {
-                                auto x = (0.5 + ii) * dense.dx;
-                                auto y = (0.5 + jj) * dense.dy;
-                                auto z = (0.5 + kk) * dense.dz;
-                                dense.sol[dense.of(i * r + ii, j * r + jj, k * r + kk)] +=
+                                auto x = (0.5 + ii) * dense->dx;
+                                auto y = (0.5 + jj) * dense->dy;
+                                auto z = (0.5 + kk) * dense->dz;
+                                dense->sol[dense->of(i * r + ii, j * r + jj, k * r + kk)] +=
                                         sol[of(i, j, k)] + fx * (x - 0.5 * dx) + fy * (y - 0.5 * dy) +
                                         fz * (z - 0.5 * dz);
                             }
@@ -210,7 +209,8 @@ void multigrid_base::prolongation(multigrid_base &dense) {
             }
         }
     }
-    dense.relax(base_step);
+    dense->relax(base_step);
+//    std::cout << tmp1 << ", " << tmp2 << std::endl;
 }
 
 void multigrid_base::solve(DataType tol) {
@@ -221,7 +221,7 @@ void multigrid_base::solve(DataType tol) {
         solver->factorize(A);
     }
 
-    sol = solver->solve(-rhs);
+    sol = solver->solve(rhs);
     compatibility_condition(sol);
     while (residual() > 1e-10) {
         sol += solver->solve(res);
@@ -234,11 +234,11 @@ void multigrid_base::init_full() {
 
     if (ndim == 2) {
         for (int i = 0; i < n; ++i) {
-            A.coeffRef(i, i) = 2.0 / dx / dx + 2.0 / dy / dy;
+            A.coeffRef(i, i) = -(2.0 / dx / dx + 2.0 / dy / dy);
         }
     } else {
         for (int i = 0; i < n; ++i) {
-            A.coeffRef(i, i) = 2.0 / dx / dx + 2.0 / dy / dy + 2.0 / dz / dz;
+            A.coeffRef(i, i) = -(2.0 / dx / dx + 2.0 / dy / dy + 2.0 / dz / dz);
         }
     }
 
@@ -263,36 +263,35 @@ multigrid_base::multigrid_base(int _nx, int _ny, int _nz, int _degree, DataType 
     A = SMatrix(n, n);
     solver = nullptr;
 
-#pragma omp parallel for default(none) collapse(3)
     for (int i = 0; i < nx; ++i) {
         for (int j = 0; j < ny; ++j) {
             for (int k = 0; k < nz; ++k) {
                 DataType cc = 0.0;
                 if (i > 0) {
-                    A.insert(of(i, j, k), of(i - 1, j, k)) = -1.0 / dx / dx;
+                    A.insert(of(i, j, k), of(i - 1, j, k)) = 1.0 / dx / dx;
                     cc += 1.0 / dx / dx;
                 }
                 if (i < nx - 1) {
-                    A.insert(of(i, j, k), of(i + 1, j, k)) = -1.0 / dx / dx;
+                    A.insert(of(i, j, k), of(i + 1, j, k)) = 1.0 / dx / dx;
                     cc += 1.0 / dx / dx;
                 }
                 if (j > 0) {
-                    A.insert(of(i, j, k), of(i, j - 1, k)) = -1.0 / dy / dy;
+                    A.insert(of(i, j, k), of(i, j - 1, k)) = 1.0 / dy / dy;
                     cc += 1.0 / dy / dy;
                 }
                 if (j < ny - 1) {
-                    A.insert(of(i, j, k), of(i, j + 1, k)) = -1.0 / dy / dy;
+                    A.insert(of(i, j, k), of(i, j + 1, k)) = 1.0 / dy / dy;
                     cc += 1.0 / dy / dy;
                 }
                 if (k > 0) {
-                    A.insert(of(i, j, k), of(i, j, k - 1)) = -1.0 / dz / dz;
+                    A.insert(of(i, j, k), of(i, j, k - 1)) = 1.0 / dz / dz;
                     cc += 1.0 / dz / dz;
                 }
                 if (k < nz - 1) {
-                    A.insert(of(i, j, k), of(i, j, k + 1)) = -1.0 / dz / dz;
+                    A.insert(of(i, j, k), of(i, j, k + 1)) = 1.0 / dz / dz;
                     cc += 1.0 / dz / dz;
                 }
-                A.insert(of(i, j, k), of(i, j, k)) = cc;
+                A.insert(of(i, j, k), of(i, j, k)) = -cc;
             }
         }
     }
@@ -317,29 +316,27 @@ multigrid_base::multigrid_base(int _nx, int _ny, int _degree, DataType _dx, Data
     buffer = VectorX(n);
     A = SMatrix(n, n);
     solver = nullptr;
-    cg = nullptr;
 
-#pragma omp parallel for default(none) collapse(2)
     for (int i = 0; i < nx; ++i) {
         for (int j = 0; j < ny; ++j) {
             DataType cc = 0.0;
             if (i > 0) {
-                A.insert(of(i, j), of(i - 1, j)) = -1.0 / dx / dx;
+                A.insert(of(i, j), of(i - 1, j)) = 1.0 / dx / dx;
                 cc += 1.0 / dx / dx;
             }
             if (i < nx - 1) {
-                A.insert(of(i, j), of(i + 1, j)) = -1.0 / dx / dx;
+                A.insert(of(i, j), of(i + 1, j)) = 1.0 / dx / dx;
                 cc += 1.0 / dx / dx;
             }
             if (j > 0) {
-                A.insert(of(i, j), of(i, j - 1)) = -1.0 / dy / dy;
+                A.insert(of(i, j), of(i, j - 1)) = 1.0 / dy / dy;
                 cc += 1.0 / dy / dy;
             }
             if (j < ny - 1) {
-                A.insert(of(i, j), of(i, j + 1)) = -1.0 / dy / dy;
+                A.insert(of(i, j), of(i, j + 1)) = 1.0 / dy / dy;
                 cc += 1.0 / dy / dy;
             }
-            A.insert(of(i, j), of(i, j)) = cc;
+            A.insert(of(i, j), of(i, j)) = -cc;
         }
     }
     A.makeCompressed();

@@ -6,9 +6,9 @@
 
 int main() {
 
-    auto geo = structured_grid(axis{0.0, 1.0, 96},
-                               axis{0.0, 1.0, 96},
-                               axis{0.0, 1.0, 96});
+    auto geo = structured_grid(axis{0.0, 1.0, 64},
+                               axis{0.0, 1.0, 64},
+                               axis{0.0, 1.0, 64});
     auto phi = wrapper(true, &geo,
                        bc_info{NEUMANN}, bc_info{NEUMANN},
                        bc_info{NEUMANN}, bc_info{NEUMANN},

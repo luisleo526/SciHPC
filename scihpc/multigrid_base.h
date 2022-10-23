@@ -26,7 +26,6 @@ public:
     SMatrix A;
     VectorX rhs, sol, res, buffer;
     SpSolver *solver;
-    CGSolver *cg;
 
     int nx, ny, nz, degree, ndim, n;
     DataType dx, dy, dz;
@@ -46,9 +45,9 @@ public:
 
     DataType residual();
 
-    void restriction(multigrid_base &coarse);
+    void restriction(multigrid_base *coarse);
 
-    void prolongation(multigrid_base &dense);
+    void prolongation(multigrid_base *dense);
 
     void solve(DataType tol);
 };
