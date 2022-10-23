@@ -12,7 +12,7 @@
 typedef Eigen::Matrix<DataType, Eigen::Dynamic, 1> VectorX;
 typedef Eigen::SparseMatrix<DataType> SMatrix;
 typedef Eigen::SparseLU<SMatrix, Eigen::COLAMDOrdering<int> > SpSolver;
-typedef Eigen::ConjugateGradient<SMatrix, Eigen::Lower | Eigen::Upper> CGSolver;
+typedef Eigen::Triplet<DataType> T;
 
 class multigrid_base {
 public:
@@ -21,9 +21,11 @@ public:
 
     multigrid_base(int _nx, int _ny, int _nz, int _degree, DataType _dx, DataType _dy, DataType _dz);
 
-    void init_full();
+    void init_NeumannBC();
+    void init_DirichletBC();
 
     SMatrix A;
+    std::vector<T> values;
     VectorX rhs, sol, res, buffer;
     SpSolver *solver;
 
@@ -50,6 +52,7 @@ public:
     void prolongation(multigrid_base *dense);
 
     void solve(DataType tol);
+
 };
 
 #endif //SCIHPC_MULTIGRID_BASE_H

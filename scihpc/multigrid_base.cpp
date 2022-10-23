@@ -3,9 +3,8 @@
 //
 
 #include "multigrid_base.h"
+#include <omp.h>
 #include <iostream>
-#include <chrono>
-#include <thread>
 
 int multigrid_base::of(int i, int j, int k) {
     return i + j * nx + k * nx * ny;
@@ -117,7 +116,6 @@ void multigrid_base::restriction(multigrid_base *coarse) {
 void multigrid_base::prolongation(multigrid_base *dense) {
     auto r = degree / dense->degree;
 
-    DataType tmp1, tmp2;
     if (ndim == 2) {
 #pragma omp parallel for default(none) shared(r, dense) collapse(2)
         for (int i = 0; i < nx; ++i) {
@@ -148,8 +146,6 @@ void multigrid_base::prolongation(multigrid_base *dense) {
                     for (int jj = 0; jj < r; ++jj) {
                         auto x = (0.5 + ii) * dense->dx;
                         auto y = (0.5 + jj) * dense->dy;
-                        tmp1 = x;
-                        tmp2 = y;
                         dense->sol[dense->of(i * r + ii, j * r + jj)] +=
                                 sol[of(i, j)] + fx * (x - 0.5 * dx) + fy * (y - 0.5 * dy);
                     }
@@ -210,7 +206,6 @@ void multigrid_base::prolongation(multigrid_base *dense) {
         }
     }
     dense->relax(base_step);
-//    std::cout << tmp1 << ", " << tmp2 << std::endl;
 }
 
 void multigrid_base::solve(DataType tol) {
@@ -223,24 +218,120 @@ void multigrid_base::solve(DataType tol) {
 
     sol = solver->solve(rhs);
     compatibility_condition(sol);
-    while (residual() > 1e-10) {
+    while (residual() > tol) {
         sol += solver->solve(res);
         compatibility_condition(sol);
     }
 
 }
 
-void multigrid_base::init_full() {
+void multigrid_base::init_NeumannBC() {
 
-    if (ndim == 2) {
-        for (int i = 0; i < n; ++i) {
-            A.coeffRef(i, i) = -(2.0 / dx / dx + 2.0 / dy / dy);
-        }
-    } else {
-        for (int i = 0; i < n; ++i) {
-            A.coeffRef(i, i) = -(2.0 / dx / dx + 2.0 / dy / dy + 2.0 / dz / dz);
+    std::cout << "Initializing Sparse Matrix of " << nx << "x" << ny << "x" << nz << " for Neumann B.C." << std::endl;
+
+    int num_thread = omp_get_num_threads();
+    int chunk_size = (nx - nx % num_thread) / num_thread;
+
+    std::cout << "Chunk size: " << chunk_size << std::endl;
+    std::cout << "Num threads: " << num_thread << "," << omp_get_num_threads() << std::endl;
+
+    for (int i = num_thread * chunk_size; i < nx; i++) {
+        for (int j = 0; j < ny; j++) {
+            for (int k = 0; k < nz; k++) {
+                DataType cc = 0.0;
+                if (i > 0) {
+//                    A.insert(of(i, j, k), of(i - 1, j, k)) = 1.0 / dx / dx;
+                    values.push_back(T(of(i, j, k), of(i - 1, j, k), 1.0 / dx / dx));
+                    cc += 1.0 / dx / dx;
+                }
+                if (i < nx - 1) {
+//                    A.insert(of(i, j, k), of(i + 1, j, k)) = 1.0 / dx / dx;
+                    values.push_back(T(of(i, j, k), of(i + 1, j, k), 1.0 / dx / dx));
+                    cc += 1.0 / dx / dx;
+                }
+                if (j > 0) {
+//                    A.insert(of(i, j, k), of(i, j - 1, k)) = 1.0 / dy / dy;
+                    values.push_back(T(of(i, j, k), of(i, j - 1, k), 1.0 / dy / dy));
+                    cc += 1.0 / dy / dy;
+                }
+                if (j < ny - 1) {
+//                    A.insert(of(i, j, k), of(i, j + 1, k)) = 1.0 / dy / dy;
+                    values.push_back(T(of(i, j, k), of(i, j + 1, k), 1.0 / dy / dy));
+                    cc += 1.0 / dy / dy;
+                }
+                if (ndim == 3) {
+                    if (k > 0) {
+//                        A.insert(of(i, j, k), of(i, j, k - 1)) = 1.0 / dz / dz;
+                        values.push_back(T(of(i, j, k), of(i, j, k - 1), 1.0 / dz / dz));
+                        cc += 1.0 / dz / dz;
+                    }
+                    if (k < nz - 1) {
+//                        A.insert(of(i, j, k), of(i, j, k + 1)) = 1.0 / dz / dz;
+                        values.push_back(T(of(i, j, k), of(i, j, k + 1), 1.0 / dz / dz));
+                        cc += 1.0 / dz / dz;
+                    }
+                }
+//                A.insert(of(i, j, k), of(i, j, k)) = -cc;
+                values.push_back(T(of(i, j, k), of(i, j, k), -cc));
+            }
         }
     }
+    A.setFromTriplets(values.begin(), values.end());
+    A.makeCompressed();
+
+}
+
+void multigrid_base::init_DirichletBC() {
+
+    std::cout << "Initializing Sparse Matrix of " << nx << "x" << ny << "x" << nz << " for Dirichlet B.C." << std::endl;
+
+    int num_thread = omp_get_num_threads();
+    int chunk_size = (nx - nx % num_thread) / num_thread;
+
+    std::cout << "Chunk size: " << chunk_size << std::endl;
+    std::cout << "Num threads: " << num_thread << "," << omp_get_num_threads() << std::endl;
+
+    for (int i = num_thread * chunk_size; i < nx; i++) {
+        for (int j = 0; j < ny; j++) {
+            for (int k = 0; k < nz; k++) {
+                if (i > 0) {
+//                    A.insert(of(i, j, k), of(i - 1, j, k)) = 1.0 / dx / dx;
+                    values.push_back(T(of(i, j, k), of(i - 1, j, k), 1.0 / dx / dx));
+                }
+                if (i < nx - 1) {
+//                    A.insert(of(i, j, k), of(i + 1, j, k)) = 1.0 / dx / dx;
+                    values.push_back(T(of(i, j, k), of(i + 1, j, k), 1.0 / dx / dx));
+                }
+                if (j > 0) {
+//                    A.insert(of(i, j, k), of(i, j - 1, k)) = 1.0 / dy / dy;
+                    values.push_back(T(of(i, j, k), of(i, j - 1, k), 1.0 / dy / dy));
+                }
+                if (j < ny - 1) {
+//                    A.insert(of(i, j, k), of(i, j + 1, k)) = 1.0 / dy / dy;
+                    values.push_back(T(of(i, j, k), of(i, j + 1, k), 1.0 / dy / dy));
+                }
+                if (ndim == 3) {
+                    if (k > 0) {
+//                        A.insert(of(i, j, k), of(i, j, k - 1)) = 1.0 / dz / dz;
+                        values.push_back(T(of(i, j, k), of(i, j, k - 1), 1.0 / dz / dz));
+                    }
+                    if (k < nz - 1) {
+//                        A.insert(of(i, j, k), of(i, j, k + 1)) = 1.0 / dz / dz;
+                        values.push_back(T(of(i, j, k), of(i, j, k + 1), 1.0 / dz / dz));
+                    }
+                }
+                if (ndim == 2) {
+//                    A.insert(of(i, j, k), of(i, j, k)) = -2.0 / dx / dx - 2.0 / dy / dy;
+                    values.push_back(T(of(i, j, k), of(i, j, k), -2.0 / dx / dx - 2.0 / dy / dy));
+                } else {
+//                    A.insert(of(i, j, k), of(i, j, k)) = -2.0 / dx / dx - 2.0 / dy / dy - 2.0 / dz / dz;
+                    values.push_back(T(of(i, j, k), of(i, j, k), -2.0 / dx / dx - 2.0 / dy / dy - 2.0 / dz / dz));
+                }
+            }
+        }
+    }
+    A.setFromTriplets(values.begin(), values.end());
+    A.makeCompressed();
 
 }
 
@@ -262,41 +353,8 @@ multigrid_base::multigrid_base(int _nx, int _ny, int _nz, int _degree, DataType 
     buffer = VectorX(n);
     A = SMatrix(n, n);
     solver = nullptr;
+    values.reserve(6 * n);
 
-    for (int i = 0; i < nx; ++i) {
-        for (int j = 0; j < ny; ++j) {
-            for (int k = 0; k < nz; ++k) {
-                DataType cc = 0.0;
-                if (i > 0) {
-                    A.insert(of(i, j, k), of(i - 1, j, k)) = 1.0 / dx / dx;
-                    cc += 1.0 / dx / dx;
-                }
-                if (i < nx - 1) {
-                    A.insert(of(i, j, k), of(i + 1, j, k)) = 1.0 / dx / dx;
-                    cc += 1.0 / dx / dx;
-                }
-                if (j > 0) {
-                    A.insert(of(i, j, k), of(i, j - 1, k)) = 1.0 / dy / dy;
-                    cc += 1.0 / dy / dy;
-                }
-                if (j < ny - 1) {
-                    A.insert(of(i, j, k), of(i, j + 1, k)) = 1.0 / dy / dy;
-                    cc += 1.0 / dy / dy;
-                }
-                if (k > 0) {
-                    A.insert(of(i, j, k), of(i, j, k - 1)) = 1.0 / dz / dz;
-                    cc += 1.0 / dz / dz;
-                }
-                if (k < nz - 1) {
-                    A.insert(of(i, j, k), of(i, j, k + 1)) = 1.0 / dz / dz;
-                    cc += 1.0 / dz / dz;
-                }
-                A.insert(of(i, j, k), of(i, j, k)) = -cc;
-            }
-        }
-    }
-
-    A.makeCompressed();
 }
 
 multigrid_base::multigrid_base(int _nx, int _ny, int _degree, DataType _dx, DataType _dy) {
@@ -316,35 +374,11 @@ multigrid_base::multigrid_base(int _nx, int _ny, int _degree, DataType _dx, Data
     buffer = VectorX(n);
     A = SMatrix(n, n);
     solver = nullptr;
+    values.reserve(6 * n);
 
-    for (int i = 0; i < nx; ++i) {
-        for (int j = 0; j < ny; ++j) {
-            DataType cc = 0.0;
-            if (i > 0) {
-                A.insert(of(i, j), of(i - 1, j)) = 1.0 / dx / dx;
-                cc += 1.0 / dx / dx;
-            }
-            if (i < nx - 1) {
-                A.insert(of(i, j), of(i + 1, j)) = 1.0 / dx / dx;
-                cc += 1.0 / dx / dx;
-            }
-            if (j > 0) {
-                A.insert(of(i, j), of(i, j - 1)) = 1.0 / dy / dy;
-                cc += 1.0 / dy / dy;
-            }
-            if (j < ny - 1) {
-                A.insert(of(i, j), of(i, j + 1)) = 1.0 / dy / dy;
-                cc += 1.0 / dy / dy;
-            }
-            A.insert(of(i, j), of(i, j)) = -cc;
-        }
-    }
-    A.makeCompressed();
 }
 
 void multigrid_base::Ax(const VectorX &x) {
-
     buffer = A * x;
-
 }
 

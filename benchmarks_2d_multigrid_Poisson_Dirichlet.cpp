@@ -19,7 +19,7 @@ int main() {
     for (int i = 0; i < mg.level_num; ++i) {
         // For Dirichlet BC, the boundary value is 0.0
         mg.at[i]->no_compatibility = true;
-        mg.at[i]->init_full();
+        mg.at[i]->init_DirichletBC();
         std::cout << mg.at[i]->degree << " " << mg.at[i]->nx << " " << mg.at[i]->ny << " " << mg.at[i]->nz << std::endl;
     }
 

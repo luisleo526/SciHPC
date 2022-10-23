@@ -16,12 +16,8 @@ int multigrid::check2d(std::vector<int> &nx, std::vector<int> &ny) {
         nx.push_back(nx.back() / 3);
         ny.push_back(ny.back() / 3);
         return 3;
-    } else if (nx.back() % 5 == 0 && ny.back() % 5 == 0 && nx.back() / 5 > min_grid && ny.back() / 5 > min_grid) {
-        nx.push_back(nx.back() / 5);
-        ny.push_back(ny.back() / 5);
-        return 5;
     } else {
-        return 0;
+        return 1;
     }
 
 }
@@ -39,14 +35,8 @@ int multigrid::check3d(std::vector<int> &nx, std::vector<int> &ny, std::vector<i
         ny.push_back(ny.back() / 3);
         nz.push_back(nz.back() / 3);
         return 3;
-    } else if (nx.back() % 5 == 0 && ny.back() % 5 == 0 && nz.back() % 5 == 0 && nx.back() / 5 > min_grid &&
-               ny.back() / 5 > min_grid && nz.back() / 5 > min_grid) {
-        nx.push_back(nx.back() / 5);
-        ny.push_back(ny.back() / 5);
-        nz.push_back(nz.back() / 5);
-        return 5;
     } else {
-        return 0;
+        return 1;
     }
 }
 
@@ -120,6 +110,8 @@ multigrid::multigrid(scalar_data *var, structured_grid *geo) {
 
     level_num = degree.size();
     at = new multigrid_base *[level_num];
+
+    std::cout <<  "level_num = " << level_num << std::endl;
 
     for (int i = 0; i < level_num; i++) {
         if (var->ndim == 2) {

@@ -17,6 +17,7 @@ int main() {
     auto vtk = vtkWriter(&geo, "multigrid_Neumann");
 
     for (int i = 0; i < mg.level_num; ++i) {
+        mg.at[i]->init_NeumannBC();
         std::cout << mg.at[i]->degree << " " << mg.at[i]->nx << " " << mg.at[i]->ny << " " << mg.at[i]->nz << std::endl;
     }
 
