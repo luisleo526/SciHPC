@@ -5,6 +5,7 @@
 #include "projection_method.h"
 #include <iostream>
 #include <cassert>
+#include "wrapper_func.h"
 
 projection_method::projection_method(scalar_data *f) {
     u_src = init_array(f->Nx, f->Ny, f->Nz);
@@ -24,10 +25,6 @@ projection_method::projection_method(scalar_data *f) {
     CF = init_array(f->Nx, f->Ny, f->Nz);
     CB = init_array(f->Nx, f->Ny, f->Nz);
     RHS = init_array(f->Nx, f->Ny, f->Nz);
-
-    nx = f->nx;
-    ny = f->ny;
-    nz = f->nz;
 
 }
 
@@ -698,7 +695,7 @@ void projection_method::fast_pressure_correction(wrapper *pressure, wrapper *lsf
         error0 = error;
         pressure->solvers->mg->full_cycle();
         error = pressure->solvers->mg->at[0]->residual();
-        if (iter % 100 == 0) {
+        if (iter % 1 == 0) {
             std::cout << "PPE residual from MG: " << error << ","
                       << pressure->solvers->mg->at[pressure->solvers->mg->level_num - 1]->residual() << std::endl;
         }
@@ -777,17 +774,24 @@ void projection_method::ab_solve(wrapper *vel, wrapper *nvel, wrapper *pressure,
     find_source(vel, nvel, lsf);
     find_intermediate_velocity(vel);
 
-    projection(pressure, lsf, vel);
+//    projection(pressure, lsf, vel);
 
-//    for (int cnt = 0; cnt < pressure->params->ppe_initer; ++cnt) {
-//        if (pressure->params->iter < 0) {
+    for (int cnt = 0; cnt < pressure->params->ppe_initer; ++cnt) {
+        if (pressure->params->iter < 3) {
+            identity_flux(pressure->scalar);
+            projection(pressure, lsf, vel);
+        } else {
+            guess_from_history(pressure->scalar);
 //            identity_flux(pressure->scalar);
-//            projection(pressure, lsf, vel);
-//        } else {
-//            identity_flux(pressure->scalar);
-//            fast_pressure_correction(pressure, lsf, vel);
-//        }
-//    }
+            fast_pressure_correction(pressure, lsf, vel);
+        }
+
+        auto div = divergence(vel);
+        std::cout << "iter: " << cnt + 1 << ", div: " << div << std::endl;
+        if (div > 0.1) {
+            exit(0);
+        }
+    }
 
     node_from_face(vel, nvel);
     nvel->apply_nvel_bc();
@@ -798,22 +802,23 @@ void projection_method::ab_solve_sec(wrapper *vel, wrapper *nvel, wrapper *press
     find_source_sec(vel, nvel, lsf);
     find_intermediate_velocity(vel);
 
-    projection(pressure, lsf, vel);
+//    projection(pressure, lsf, vel);
 
-//    for (int cnt = 0; cnt < pressure->params->ppe_initer; ++cnt) {
-//        if (pressure->params->iter < 0) {
-//            identity_flux(pressure->scalar);
-//            projection(pressure, lsf, vel);
-//        } else {
-//            identity_flux(pressure->scalar);
-//            fast_pressure_correction(pressure, lsf, vel);
-//        }
-//    }
+    for (int cnt = 0; cnt < pressure->params->ppe_initer; ++cnt) {
+        if (pressure->params->iter < 3) {
+            identity_flux(pressure->scalar);
+            projection(pressure, lsf, vel);
+        } else {
+            guess_from_history(pressure->scalar);
+            fast_pressure_correction(pressure, lsf, vel);
+        }
+        auto div = divergence(vel);
+        std::cout << "iter: " << cnt + 1 << ", div: " << div << std::endl;
+        if (div > 0.1) {
+            exit(0);
+        }
+    }
 
     node_from_face(vel, nvel);
     nvel->apply_nvel_bc();
-}
-
-int projection_method::pos(int i, int j, int k) {
-    return i + j * nx + k * nx * ny;
 }

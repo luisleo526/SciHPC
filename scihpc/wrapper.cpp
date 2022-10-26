@@ -6,7 +6,7 @@
 #include <cassert>
 #include <utility>
 
-void wrapper::link_solvers(SharedSolvers *_solvers) {
+void wrapper::link_solvers(shared_solvers *_solvers) {
     solvers = _solvers;
 }
 

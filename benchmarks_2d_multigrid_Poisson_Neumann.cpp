@@ -21,8 +21,6 @@ int main() {
         std::cout << mg.at[i]->degree << " " << mg.at[i]->nx << " " << mg.at[i]->ny << " " << mg.at[i]->nz << std::endl;
     }
 
-    std::cout << "Assigning initial values..." << std::endl;
-
     for (int i = 0; i < phi.scalar->nx; ++i) {
         for (int j = 0; j < phi.scalar->ny; ++j) {
             mg.at[0]->rhs[mg.at[0]->of(i, j)] = -2.0 * M_PI * M_PI * sin(M_PI * geo.xc[i]) * sin(M_PI * geo.yc[j]) -
@@ -36,8 +34,8 @@ int main() {
 
     int step = 0;
     while (mg.at[0]->residual() > 1e-8) {
-        mg.full_cycle();
-//        mg.v_cycle();
+//        mg.full_cycle();
+        mg.v_cycle();
 //        mg.at[0]->relax(1);
         std::cout << step++ << "," << mg.at[0]->residual() << "," << mg.at[mg.level_num - 1]->residual() << std::endl;
     }

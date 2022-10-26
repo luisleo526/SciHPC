@@ -235,7 +235,7 @@ void multigrid_base::solve() {
 
 void multigrid_base::init_NeumannBC() {
 
-    std::cout << "Initializing Sparse Matrix of " << nx << "x" << ny << "x" << nz << " for Neumann B.C." << std::endl;
+//    std::cout << "Initializing Sparse Matrix of " << nx << "x" << ny << "x" << nz << " for Neumann B.C." << std::endl;
     std::vector<T> values;
 
 #pragma omp parallel
@@ -292,7 +292,7 @@ void multigrid_base::init_NeumannBC() {
 
 void multigrid_base::init_DirichletBC() {
 
-    std::cout << "Initializing Sparse Matrix of " << nx << "x" << ny << "x" << nz << " for Dirichlet B.C." << std::endl;
+//    std::cout << "Initializing Sparse Matrix of " << nx << "x" << ny << "x" << nz << " for Dirichlet B.C." << std::endl;
     std::vector<T> values;
 
 #pragma omp parallel

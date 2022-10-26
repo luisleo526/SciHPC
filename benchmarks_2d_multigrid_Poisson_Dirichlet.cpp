@@ -23,10 +23,6 @@ int main() {
         std::cout << mg.at[i]->degree << " " << mg.at[i]->nx << " " << mg.at[i]->ny << " " << mg.at[i]->nz << std::endl;
     }
 
-    std::cout << mg.at[mg.level_num-1]->A.innerSize() << std::endl;
-
-    std::cout << "Assigning initial values..." << std::endl;
-
     for (int i = 0; i < phi.scalar->nx; ++i) {
         for (int j = 0; j < phi.scalar->ny; ++j) {
             mg.at[0]->rhs[mg.at[0]->of(i, j)] = sin(M_PI * geo.xc[i]) * cos(M_PI * geo.yc[j]) +

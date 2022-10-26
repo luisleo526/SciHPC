@@ -111,8 +111,6 @@ multigrid::multigrid(scalar_data *var, structured_grid *geo) {
     level_num = degree.size();
     at = new multigrid_base *[level_num];
 
-    std::cout <<  "level_num = " << level_num << std::endl;
-
     for (int i = 0; i < level_num; i++) {
         if (var->ndim == 2) {
             at[i] = new multigrid_base(nx[i], ny[i], degree[i], geo->dx * degree[i], geo->dy * degree[i]);

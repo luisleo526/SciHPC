@@ -11,10 +11,10 @@
 #include "scihpc/source.h"
 #include "scihpc/flux.h"
 #include "scihpc/vtkWriter.h"
-#include "scihpc/SharedSolvers.h"
+#include "scihpc/shared_solvers.h"
 #include "scihpc/wrapper.h"
 #include "scihpc/lsm.h"
-#include "wrapper_func.h"
+#include "scihpc/wrapper_func.h"
 
 int main() {
 

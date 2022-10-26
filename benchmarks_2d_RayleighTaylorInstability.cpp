@@ -38,6 +38,7 @@ int main() {
 
     auto param = new problem_parameters{};
     auto deri_solvers = SharedSolvers_alloc(phi.scalar, &geo);
+    shared_solvers_mg_init_Neumann(deri_solvers);
     auto dummy = dummy_data_alloc(phi.scalar);
 
     for (int i = 0; i < phi.scalar->nx; ++i) {
@@ -76,11 +77,19 @@ int main() {
 
     param->ls_width = 1.5 * geo.h;
     param->rdt = 0.5 * geo.h;
+    param->dt = 0.01 * geo.h;
     param->viscosity_ratio = 1.0;
     param->density_ratio = 1.0 / 3.0;
     param->Froude_number = 1.0;
     param->Reynolds_number = 3000.0;
     param->ppe_tol = 1e-4;
+    param->ppe_initer = 1;
+
+    std::cout << geo.dx << ", " << geo.dy << ", " << geo.dz << std::endl;
+    std::cout << "mg-dim: " << deri_solvers->mg->at[0]->ndim << std::endl;
+    for (int i = 0; i < deri_solvers->mg->level_num; ++i) {
+        std::cout << "level: " << i << ", " << deri_solvers->mg->at[i]->dx << ", " << deri_solvers->mg->at[i]->dy << ", " << deri_solvers->mg->at[i]->dz << std::endl;
+    }
 
     int step, instep;
 
@@ -107,7 +116,7 @@ int main() {
     do {
 
         param->iter++;
-        find_dt(&vel);
+//        find_dt(&vel);
         param->t += param->dt;
 
         solver.tvd_rk3(&phi, &nvel, &identity_flux, &convection);
@@ -122,7 +131,7 @@ int main() {
             std::cout << "----------------------------------------" << std::endl;
             std::cout << " time: " << param->t << std::endl;
             std::cout << " stable CFL: " << param->stable_CFL << std::endl;
-            std::cout << " mass loss ratio (%): " << (1.0 - lsf_mass(&phi) / param->lsf_mass0)*100 << std::endl;
+            std::cout << " mass loss ratio (%): " << (1.0 - lsf_mass(&phi) / param->lsf_mass0) * 100 << std::endl;
             std::cout << " div: " << divergence(&vel) << std::endl;
             std::cout << " l2norm: " << l2norm(&pressure) << std::endl;
 

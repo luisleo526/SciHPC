@@ -12,9 +12,6 @@
 #include "Eigen/Sparse"
 
 class projection_method {
-private:
-    int nx, ny, nz;
-    int pos(int i, int j, int k);
 public:
     explicit projection_method(scalar_data *f);
 
