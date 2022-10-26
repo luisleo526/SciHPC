@@ -6,8 +6,8 @@
 #define SCIHPC_MULTIGRID_BASE_H
 
 #include "global.h"
-#include <Eigen/Core>
-#include <Eigen/Sparse>
+#include "Eigen/Core"
+#include "Eigen/Sparse"
 
 typedef Eigen::Matrix<DataType, Eigen::Dynamic, 1> VectorX;
 typedef Eigen::SparseMatrix<DataType> SMatrix;
@@ -50,7 +50,7 @@ public:
 
     void prolongation(multigrid_base *dense);
 
-    void solve(DataType tol);
+    void solve();
 
 };
 

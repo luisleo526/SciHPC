@@ -881,7 +881,7 @@ struct SparseLUMatrixUReturnType : internal::no_assignment_operator
         // FIXME: the following lines should use Block expressions and not Map!
         Map<const Matrix<Scalar,Dynamic,Dynamic, ColMajor>, 0, OuterStride<> > A( &(m_mapL.valuePtr()[luptr]), nsupc, nsupc, OuterStride<>(lda) );
         Map< Matrix<Scalar,Dynamic,Dest::ColsAtCompileTime, ColMajor>, 0, OuterStride<> > U (&(X.coeffRef(fsupc,0)), nsupc, nrhs, OuterStride<>(n) );
-        U = A.template triangularView<Upper>().solve(U);
+        U = A.template triangularView<Upper>().solve();
       }
 
       for (Index j = 0; j < nrhs; ++j)
@@ -936,9 +936,9 @@ struct SparseLUMatrixUReturnType : internal::no_assignment_operator
         Map<const Matrix<Scalar,Dynamic,Dynamic, ColMajor>, 0, OuterStride<> > A( &(m_mapL.valuePtr()[luptr]), nsupc, nsupc, OuterStride<>(lda) );
         Map< Matrix<Scalar,Dynamic,Dest::ColsAtCompileTime, ColMajor>, 0, OuterStride<> > U (&(X(fsupc,0)), nsupc, nrhs, OuterStride<>(n) );
         if(Conjugate)
-          U = A.adjoint().template triangularView<Lower>().solve(U);
+          U = A.adjoint().template triangularView<Lower>().solve();
         else
-          U = A.transpose().template triangularView<Lower>().solve(U);
+          U = A.transpose().template triangularView<Lower>().solve();
       }
     }// End For U-solve
   }

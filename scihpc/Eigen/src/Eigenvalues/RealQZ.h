@@ -324,8 +324,9 @@ namespace Eigen {
       if (j==i-1)
       {
         // block of (S T^{-1})
-        Matrix2s STi = m_T.template block<2,2>(i,i).template triangularView<Upper>().
-          template solve<OnTheRight>(m_S.template block<2,2>(i,i));
+        Matrix2s STi = m_T.template block<2, 2>(i, i).
+                template triangularView<Upper>().
+                template solve<OnTheRight>();
         Scalar p = Scalar(0.5)*(STi(0,0)-STi(1,1));
         Scalar q = p*p + STi(1,0)*STi(0,1);
         if (q>=0) {

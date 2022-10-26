@@ -9,7 +9,7 @@
 #include "flux.h"
 #include "source.h"
 #include "structured_grid.h"
-#include <Eigen/Sparse>
+#include "Eigen/Sparse"
 
 class projection_method {
 private:

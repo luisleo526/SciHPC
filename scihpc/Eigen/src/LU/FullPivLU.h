@@ -849,7 +849,7 @@ struct Assignment<DstXprType, Inverse<FullPivLU<MatrixType> >, internal::assign_
   typedef Inverse<LuType> SrcXprType;
   static void run(DstXprType &dst, const SrcXprType &src, const internal::assign_op<typename DstXprType::Scalar,typename MatrixType::Scalar> &)
   {
-    dst = src.nestedExpression().solve(MatrixType::Identity(src.rows(), src.cols()));
+    dst = src.nestedExpression().solve();
   }
 };
 } // end namespace internal

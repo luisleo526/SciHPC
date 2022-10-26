@@ -155,7 +155,7 @@ class IncompleteCholesky : public SparseSolverBase<IncompleteCholesky<Scalar,UpL
       else                            x = b;
       x = m_scale.asDiagonal() * x;
       x = m_L.template triangularView<Lower>().solve(x);
-      x = m_L.adjoint().template triangularView<Upper>().solve(x);
+      x = m_L.adjoint().template triangularView<Upper>().solve();
       x = m_scale.asDiagonal() * x;
       if (m_perm.rows() == b.rows())
         x = m_perm.inverse() * x;

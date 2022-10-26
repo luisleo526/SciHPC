@@ -207,7 +207,7 @@ void multigrid_base::prolongation(multigrid_base *dense) {
     dense->relax(base_step);
 }
 
-void multigrid_base::solve(DataType tol) {
+void multigrid_base::solve() {
 
     if (solver == nullptr) {
         solver = new SpSolver();
@@ -217,10 +217,19 @@ void multigrid_base::solve(DataType tol) {
 
     sol = solver->solve(rhs);
     compatibility_condition(sol);
-    while (residual() > tol) {
+
+    DataType old_res = -1.0;
+    DataType new_res;
+    do {
+        if (old_res < 0.0) {
+            old_res = residual();
+        } else {
+            old_res = new_res;
+        }
         sol += solver->solve(res);
         compatibility_condition(sol);
-    }
+        new_res = residual();
+    } while (1.0 - new_res / old_res > 0.1);
 
 }
 
@@ -229,39 +238,52 @@ void multigrid_base::init_NeumannBC() {
     std::cout << "Initializing Sparse Matrix of " << nx << "x" << ny << "x" << nz << " for Neumann B.C." << std::endl;
     std::vector<T> values;
 
-    for (int i = 0; i < nx; i++) {
-        for (int j = 0; j < ny; j++) {
-            for (int k = 0; k < nz; k++) {
-                DataType cc = 0.0;
-                if (i > 0) {
-                    values.emplace_back(of(i, j, k), of(i - 1, j, k), 1.0 / dx / dx);
-                    cc += 1.0 / dx / dx;
-                }
-                if (i < nx - 1) {
-                    values.emplace_back(of(i, j, k), of(i + 1, j, k), 1.0 / dx / dx);
-                    cc += 1.0 / dx / dx;
-                }
-                if (j > 0) {
-                    values.emplace_back(of(i, j, k), of(i, j - 1, k), 1.0 / dy / dy);
-                    cc += 1.0 / dy / dy;
-                }
-                if (j < ny - 1) {
-                    values.emplace_back(of(i, j, k), of(i, j + 1, k), 1.0 / dy / dy);
-                    cc += 1.0 / dy / dy;
-                }
-                if (ndim == 3) {
-                    if (k > 0) {
-                        values.emplace_back(of(i, j, k), of(i, j, k - 1), 1.0 / dz / dz);
-                        cc += 1.0 / dz / dz;
+#pragma omp parallel
+    {
+
+        std::vector<T> l_values;
+
+#pragma omp for
+        for (int i = 0; i < nx; i++) {
+            for (int j = 0; j < ny; j++) {
+                for (int k = 0; k < nz; k++) {
+                    DataType cc = 0.0;
+                    if (i > 0) {
+                        l_values.emplace_back(of(i, j, k), of(i - 1, j, k), 1.0 / dx / dx);
+                        cc += 1.0 / dx / dx;
                     }
-                    if (k < nz - 1) {
-                        values.emplace_back(of(i, j, k), of(i, j, k + 1), 1.0 / dz / dz);
-                        cc += 1.0 / dz / dz;
+                    if (i < nx - 1) {
+                        l_values.emplace_back(of(i, j, k), of(i + 1, j, k), 1.0 / dx / dx);
+                        cc += 1.0 / dx / dx;
                     }
+                    if (j > 0) {
+                        l_values.emplace_back(of(i, j, k), of(i, j - 1, k), 1.0 / dy / dy);
+                        cc += 1.0 / dy / dy;
+                    }
+                    if (j < ny - 1) {
+                        l_values.emplace_back(of(i, j, k), of(i, j + 1, k), 1.0 / dy / dy);
+                        cc += 1.0 / dy / dy;
+                    }
+                    if (ndim == 3) {
+                        if (k > 0) {
+                            l_values.emplace_back(of(i, j, k), of(i, j, k - 1), 1.0 / dz / dz);
+                            cc += 1.0 / dz / dz;
+                        }
+                        if (k < nz - 1) {
+                            l_values.emplace_back(of(i, j, k), of(i, j, k + 1), 1.0 / dz / dz);
+                            cc += 1.0 / dz / dz;
+                        }
+                    }
+                    l_values.emplace_back(of(i, j, k), of(i, j, k), -cc);
                 }
-                values.emplace_back(of(i, j, k), of(i, j, k), -cc);
             }
         }
+
+#pragma omp critical
+        {
+            values.insert(values.end(), l_values.begin(), l_values.end());
+        }
+
     }
     A.setFromTriplets(values.begin(), values.end());
     A.makeCompressed();
@@ -273,37 +295,50 @@ void multigrid_base::init_DirichletBC() {
     std::cout << "Initializing Sparse Matrix of " << nx << "x" << ny << "x" << nz << " for Dirichlet B.C." << std::endl;
     std::vector<T> values;
 
-    for (int i = 0; i < nx; i++) {
-        for (int j = 0; j < ny; j++) {
-            for (int k = 0; k < nz; k++) {
-                if (i > 0) {
-                    values.emplace_back(of(i, j, k), of(i - 1, j, k), 1.0 / dx / dx);
-                }
-                if (i < nx - 1) {
-                    values.emplace_back(of(i, j, k), of(i + 1, j, k), 1.0 / dx / dx);
-                }
-                if (j > 0) {
-                    values.emplace_back(of(i, j, k), of(i, j - 1, k), 1.0 / dy / dy);
-                }
-                if (j < ny - 1) {
-                    values.emplace_back(of(i, j, k), of(i, j + 1, k), 1.0 / dy / dy);
-                }
-                if (ndim == 3) {
-                    if (k > 0) {
-                        values.emplace_back(of(i, j, k), of(i, j, k - 1), 1.0 / dz / dz);
+#pragma omp parallel
+    {
+        std::vector<T> l_values;
+
+#pragma omp for
+        for (int i = 0; i < nx; i++) {
+            for (int j = 0; j < ny; j++) {
+                for (int k = 0; k < nz; k++) {
+                    if (i > 0) {
+                        l_values.emplace_back(of(i, j, k), of(i - 1, j, k), 1.0 / dx / dx);
                     }
-                    if (k < nz - 1) {
-                        values.emplace_back(of(i, j, k), of(i, j, k + 1), 1.0 / dz / dz);
+                    if (i < nx - 1) {
+                        l_values.emplace_back(of(i, j, k), of(i + 1, j, k), 1.0 / dx / dx);
                     }
-                }
-                if (ndim == 2) {
-                    values.emplace_back(of(i, j, k), of(i, j, k), -2.0 / dx / dx - 2.0 / dy / dy);
-                } else {
-                    values.emplace_back(of(i, j, k), of(i, j, k), -2.0 / dx / dx - 2.0 / dy / dy - 2.0 / dz / dz);
+                    if (j > 0) {
+                        l_values.emplace_back(of(i, j, k), of(i, j - 1, k), 1.0 / dy / dy);
+                    }
+                    if (j < ny - 1) {
+                        l_values.emplace_back(of(i, j, k), of(i, j + 1, k), 1.0 / dy / dy);
+                    }
+                    if (ndim == 3) {
+                        if (k > 0) {
+                            l_values.emplace_back(of(i, j, k), of(i, j, k - 1), 1.0 / dz / dz);
+                        }
+                        if (k < nz - 1) {
+                            l_values.emplace_back(of(i, j, k), of(i, j, k + 1), 1.0 / dz / dz);
+                        }
+                    }
+                    if (ndim == 2) {
+                        l_values.emplace_back(of(i, j, k), of(i, j, k), -2.0 / dx / dx - 2.0 / dy / dy);
+                    } else {
+                        l_values.emplace_back(of(i, j, k), of(i, j, k), -2.0 / dx / dx - 2.0 / dy / dy - 2.0 / dz / dz);
+                    }
                 }
             }
         }
-    }
+
+#pragma omp critical
+        {
+            values.insert(values.end(), l_values.begin(), l_values.end());
+        }
+
+    };
+
     A.setFromTriplets(values.begin(), values.end());
     A.makeCompressed();
 

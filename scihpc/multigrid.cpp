@@ -46,7 +46,7 @@ void multigrid::v_cycle() {
         at[i]->restriction(at[i + 1]);
     }
 
-    at[level_num - 1]->solve(1e-16);
+    at[level_num - 1]->solve();
 
     for (int i = int(level_num) - 1; i > 0; --i) {
         at[i]->prolongation(at[i - 1]);
@@ -60,7 +60,7 @@ void multigrid::full_cycle() {
         at[i]->restriction(at[i + 1]);
     }
 
-    at[level_num - 1]->solve(1e-16);
+    at[level_num - 1]->solve();
 
     for (int iter = 1; iter < level_num; ++iter) {
         for (int i = int(level_num) - 1; i < int(level_num) - 1 - iter; --i) {
@@ -69,7 +69,7 @@ void multigrid::full_cycle() {
         for (int i = int(level_num) - 1 - iter; i < level_num - 1; ++i) {
             at[i]->restriction(at[i + 1]);
         }
-        at[level_num - 1]->solve(1e-16);
+        at[level_num - 1]->solve();
     }
 
     for (int i = int(level_num) - 1; i > 0; --i) {

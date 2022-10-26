@@ -564,9 +564,9 @@ void CompleteOrthogonalDecomposition<MatrixType_>::_solve_impl(
 
   // Solve T z = c(1:rank, :)
   dst.topRows(rank) = matrixT()
-                          .topLeftCorner(rank, rank)
-                          .template triangularView<Upper>()
-                          .solve(c.topRows(rank));
+          .topLeftCorner(rank, rank)
+          .template triangularView<Upper>()
+          .solve();
 
   const Index cols = this->cols();
   if (rank < cols) {
@@ -626,7 +626,7 @@ struct Assignment<DstXprType, Inverse<CompleteOrthogonalDecomposition<MatrixType
   static void run(DstXprType &dst, const SrcXprType &src, const internal::assign_op<typename DstXprType::Scalar,typename CodType::Scalar> &)
   {
     typedef Matrix<typename CodType::Scalar, CodType::RowsAtCompileTime, CodType::RowsAtCompileTime, 0, CodType::MaxRowsAtCompileTime, CodType::MaxRowsAtCompileTime> IdentityMatrixType;
-    dst = src.nestedExpression().solve(IdentityMatrixType::Identity(src.cols(), src.cols()));
+    dst = src.nestedExpression().solve();
   }
 };
 

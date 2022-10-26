@@ -35,7 +35,7 @@ EXTRA_CFLAGS           =
 EXTRA_LDFLAGS          = 
 
 # Specify the include dirs, e.g. "-I/usr/include/mysql -I./include -I/usr/include -I/usr/local/include".
-INCLUDE                = -I/home/leo/eigen 
+INCLUDE                =
 
 # The C Preprocessor options (notice here "CPP" does not mean "C++"; man cpp for more info.). Actually $(INCLUDE) is included. 
 CPPFLAGS               = -std=c++17 -fopenmp -Wall -Wextra    # helpful for writing better code (behavior-related)

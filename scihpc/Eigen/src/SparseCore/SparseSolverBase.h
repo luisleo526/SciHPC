@@ -38,7 +38,7 @@ solve_sparse_through_dense_panels(const Decomposition &dec, const Rhs& rhs, Dest
   {
     Index actualCols = std::min<Index>(rhsCols-k, NbColsAtOnce);
     tmp.leftCols(actualCols) = rhs.middleCols(k,actualCols);
-    tmpX.leftCols(actualCols) = dec.solve(tmp.leftCols(actualCols));
+    tmpX.leftCols(actualCols) = dec.solve();
     dest.middleCols(k,actualCols) = tmpX.leftCols(actualCols).sparseView();
   }
 }
@@ -52,7 +52,7 @@ solve_sparse_through_dense_panels(const Decomposition &dec, const Rhs& rhs, Dest
   Index size = rhs.rows();
   Eigen::Matrix<DestScalar,Dynamic,1> rhs_dense(rhs);
   Eigen::Matrix<DestScalar,Dynamic,1> dest_dense(size);
-  dest_dense = dec.solve(rhs_dense);
+  dest_dense = dec.solve();
   dest = dest_dense.sparseView();
 }
 

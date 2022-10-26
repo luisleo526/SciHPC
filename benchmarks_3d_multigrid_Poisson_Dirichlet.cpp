@@ -6,10 +6,9 @@
 
 int main() {
 
-    omp_set_num_threads(8);
-    auto geo = structured_grid(axis{0.0, 1.0, 64},
-                               axis{0.0, 1.0, 64},
-                               axis{0.0, 1.0, 64});
+    auto geo = structured_grid(axis{0.0, 1.0, 128},
+                               axis{0.0, 1.0, 128},
+                               axis{0.0, 1.0, 128});
     auto phi = wrapper(true, &geo,
                        bc_info{NEUMANN}, bc_info{NEUMANN},
                        bc_info{NEUMANN}, bc_info{NEUMANN},
@@ -41,7 +40,7 @@ int main() {
     }
 
     int step = 0;
-    while (mg.at[0]->residual() > 1e-6) {
+    while (mg.at[0]->residual() > 1e-8) {
         mg.full_cycle();
         std::cout << step++ << "," << mg.at[0]->residual() << "," << mg.at[mg.level_num - 1]->residual() << std::endl;
     }
@@ -54,7 +53,7 @@ int main() {
         for (int j = 0; j < phi.scalar->ny; ++j) {
             for (int k = 0; k < phi.scalar->nz; ++k) {
                 auto index = phi.scalar->index_mapping(i + 1, j + 1, k + 1);
-                error += pow(phi.scalar->data[index.i][index.j][index.k] - mg.at[0]->sol[mg.at[0]->of(i, j)], 2);
+                error += pow(phi.scalar->data[index.i][index.j][index.k] - mg.at[0]->sol[mg.at[0]->of(i, j, k)], 2);
                 phi.scalar->data[index.i][index.j][index.k] = mg.at[0]->sol[mg.at[0]->of(i, j)];
             }
         }
