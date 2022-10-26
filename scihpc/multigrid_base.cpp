@@ -3,7 +3,6 @@
 //
 
 #include "multigrid_base.h"
-#include <omp.h>
 #include <iostream>
 
 int multigrid_base::of(int i, int j, int k) {
@@ -228,51 +227,39 @@ void multigrid_base::solve(DataType tol) {
 void multigrid_base::init_NeumannBC() {
 
     std::cout << "Initializing Sparse Matrix of " << nx << "x" << ny << "x" << nz << " for Neumann B.C." << std::endl;
+    std::vector<T> values;
 
-    int num_thread = omp_get_num_threads();
-    int chunk_size = (nx - nx % num_thread) / num_thread;
-
-    std::cout << "Chunk size: " << chunk_size << std::endl;
-    std::cout << "Num threads: " << num_thread << "," << omp_get_num_threads() << std::endl;
-
-    for (int i = num_thread * chunk_size; i < nx; i++) {
+    for (int i = 0; i < nx; i++) {
         for (int j = 0; j < ny; j++) {
             for (int k = 0; k < nz; k++) {
                 DataType cc = 0.0;
                 if (i > 0) {
-//                    A.insert(of(i, j, k), of(i - 1, j, k)) = 1.0 / dx / dx;
-                    values.push_back(T(of(i, j, k), of(i - 1, j, k), 1.0 / dx / dx));
+                    values.emplace_back(of(i, j, k), of(i - 1, j, k), 1.0 / dx / dx);
                     cc += 1.0 / dx / dx;
                 }
                 if (i < nx - 1) {
-//                    A.insert(of(i, j, k), of(i + 1, j, k)) = 1.0 / dx / dx;
-                    values.push_back(T(of(i, j, k), of(i + 1, j, k), 1.0 / dx / dx));
+                    values.emplace_back(of(i, j, k), of(i + 1, j, k), 1.0 / dx / dx);
                     cc += 1.0 / dx / dx;
                 }
                 if (j > 0) {
-//                    A.insert(of(i, j, k), of(i, j - 1, k)) = 1.0 / dy / dy;
-                    values.push_back(T(of(i, j, k), of(i, j - 1, k), 1.0 / dy / dy));
+                    values.emplace_back(of(i, j, k), of(i, j - 1, k), 1.0 / dy / dy);
                     cc += 1.0 / dy / dy;
                 }
                 if (j < ny - 1) {
-//                    A.insert(of(i, j, k), of(i, j + 1, k)) = 1.0 / dy / dy;
-                    values.push_back(T(of(i, j, k), of(i, j + 1, k), 1.0 / dy / dy));
+                    values.emplace_back(of(i, j, k), of(i, j + 1, k), 1.0 / dy / dy);
                     cc += 1.0 / dy / dy;
                 }
                 if (ndim == 3) {
                     if (k > 0) {
-//                        A.insert(of(i, j, k), of(i, j, k - 1)) = 1.0 / dz / dz;
-                        values.push_back(T(of(i, j, k), of(i, j, k - 1), 1.0 / dz / dz));
+                        values.emplace_back(of(i, j, k), of(i, j, k - 1), 1.0 / dz / dz);
                         cc += 1.0 / dz / dz;
                     }
                     if (k < nz - 1) {
-//                        A.insert(of(i, j, k), of(i, j, k + 1)) = 1.0 / dz / dz;
-                        values.push_back(T(of(i, j, k), of(i, j, k + 1), 1.0 / dz / dz));
+                        values.emplace_back(of(i, j, k), of(i, j, k + 1), 1.0 / dz / dz);
                         cc += 1.0 / dz / dz;
                     }
                 }
-//                A.insert(of(i, j, k), of(i, j, k)) = -cc;
-                values.push_back(T(of(i, j, k), of(i, j, k), -cc));
+                values.emplace_back(of(i, j, k), of(i, j, k), -cc);
             }
         }
     }
@@ -284,48 +271,35 @@ void multigrid_base::init_NeumannBC() {
 void multigrid_base::init_DirichletBC() {
 
     std::cout << "Initializing Sparse Matrix of " << nx << "x" << ny << "x" << nz << " for Dirichlet B.C." << std::endl;
+    std::vector<T> values;
 
-    int num_thread = omp_get_num_threads();
-    int chunk_size = (nx - nx % num_thread) / num_thread;
-
-    std::cout << "Chunk size: " << chunk_size << std::endl;
-    std::cout << "Num threads: " << num_thread << "," << omp_get_num_threads() << std::endl;
-
-    for (int i = num_thread * chunk_size; i < nx; i++) {
+    for (int i = 0; i < nx; i++) {
         for (int j = 0; j < ny; j++) {
             for (int k = 0; k < nz; k++) {
                 if (i > 0) {
-//                    A.insert(of(i, j, k), of(i - 1, j, k)) = 1.0 / dx / dx;
-                    values.push_back(T(of(i, j, k), of(i - 1, j, k), 1.0 / dx / dx));
+                    values.emplace_back(of(i, j, k), of(i - 1, j, k), 1.0 / dx / dx);
                 }
                 if (i < nx - 1) {
-//                    A.insert(of(i, j, k), of(i + 1, j, k)) = 1.0 / dx / dx;
-                    values.push_back(T(of(i, j, k), of(i + 1, j, k), 1.0 / dx / dx));
+                    values.emplace_back(of(i, j, k), of(i + 1, j, k), 1.0 / dx / dx);
                 }
                 if (j > 0) {
-//                    A.insert(of(i, j, k), of(i, j - 1, k)) = 1.0 / dy / dy;
-                    values.push_back(T(of(i, j, k), of(i, j - 1, k), 1.0 / dy / dy));
+                    values.emplace_back(of(i, j, k), of(i, j - 1, k), 1.0 / dy / dy);
                 }
                 if (j < ny - 1) {
-//                    A.insert(of(i, j, k), of(i, j + 1, k)) = 1.0 / dy / dy;
-                    values.push_back(T(of(i, j, k), of(i, j + 1, k), 1.0 / dy / dy));
+                    values.emplace_back(of(i, j, k), of(i, j + 1, k), 1.0 / dy / dy);
                 }
                 if (ndim == 3) {
                     if (k > 0) {
-//                        A.insert(of(i, j, k), of(i, j, k - 1)) = 1.0 / dz / dz;
-                        values.push_back(T(of(i, j, k), of(i, j, k - 1), 1.0 / dz / dz));
+                        values.emplace_back(of(i, j, k), of(i, j, k - 1), 1.0 / dz / dz);
                     }
                     if (k < nz - 1) {
-//                        A.insert(of(i, j, k), of(i, j, k + 1)) = 1.0 / dz / dz;
-                        values.push_back(T(of(i, j, k), of(i, j, k + 1), 1.0 / dz / dz));
+                        values.emplace_back(of(i, j, k), of(i, j, k + 1), 1.0 / dz / dz);
                     }
                 }
                 if (ndim == 2) {
-//                    A.insert(of(i, j, k), of(i, j, k)) = -2.0 / dx / dx - 2.0 / dy / dy;
-                    values.push_back(T(of(i, j, k), of(i, j, k), -2.0 / dx / dx - 2.0 / dy / dy));
+                    values.emplace_back(of(i, j, k), of(i, j, k), -2.0 / dx / dx - 2.0 / dy / dy);
                 } else {
-//                    A.insert(of(i, j, k), of(i, j, k)) = -2.0 / dx / dx - 2.0 / dy / dy - 2.0 / dz / dz;
-                    values.push_back(T(of(i, j, k), of(i, j, k), -2.0 / dx / dx - 2.0 / dy / dy - 2.0 / dz / dz));
+                    values.emplace_back(of(i, j, k), of(i, j, k), -2.0 / dx / dx - 2.0 / dy / dy - 2.0 / dz / dz);
                 }
             }
         }
@@ -353,7 +327,6 @@ multigrid_base::multigrid_base(int _nx, int _ny, int _nz, int _degree, DataType 
     buffer = VectorX(n);
     A = SMatrix(n, n);
     solver = nullptr;
-    values.reserve(6 * n);
 
 }
 
@@ -374,7 +347,6 @@ multigrid_base::multigrid_base(int _nx, int _ny, int _degree, DataType _dx, Data
     buffer = VectorX(n);
     A = SMatrix(n, n);
     solver = nullptr;
-    values.reserve(6 * n);
 
 }
 

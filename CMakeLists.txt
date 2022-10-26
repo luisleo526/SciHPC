@@ -10,7 +10,7 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 
 include_directories(scihpc)
-include_directories(/home/leo/eigen)
+
 
 add_executable(SciHPC
 #        main.cpp

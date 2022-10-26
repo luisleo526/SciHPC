@@ -25,7 +25,6 @@ public:
     void init_DirichletBC();
 
     SMatrix A;
-    std::vector<T> values;
     VectorX rhs, sol, res, buffer;
     SpSolver *solver;
 

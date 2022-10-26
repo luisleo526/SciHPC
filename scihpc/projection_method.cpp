@@ -777,15 +777,17 @@ void projection_method::ab_solve(wrapper *vel, wrapper *nvel, wrapper *pressure,
     find_source(vel, nvel, lsf);
     find_intermediate_velocity(vel);
 
-    for (int cnt = 0; cnt < pressure->params->ppe_initer; ++cnt) {
-        if (pressure->params->iter < 0) {
-            identity_flux(pressure->scalar);
-            projection(pressure, lsf, vel);
-        } else {
-            identity_flux(pressure->scalar);
-            fast_pressure_correction(pressure, lsf, vel);
-        }
-    }
+    projection(pressure, lsf, vel);
+
+//    for (int cnt = 0; cnt < pressure->params->ppe_initer; ++cnt) {
+//        if (pressure->params->iter < 0) {
+//            identity_flux(pressure->scalar);
+//            projection(pressure, lsf, vel);
+//        } else {
+//            identity_flux(pressure->scalar);
+//            fast_pressure_correction(pressure, lsf, vel);
+//        }
+//    }
 
     node_from_face(vel, nvel);
     nvel->apply_nvel_bc();
@@ -796,15 +798,17 @@ void projection_method::ab_solve_sec(wrapper *vel, wrapper *nvel, wrapper *press
     find_source_sec(vel, nvel, lsf);
     find_intermediate_velocity(vel);
 
-    for (int cnt = 0; cnt < pressure->params->ppe_initer; ++cnt) {
-        if (pressure->params->iter < 0) {
-            identity_flux(pressure->scalar);
-            projection(pressure, lsf, vel);
-        } else {
-            identity_flux(pressure->scalar);
-            fast_pressure_correction(pressure, lsf, vel);
-        }
-    }
+    projection(pressure, lsf, vel);
+
+//    for (int cnt = 0; cnt < pressure->params->ppe_initer; ++cnt) {
+//        if (pressure->params->iter < 0) {
+//            identity_flux(pressure->scalar);
+//            projection(pressure, lsf, vel);
+//        } else {
+//            identity_flux(pressure->scalar);
+//            fast_pressure_correction(pressure, lsf, vel);
+//        }
+//    }
 
     node_from_face(vel, nvel);
     nvel->apply_nvel_bc();
