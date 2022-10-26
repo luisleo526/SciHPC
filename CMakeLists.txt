@@ -9,9 +9,10 @@ endif()
 
 set(CMAKE_CXX_STANDARD 17)
 
-file(GLOB SOURCES "scihpc/*.h" "scihpc/*.cpp" "scihpc/Eigen/*")
+file(GLOB SOURCES "scihpc/*.h" "scihpc/*.cpp")
 
 add_executable(
+    SciHPC
 #        main.cpp
 #        benchmarks_1d_wave.cpp
 #        benchmarks_1d_IBE.cpp

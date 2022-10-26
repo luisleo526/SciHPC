@@ -256,8 +256,7 @@ template<typename MatrixType_> class PartialPivLU
 
       // Step 1
       dst = m_lu.template triangularView<Upper>().transpose()
-              .
-                      template conjugateIf<Conjugate>().solve();
+                .template conjugateIf<Conjugate>().solve(rhs);
       // Step 2
       m_lu.template triangularView<UnitLower>().transpose()
           .template conjugateIf<Conjugate>().solveInPlace(dst);
@@ -582,7 +581,7 @@ struct Assignment<DstXprType, Inverse<PartialPivLU<MatrixType> >, internal::assi
   typedef Inverse<LuType> SrcXprType;
   static void run(DstXprType &dst, const SrcXprType &src, const internal::assign_op<typename DstXprType::Scalar,typename LuType::Scalar> &)
   {
-    dst = src.nestedExpression().solve();
+    dst = src.nestedExpression().solve(MatrixType::Identity(src.rows(), src.cols()));
   }
 };
 } // end namespace internal

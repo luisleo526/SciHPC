@@ -84,14 +84,14 @@ bool bicgstab(const MatrixType& mat, const Rhs& rhs, Dest& x,
     Scalar beta = (rho/rho_old) * (alpha / w);
     p = r + beta * (p - w * v);
     
-    y = precond.solve();
+    y = precond.solve(p);
     
     v.noalias() = mat * y;
 
     alpha = rho / r0.dot(v);
     s = r - alpha * v;
 
-    z = precond.solve();
+    z = precond.solve(s);
     t.noalias() = mat * z;
 
     RealScalar tmp = t.squaredNorm();

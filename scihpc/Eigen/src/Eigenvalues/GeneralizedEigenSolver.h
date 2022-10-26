@@ -338,7 +338,7 @@ GeneralizedEigenSolver<MatrixType>::compute(const MatrixType& A, const MatrixTyp
                 // 2x2 block
                 Matrix<Scalar, 2, 1> rhs = (alpha*mT.template block<2,Dynamic>(j-1,st,2,sz) - beta*mS.template block<2,Dynamic>(j-1,st,2,sz)) .lazyProduct( v.segment(st,sz) );
                 Matrix<Scalar, 2, 2> lhs = beta * mS.template block<2,2>(j-1,j-1) - alpha * mT.template block<2,2>(j-1,j-1);
-                v.template segment<2>(j-1) = lhs.partialPivLu().solve();
+                v.template segment<2>(j-1) = lhs.partialPivLu().solve(rhs);
                 j--;
               }
               else
@@ -389,7 +389,7 @@ GeneralizedEigenSolver<MatrixType>::compute(const MatrixType& A, const MatrixTyp
               // 2x2 block
               Matrix<ComplexScalar, 2, 1> rhs = (alpha*mT.template block<2,Dynamic>(j-1,st,2,sz) - beta*mS.template block<2,Dynamic>(j-1,st,2,sz)) .lazyProduct( cv.segment(st,sz) );
               Matrix<ComplexScalar, 2, 2> lhs = beta * mS.template block<2,2>(j-1,j-1) - alpha * mT.template block<2,2>(j-1,j-1);
-              cv.template segment<2>(j-1) = lhs.partialPivLu().solve();
+              cv.template segment<2>(j-1) = lhs.partialPivLu().solve(rhs);
               j--;
             } else {
               cv.coeffRef(j) =  cv.segment(st,sz).transpose().cwiseProduct(beta*mS.block(j,st,1,sz) - alpha*mT.block(j,st,1,sz)).sum()

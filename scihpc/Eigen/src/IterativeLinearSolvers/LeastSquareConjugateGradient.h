@@ -63,7 +63,7 @@ void least_square_conjugate_gradient(const MatrixType& mat, const Rhs& rhs, Dest
   }
   
   VectorType p(n);
-  p = precond.solve();                         // initial search direction
+  p = precond.solve(normal_residual);                         // initial search direction
 
   VectorType z(n), tmp(m);
   RealScalar absNew = numext::real(normal_residual.dot(p));  // the square of the absolute value of r scaled by invM
@@ -81,7 +81,7 @@ void least_square_conjugate_gradient(const MatrixType& mat, const Rhs& rhs, Dest
     if(residualNorm2 < threshold)
       break;
     
-    z = precond.solve();             // approximately solve for "A'A z = normal_residual"
+    z = precond.solve(normal_residual);             // approximately solve for "A'A z = normal_residual"
 
     RealScalar absOld = absNew;
     absNew = numext::real(normal_residual.dot(z));  // update the absolute value of r
