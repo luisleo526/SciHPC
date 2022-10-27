@@ -22,11 +22,11 @@ add_executable(
 #        benchmarks_lsf_curvature.cpp
 #        benchmarks_2d_cavity_flows.cpp
 #        benchmarks_2d_dambreak.cpp
-        benchmarks_2d_RayleighTaylorInstability.cpp
-#        benchmarks_2d_bubble_rising.cpp
+#        benchmarks_2d_RayleighTaylorInstability.cpp
+        benchmarks_2d_bubble_rising.cpp
 #        benchmarks_2d_multigrid_Poisson_Dirichlet.cpp
 #        benchmarks_2d_multigrid_Poisson_Neumann.cpp
 #        benchmarks_3d_dambreak.cpp
 #        benchmarks_3d_multigrid_Poisson.cpp
         ${SOURCES}
-        )
+        scihpc/simple_bc.cpp scihpc/simple_bc.h)

@@ -378,6 +378,9 @@ void find_dt(wrapper *vel) {
                                                  + 4 * pow(CFL_surface_tension, 2)));
 
     vel->params->stable_CFL = 1.0 / CFL / vel->geo->h;
+
+    vel->params->dt_old2 = vel->params->dt_old;
+    vel->params->dt_old = vel->params->dt;
     vel->params->dt = fmin(vel->params->stable_CFL, vel->params->max_CFL) * vel->geo->h;
 }
 

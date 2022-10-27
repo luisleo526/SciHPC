@@ -6,6 +6,7 @@
 #define SCIHPC_SOURCE_H
 
 #include "global.h"
+#include "simple_bc.h"
 #include "wrapper_func.h"
 #include "godunov_gradient.h"
 #include "flux.h"

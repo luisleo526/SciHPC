@@ -16,8 +16,8 @@
 
 int main() {
 
-    auto geo = structured_grid(axis{0.0, 1.0, 32},
-                               axis{-2.0, 2.0, 128});
+    auto geo = structured_grid(axis{0.0, 1.0, 64},
+                               axis{-2.0, 2.0, 256});
 
     auto phi = wrapper(true, &geo,
                        bc_info{NEUMANN}, bc_info{NEUMANN},
@@ -76,20 +76,15 @@ int main() {
     nvel.link_dummy(dummy);
 
     param->ls_width = 1.5 * geo.h;
-    param->rdt = 0.5 * geo.h;
-    param->dt = 0.01 * geo.h;
+    param->rdt = 0.1 * geo.h;
+    param->max_CFL = 0.1;
     param->viscosity_ratio = 1.0;
     param->density_ratio = 1.0 / 3.0;
     param->Froude_number = 1.0;
     param->Reynolds_number = 3000.0;
-    param->ppe_tol = 1e-4;
+    param->ppe_tol = 1e-5;
     param->ppe_initer = 1;
 
-    std::cout << geo.dx << ", " << geo.dy << ", " << geo.dz << std::endl;
-    std::cout << "mg-dim: " << deri_solvers->mg->at[0]->ndim << std::endl;
-    for (int i = 0; i < deri_solvers->mg->level_num; ++i) {
-        std::cout << "level: " << i << ", " << deri_solvers->mg->at[i]->dx << ", " << deri_solvers->mg->at[i]->dy << ", " << deri_solvers->mg->at[i]->dz << std::endl;
-    }
 
     int step, instep;
 
@@ -116,7 +111,7 @@ int main() {
     do {
 
         param->iter++;
-//        find_dt(&vel);
+        find_dt(&vel);
         param->t += param->dt;
 
         solver.tvd_rk3(&phi, &nvel, &identity_flux, &convection);
@@ -136,12 +131,12 @@ int main() {
             std::cout << " l2norm: " << l2norm(&pressure) << std::endl;
 
             instep = 0;
-            while (instep * param->rdt < 2.5 * param->ls_width and step % 20 == 0) {
+            while (instep * param->rdt < 1.5 * param->ls_width and step % 10 == 0) {
                 if (instep == 0) {
                     find_sign(&phi);
                 }
                 instep++;
-                solver.tvd_rk3(&phi, &nvel, identity_flux, lsf_redistance_no_lambda);
+                solver.tvd_rk3(&phi, &nvel, identity_flux, lsf_redistance_lambda);
             };
         }
 

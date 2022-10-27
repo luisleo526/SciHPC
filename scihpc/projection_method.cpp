@@ -401,6 +401,146 @@ void projection_method::find_intermediate_velocity(wrapper *vel) const {
 
 }
 
+void projection_method::init_ppe_proj_coefficients(wrapper *pressure) {
+
+#pragma omp parallel for default(none) shared(pressure) collapse(3)
+    for (int I = 0; I < pressure->scalar->nx; ++I) {
+        for (int J = 0; J < pressure->scalar->ny; ++J) {
+            for (int K = 0; K < pressure->scalar->nz; ++K) {
+
+                auto index = pressure->scalar->index_mapping(I + 1, J + 1, K + 1);
+                auto i = index.i;
+                auto j = index.j;
+                auto k = index.k;
+
+                auto R = 0.5 * (pressure->dummy->density[i][j][k] + pressure->dummy->density[i + 1][j][k]);
+                auto L = 0.5 * (pressure->dummy->density[i][j][k] + pressure->dummy->density[i - 1][j][k]);
+                auto U = 0.5 * (pressure->dummy->density[i][j][k] + pressure->dummy->density[i][j + 1][k]);
+                auto D = 0.5 * (pressure->dummy->density[i][j][k] + pressure->dummy->density[i][j - 1][k]);
+
+                CR[i][j][k] = 1.0 / R / pressure->geo->dx / pressure->geo->dx;
+                CL[i][j][k] = 1.0 / L / pressure->geo->dx / pressure->geo->dx;
+                CU[i][j][k] = 1.0 / U / pressure->geo->dy / pressure->geo->dy;
+                CD[i][j][k] = 1.0 / D / pressure->geo->dy / pressure->geo->dy;
+
+                if (I == 0) {
+                    CL[i][j][k] = 0.0;
+                }
+
+                if (I == pressure->scalar->nx - 1) {
+                    CR[i][j][k] = 0.0;
+                }
+
+                if (J == 0) {
+                    CD[i][j][k] = 0.0;
+                }
+
+                if (J == pressure->scalar->ny - 1) {
+                    CU[i][j][k] = 0.0;
+                }
+
+                if (pressure->scalar->ndim > 2) {
+                    auto F = 0.5 * (pressure->dummy->density[i][j][k] + pressure->dummy->density[i][j][k + 1]);
+                    auto B = 0.5 * (pressure->dummy->density[i][j][k] + pressure->dummy->density[i][j][k - 1]);
+
+                    CF[i][j][k] = 1.0 / F / pressure->geo->dz / pressure->geo->dz;
+                    CB[i][j][k] = 1.0 / B / pressure->geo->dz / pressure->geo->dz;
+                    if (K == 0) {
+                        CB[i][j][k] = 0.0;
+                    }
+                    if (K == pressure->scalar->nz - 1) {
+                        CF[i][j][k] = 0.0;
+                    }
+                }
+
+                CC[i][j][k] = -(CR[i][j][k] + CL[i][j][k] + CU[i][j][k] + CD[i][j][k]);
+
+                if (pressure->scalar->ndim > 2) {
+                    CC[i][j][k] -= (CF[i][j][k] + CB[i][j][k]);
+                }
+
+            }
+        }
+    }
+}
+
+void projection_method::init_ppe_fpc_coefficients(wrapper *pressure) {
+
+    auto rho12 = pressure->params->density_ratio;
+
+#pragma omp parallel for default(none) shared(pressure) collapse(3)
+    for (int I = 0; I < pressure->scalar->nx; ++I) {
+        for (int J = 0; J < pressure->scalar->ny; ++J) {
+            for (int K = 0; K < pressure->scalar->nz; ++K) {
+
+                auto index = pressure->scalar->index_mapping(I + 1, J + 1, K + 1);
+                auto i = index.i;
+                auto j = index.j;
+                auto k = index.k;
+
+                auto R = 0.5 * (pressure->dummy->density[i][j][k] + pressure->dummy->density[i + 1][j][k]);
+                auto L = 0.5 * (pressure->dummy->density[i][j][k] + pressure->dummy->density[i - 1][j][k]);
+                auto U = 0.5 * (pressure->dummy->density[i][j][k] + pressure->dummy->density[i][j + 1][k]);
+                auto D = 0.5 * (pressure->dummy->density[i][j][k] + pressure->dummy->density[i][j - 1][k]);
+
+                CR[i][j][k] = (1.0 - rho12 / R) / pressure->geo->dx / pressure->geo->dx;
+                CL[i][j][k] = (1.0 - rho12 / L) / pressure->geo->dx / pressure->geo->dx;
+                CU[i][j][k] = (1.0 - rho12 / U) / pressure->geo->dy / pressure->geo->dy;
+                CD[i][j][k] = (1.0 - rho12 / D) / pressure->geo->dy / pressure->geo->dy;
+
+                if (I == 0) {
+                    CL[i][j][k] = 0.0;
+                }
+
+                if (I == pressure->scalar->nx - 1) {
+                    CR[i][j][k] = 0.0;
+                }
+
+                if (J == 0) {
+                    CD[i][j][k] = 0.0;
+                }
+
+                if (J == pressure->scalar->ny - 1) {
+                    CU[i][j][k] = 0.0;
+                }
+
+                if (pressure->scalar->ndim > 2) {
+                    auto F = 0.5 * (pressure->dummy->density[i][j][k] + pressure->dummy->density[i][j][k + 1]);
+                    auto B = 0.5 * (pressure->dummy->density[i][j][k] + pressure->dummy->density[i][j][k - 1]);
+
+                    CF[i][j][k] = (1.0 - rho12 / F) / pressure->geo->dz / pressure->geo->dz;
+                    CB[i][j][k] = (1.0 - rho12 / B) / pressure->geo->dz / pressure->geo->dz;
+                    if (K == 0) {
+                        CB[i][j][k] = 0.0;
+                    }
+                    if (K == pressure->scalar->nz - 1) {
+                        CF[i][j][k] = 0.0;
+                    }
+                }
+
+                CC[i][j][k] = -(CR[i][j][k] + CL[i][j][k] + CU[i][j][k] + CD[i][j][k]);
+
+                if (pressure->scalar->ndim > 2) {
+                    CC[i][j][k] -= (CF[i][j][k] + CB[i][j][k]);
+                }
+
+                RHS[i][j][k] = CC[i][j][k] * pressure->scalar->flux[i][j][k] +
+                               CR[i][j][k] * pressure->scalar->flux[i + 1][j][k] +
+                               CL[i][j][k] * pressure->scalar->flux[i - 1][j][k] +
+                               CU[i][j][k] * pressure->scalar->flux[i][j + 1][k] +
+                               CD[i][j][k] * pressure->scalar->flux[i][j - 1][k];
+
+                if (pressure->scalar->ndim > 2) {
+                    RHS[i][j][k] += CF[i][j][k] * pressure->scalar->flux[i][j][k + 1] +
+                                    CB[i][j][k] * pressure->scalar->flux[i][j][k - 1];
+                }
+
+            }
+        }
+    }
+}
+
+
 void projection_method::projection(wrapper *pressure, wrapper *lsf, wrapper *vel) const {
 
 #pragma omp parallel for default(none) shared(pressure, lsf, vel) collapse(3)
@@ -412,52 +552,6 @@ void projection_method::projection(wrapper *pressure, wrapper *lsf, wrapper *vel
                 auto i = index.i;
                 auto j = index.j;
                 auto k = index.k;
-
-                auto R = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i + 1][j][k]);
-                auto L = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i - 1][j][k]);
-                auto U = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j + 1][k]);
-                auto D = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j - 1][k]);
-
-                CR[i][j][k] = 1.0 / R / pressure->geo->dx / pressure->geo->dx;
-                CL[i][j][k] = 1.0 / L / pressure->geo->dx / pressure->geo->dx;
-                CU[i][j][k] = 1.0 / U / pressure->geo->dy / pressure->geo->dy;
-                CD[i][j][k] = 1.0 / D / pressure->geo->dy / pressure->geo->dy;
-
-                if (i == pressure->scalar->ghc) {
-                    CL[i][j][k] = 0.0;
-                }
-
-                if (i == pressure->scalar->Nx - 1 - pressure->scalar->ghc) {
-                    CR[i][j][k] = 0.0;
-                }
-
-                if (j == pressure->scalar->ghc) {
-                    CD[i][j][k] = 0.0;
-                }
-
-                if (j == pressure->scalar->Ny - 1 - pressure->scalar->ghc) {
-                    CU[i][j][k] = 0.0;
-                }
-
-                if (lsf->scalar->ndim > 2) {
-                    auto F = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j][k + 1]);
-                    auto B = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j][k - 1]);
-
-                    CF[i][j][k] = 1.0 / F / pressure->geo->dz / pressure->geo->dz;
-                    CB[i][j][k] = 1.0 / B / pressure->geo->dz / pressure->geo->dz;
-                    if (k == pressure->scalar->ghc) {
-                        CB[i][j][k] = 0.0;
-                    }
-                    if (k == pressure->scalar->Nz - 1 - pressure->scalar->ghc) {
-                        CF[i][j][k] = 0.0;
-                    }
-                }
-
-                CC[i][j][k] = -(CR[i][j][k] + CL[i][j][k] + CU[i][j][k] + CD[i][j][k]);
-
-                if (lsf->scalar->ndim > 2) {
-                    CC[i][j][k] -= (CF[i][j][k] + CB[i][j][k]);
-                }
 
                 RHS[i][j][k] = (vel->vector->x.data[i][j][k] - vel->vector->x.data[i - 1][j][k]) /
                                pressure->geo->dx +
@@ -570,118 +664,29 @@ void projection_method::fast_pressure_correction(wrapper *pressure, wrapper *lsf
     auto dt = pressure->params->dt;
     auto rho12 = pressure->params->density_ratio;
 
-    if (pressure->scalar->ndim == 2) {
-        for (int I = 0; I < pressure->scalar->nx; ++I) {
-            for (int J = 0; J < pressure->scalar->ny; ++J) {
-                auto index = pressure->scalar->index_mapping(I + 1, J + 1, 1);
+#pragma omp parallel for default(none) shared(pressure, lsf, vel) collapse(3)
+    for (int I = 0; I < lsf->scalar->nx; ++I) {
+        for (int J = 0; J < lsf->scalar->ny; ++J) {
+            for (int K = 0; K < lsf->scalar->nz; ++K) {
+
+                auto index = lsf->scalar->index_mapping(I + 1, J + 1, K + 1);
                 auto i = index.i;
                 auto j = index.j;
                 auto k = index.k;
-                auto pos = pressure->solvers->mg->at[0]->of(I, J);
-                auto div = (vel->vector->x.data[i][j][k] - vel->vector->x.data[i - 1][j][k]) / dx +
-                           (vel->vector->y.data[i][j][k] - vel->vector->y.data[i][j - 1][k]) / dy;
-                auto cr = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i + 1][j][k] + lsf->dummy->density[i][j][k]);
-                auto cl = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i - 1][j][k] + lsf->dummy->density[i][j][k]);
-                auto cu = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i][j + 1][k] + lsf->dummy->density[i][j][k]);
-                auto cd = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i][j - 1][k] + lsf->dummy->density[i][j][k]);
 
-                cr = cr / dx / dx;
-                cl = cl / dx / dx;
-                cu = cu / dy / dy;
-                cd = cd / dy / dy;
+                auto pos = pressure->solvers->mg->at[0]->of(I, J, K);
 
-                if (I == 0) {
-                    cl = 0.0;
+                pressure->solvers->mg->at[0]->rhs[pos] =
+                        (vel->vector->x.data[i][j][k] - vel->vector->x.data[i - 1][j][k]) / dx +
+                        (vel->vector->y.data[i][j][k] - vel->vector->y.data[i][j - 1][k]) / dy;
+                if (lsf->scalar->ndim > 2) {
+                    pressure->solvers->mg->at[0]->rhs[pos] +=
+                            (vel->vector->z.data[i][j][k] - vel->vector->z.data[i][j][k - 1]) / dz;
                 }
+                pressure->solvers->mg->at[0]->rhs[pos] *= rho12 / lsf->params->dt;
 
-                if (I == pressure->scalar->nx - 1) {
-                    cr = 0.0;
-                }
+                pressure->solvers->mg->at[0]->rhs[pos] += RHS[i][j][k];
 
-                if (J == 0) {
-                    cd = 0.0;
-                }
-
-                if (J == pressure->scalar->ny - 1) {
-                    cu = 0.0;
-                }
-
-                auto cc = -(cr + cl + cu + cd);
-
-                pressure->solvers->mg->at[0]->rhs[pos] = div / dt * rho12;
-                pressure->solvers->mg->at[0]->rhs[pos] += cc * pressure->scalar->flux[i][j][k];
-                pressure->solvers->mg->at[0]->rhs[pos] += cr * pressure->scalar->flux[i + 1][j][k];
-                pressure->solvers->mg->at[0]->rhs[pos] += cl * pressure->scalar->flux[i - 1][j][k];
-                pressure->solvers->mg->at[0]->rhs[pos] += cu * pressure->scalar->flux[i][j + 1][k];
-                pressure->solvers->mg->at[0]->rhs[pos] += cd * pressure->scalar->flux[i][j - 1][k];
-
-                pressure->solvers->mg->at[0]->sol[pos] = pressure->scalar->data[i][j][k];
-            }
-        }
-    } else {
-        for (int I = 0; I < pressure->scalar->nx; ++I) {
-            for (int J = 0; J < pressure->scalar->ny; ++J) {
-                for (int K = 0; K < pressure->scalar->nz; ++K) {
-                    auto index = pressure->scalar->index_mapping(I + 1, J + 1, K + 1);
-                    auto i = index.i;
-                    auto j = index.j;
-                    auto k = index.k;
-                    auto pos = pressure->solvers->mg->at[0]->of(I, J, K);
-                    auto div = (vel->vector->x.data[i][j][k] - vel->vector->x.data[i - 1][j][k]) / dx +
-                               (vel->vector->y.data[i][j][k] - vel->vector->y.data[i][j - 1][k]) / dy +
-                               (vel->vector->z.data[i][j][k] - vel->vector->z.data[i][j][k - 1]) / dz;
-                    auto cr = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i + 1][j][k] + lsf->dummy->density[i][j][k]);
-                    auto cl = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i - 1][j][k] + lsf->dummy->density[i][j][k]);
-                    auto cu = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i][j + 1][k] + lsf->dummy->density[i][j][k]);
-                    auto cd = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i][j - 1][k] + lsf->dummy->density[i][j][k]);
-                    auto cf = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i][j][k + 1] + lsf->dummy->density[i][j][k]);
-                    auto cb = 1.0 - 2.0 * rho12 / (lsf->dummy->density[i][j][k - 1] + lsf->dummy->density[i][j][k]);
-
-                    cr = cr / dx / dx;
-                    cl = cl / dx / dx;
-                    cu = cu / dy / dy;
-                    cd = cd / dy / dy;
-                    cf = cf / dz / dz;
-                    cb = cb / dz / dz;
-
-                    if (I == 0) {
-                        cl = 0.0;
-                    }
-
-                    if (I == pressure->scalar->nx - 1) {
-                        cr = 0.0;
-                    }
-
-                    if (J == 0) {
-                        cd = 0.0;
-                    }
-
-                    if (J == pressure->scalar->ny - 1) {
-                        cu = 0.0;
-                    }
-
-                    if (K == 0) {
-                        cb = 0.0;
-                    }
-
-                    if (K == pressure->scalar->nz - 1) {
-                        cf = 0.0;
-                    }
-
-                    auto cc = -(cr + cl + cu + cd + cf + cb);
-
-                    pressure->solvers->mg->at[0]->rhs[pos] = div / dt * rho12;
-                    pressure->solvers->mg->at[0]->rhs[pos] += cc * pressure->scalar->flux[i][j][k];
-                    pressure->solvers->mg->at[0]->rhs[pos] += cr * pressure->scalar->flux[i + 1][j][k];
-                    pressure->solvers->mg->at[0]->rhs[pos] += cl * pressure->scalar->flux[i - 1][j][k];
-                    pressure->solvers->mg->at[0]->rhs[pos] += cu * pressure->scalar->flux[i][j + 1][k];
-                    pressure->solvers->mg->at[0]->rhs[pos] += cd * pressure->scalar->flux[i][j - 1][k];
-                    pressure->solvers->mg->at[0]->rhs[pos] += cf * pressure->scalar->flux[i][j][k + 1];
-                    pressure->solvers->mg->at[0]->rhs[pos] += cb * pressure->scalar->flux[i][j][k - 1];
-
-                    pressure->solvers->mg->at[0]->sol[pos] = pressure->scalar->data[i][j][k];
-
-                }
             }
         }
     }
@@ -689,18 +694,17 @@ void projection_method::fast_pressure_correction(wrapper *pressure, wrapper *lsf
     auto error = pressure->solvers->mg->at[0]->residual();
     int iter = 0;
 
-    auto error0 = error;
-    while (error > pressure->params->ppe_tol && iter < pressure->params->ppe_max_iter) {
+    while (error > pressure->params->ppe_tol && iter < 100) {
         iter++;
-        error0 = error;
         pressure->solvers->mg->full_cycle();
         error = pressure->solvers->mg->at[0]->residual();
-        if (iter % 1 == 0) {
+        if (iter % 10 == 0) {
             std::cout << "PPE residual from MG: " << error << ","
                       << pressure->solvers->mg->at[pressure->solvers->mg->level_num - 1]->residual() << std::endl;
         }
     }
 
+#pragma omp parallel for default(none) shared(pressure) collapse(3)
     for (int I = 0; I < pressure->scalar->nx; ++I) {
         for (int J = 0; J < pressure->scalar->ny; ++J) {
             for (int K = 0; K < pressure->scalar->nz; ++K) {
@@ -715,56 +719,34 @@ void projection_method::fast_pressure_correction(wrapper *pressure, wrapper *lsf
     }
     pressure->apply_scalar_bc();
 
-    if (pressure->scalar->ndim == 2) {
+#pragma omp parallel for default(none) shared(vel, pressure, lsf) collapse(3)
+    for (int i = 0; i < lsf->scalar->Nx - 1; ++i) {
+        for (int j = 0; j < lsf->scalar->Ny - 1; ++j) {
+            for (int k = 0; k < lsf->scalar->Nz; ++k) {
 
-        for (int i = 0; i < lsf->scalar->Nx - 1; ++i) {
-            for (int j = 0; j < lsf->scalar->Ny - 1; ++j) {
-                for (int k = 0; k < lsf->scalar->Nz; ++k) {
+                auto px = (pressure->scalar->data[i + 1][j][k] - pressure->scalar->data[i][j][k]) / dx;
+                auto px2 = (pressure->scalar->flux[i + 1][j][k] - pressure->scalar->flux[i][j][k]) / dx;
+                auto density = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i + 1][j][k]);
 
-                    auto density = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i + 1][j][k]);
-                    auto px = (pressure->scalar->data[i + 1][j][k] - pressure->scalar->data[i][j][k]) / dx;
-                    auto px2 = (pressure->scalar->flux[i + 1][j][k] + pressure->scalar->flux[i][j][k]) / dx;
+                vel->vector->x.data[i][j][k] -= dt * ((px - px2) / rho12 + px2 / density);
 
-                    vel->vector->x.data[i][j][k] -= dt * (px / rho12 + (1.0 / density - 1.0 / rho12) * px2);
+                auto py = (pressure->scalar->data[i][j + 1][k] - pressure->scalar->data[i][j][k]) / dy;
+                auto py2 = (pressure->scalar->flux[i][j + 1][k] - pressure->scalar->flux[i][j][k]) / dy;
+                density = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j + 1][k]);
 
-                    density = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j + 1][k]);
-                    auto py = (pressure->scalar->data[i][j + 1][k] - pressure->scalar->data[i][j][k]) / dy;
-                    auto py2 = (pressure->scalar->flux[i][j + 1][k] + pressure->scalar->flux[i][j][k]) / dy;
+                vel->vector->y.data[i][j][k] -= dt * ((py - py2) / rho12 + py2 / density);
 
-                    vel->vector->y.data[i][j][k] -= dt * (py / rho12 + (1.0 / density - 1.0 / rho12) * py2);
-                }
-            }
-        }
-
-    } else {
-
-        for (int i = 0; i < lsf->scalar->Nx - 1; ++i) {
-            for (int j = 0; j < lsf->scalar->Ny - 1; ++j) {
-                for (int k = 0; k < lsf->scalar->Nz - 1; ++k) {
-
-                    auto density = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i + 1][j][k]);
-                    auto px = (pressure->scalar->data[i + 1][j][k] - pressure->scalar->data[i][j][k]) / dx;
-                    auto px2 = (pressure->scalar->flux[i + 1][j][k] + pressure->scalar->flux[i][j][k]) / dx;
-
-                    vel->vector->x.data[i][j][k] -= dt * (px / rho12 + (1.0 / density - 1.0 / rho12) * px2);
-
-                    density = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j + 1][k]);
-                    auto py = (pressure->scalar->data[i][j + 1][k] - pressure->scalar->data[i][j][k]) / dy;
-                    auto py2 = (pressure->scalar->flux[i][j + 1][k] + pressure->scalar->flux[i][j][k]) / dy;
-
-                    vel->vector->y.data[i][j][k] -= dt * (py / rho12 + (1.0 / density - 1.0 / rho12) * py2);
-
-                    density = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j][k + 1]);
+                if (lsf->scalar->ndim > 2 && k < lsf->scalar->Nz - 1) {
                     auto pz = (pressure->scalar->data[i][j][k + 1] - pressure->scalar->data[i][j][k]) / dz;
-                    auto pz2 = (pressure->scalar->flux[i][j][k + 1] + pressure->scalar->flux[i][j][k]) / dz;
+                    auto pz2 = (pressure->scalar->flux[i][j][k + 1] - pressure->scalar->flux[i][j][k]) / dz;
+                    density = 0.5 * (lsf->dummy->density[i][j][k] + lsf->dummy->density[i][j][k + 1]);
 
-                    vel->vector->z.data[i][j][k] -= dt * (pz / rho12 + (1.0 / density - 1.0 / rho12) * pz2);
-
+                    vel->vector->z.data[i][j][k] -= dt * ((pz - pz2) / rho12 + pz2 / density);
                 }
+
             }
         }
     }
-
     vel->apply_vel_bc();
 
 }
@@ -774,22 +756,18 @@ void projection_method::ab_solve(wrapper *vel, wrapper *nvel, wrapper *pressure,
     find_source(vel, nvel, lsf);
     find_intermediate_velocity(vel);
 
-//    projection(pressure, lsf, vel);
-
     for (int cnt = 0; cnt < pressure->params->ppe_initer; ++cnt) {
-        if (pressure->params->iter < 3) {
-            identity_flux(pressure->scalar);
+        if (pressure->params->iter < 5) {
+            if (cnt == 0) {
+                init_ppe_proj_coefficients(pressure);
+            }
             projection(pressure, lsf, vel);
         } else {
-            guess_from_history(pressure->scalar);
-//            identity_flux(pressure->scalar);
+            if (cnt == 0) {
+                pressure_guess_solution(pressure);
+                init_ppe_fpc_coefficients(pressure);
+            }
             fast_pressure_correction(pressure, lsf, vel);
-        }
-
-        auto div = divergence(vel);
-        std::cout << "iter: " << cnt + 1 << ", div: " << div << std::endl;
-        if (div > 0.1) {
-            exit(0);
         }
     }
 
@@ -802,23 +780,35 @@ void projection_method::ab_solve_sec(wrapper *vel, wrapper *nvel, wrapper *press
     find_source_sec(vel, nvel, lsf);
     find_intermediate_velocity(vel);
 
-//    projection(pressure, lsf, vel);
-
     for (int cnt = 0; cnt < pressure->params->ppe_initer; ++cnt) {
-        if (pressure->params->iter < 3) {
-            identity_flux(pressure->scalar);
+        if (pressure->params->iter < 5) {
+            if (cnt == 0) {
+                init_ppe_proj_coefficients(pressure);
+            }
             projection(pressure, lsf, vel);
         } else {
-            guess_from_history(pressure->scalar);
+            if (cnt == 0) {
+                pressure_guess_solution(pressure);
+                init_ppe_fpc_coefficients(pressure);
+            }
             fast_pressure_correction(pressure, lsf, vel);
-        }
-        auto div = divergence(vel);
-        std::cout << "iter: " << cnt + 1 << ", div: " << div << std::endl;
-        if (div > 0.1) {
-            exit(0);
         }
     }
 
     node_from_face(vel, nvel);
     nvel->apply_nvel_bc();
+}
+
+void projection_method::pressure_guess_solution(wrapper *pressure) {
+
+#pragma omp parallel for default(none) shared(pressure) collapse(3)
+    for (int i = 0; i < pressure->scalar->Nx; ++i) {
+        for (int j = 0; j < pressure->scalar->Ny; ++j) {
+            for (int k = 0; k < pressure->scalar->Nz; ++k) {
+                auto dpdt =
+                        (pressure->scalar->old[i][j][k] - pressure->scalar->old2[i][j][k]) / pressure->params->dt_old2;
+                pressure->scalar->flux[i][j][k] = pressure->scalar->old[i][j][k] + pressure->params->dt_old * dpdt;
+            }
+        }
+    }
 }

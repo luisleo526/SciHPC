@@ -38,6 +38,8 @@ int main() {
 
     auto param = new problem_parameters{};
     auto deri_solvers = SharedSolvers_alloc(phi.scalar, &geo);
+    shared_solvers_mg_init_Neumann(deri_solvers);
+
     auto dummy = dummy_data_alloc(phi.scalar);
 
     for (int i = 0; i < phi.scalar->nx; ++i) {
@@ -71,8 +73,8 @@ int main() {
     param->Froude_number = 1.0;
     param->ls_width = 1.5 * geo.h;
     param->rdt = 0.5 * geo.h;
-    param->max_CFL = 0.25;
-    param->ppe_tol = 1e-3;
+    param->max_CFL = 0.05;
+    param->ppe_tol = 1e-5;
     param->ppe_initer = 1;
     param->ppe_tol2 = 1e-10;
     param->positive_ref = false;
@@ -84,31 +86,32 @@ int main() {
 
     int step, instep;
 
-    flow_solver.find_source_sec(&vel, &nvel, &phi);
+    flow_solver.find_source(&vel, &nvel, &phi);
     param->lsf_mass0 = lsf_mass(&phi);
 
     vtk.create(0);
     vtk.add_scalar(phi.scalar, "phi");
-    vtk.add_scalar(dummy->density, phi.scalar,"density");
+    vtk.add_scalar(dummy->density, phi.scalar, "density");
     vtk.add_scalar(pressure.scalar, "pressure");
     vtk.add_vector(nvel.vector, "nvel");
     vtk.close();
 
     step = 0;
     int pltid = 1;
+    int reinit_id = 1;
     do {
 
-//        find_dt(&vel);
+        find_dt(&vel);
         param->t += param->dt;
         param->iter++;
 
         solver.tvd_rk3(&phi, &nvel, &identity_flux, &convection);
 
-//        do {
-//            solver.euler(&phi, &nvel, &identity_flux, &mpls);
-//        } while (fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) > 1e-10);
+        do {
+            solver.euler(&phi, &nvel, &identity_flux, &mpls);
+        } while (fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) > 1e-10);
 
-        flow_solver.ab_solve_sec(&vel, &nvel, &pressure, &phi);
+        flow_solver.ab_solve(&vel, &nvel, &pressure, &phi);
 
         if (++step % 1 == 0) {
             std::cout << "----------------------------------------" << std::endl;
@@ -117,16 +120,17 @@ int main() {
             std::cout << " mass loss ratio(%): " << fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) * 100 << std::endl;
             std::cout << " div: " << divergence(&vel) << std::endl;
             std::cout << " l2norm: " << l2norm(&pressure) << std::endl;
-
-            instep = 0;
-            while (instep * param->rdt < 2.0 * param->ls_width and step % 20 == 0) {
-                if (instep == 0) {
-                    find_sign(&phi);
-                }
-                instep++;
-                solver.tvd_rk3(&phi, &nvel, identity_flux, lsf_redistance_lambda);
-            };
         }
+
+        instep = 0;
+        while (instep * param->rdt < 2.0 * param->ls_width and param->t > reinit_id * 0.05) {
+            if (instep == 0) {
+                find_sign(&phi);
+                reinit_id++;
+            }
+            instep++;
+            solver.tvd_rk3(&phi, &nvel, identity_flux, lsf_redistance_lambda);
+        };
 
         if (param->t > pltid * 0.1) {
             vtk.create(pltid++);

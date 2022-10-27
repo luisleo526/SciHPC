@@ -37,11 +37,17 @@ public:
 
     void projection(wrapper *pressure, wrapper *lsf, wrapper *vel) const;
 
-    static void fast_pressure_correction(wrapper *pressure, wrapper *lsf, wrapper *vel);
+    void fast_pressure_correction(wrapper *pressure, wrapper *lsf, wrapper *vel);
 
     void ab_solve(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf);
 
     void ab_solve_sec(wrapper *vel, wrapper *nvel, wrapper *pressure, wrapper *lsf);
+
+    void init_ppe_proj_coefficients(wrapper *pressure);
+
+    void init_ppe_fpc_coefficients(wrapper *pressure);
+
+    void pressure_guess_solution(wrapper *pressure);
 };
 
 

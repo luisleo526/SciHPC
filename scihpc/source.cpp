@@ -184,6 +184,13 @@ void lsf_redistance_lambda(wrapper *phi, wrapper *vel, DataType ***s, void (*flu
         }
     }
 
+    zero_order_extrapolation(phi->dummy->a,
+                             phi->scalar->Nx, phi->scalar->Ny, phi->scalar->Nz,
+                             phi->scalar->ghc);
+    zero_order_extrapolation(phi->dummy->b,
+                             phi->scalar->Nx, phi->scalar->Ny, phi->scalar->Nz,
+                             phi->scalar->ghc);
+
 #pragma omp parallel for default(none) shared(phi, s) collapse(3)
     for (int I = 0; I < phi->scalar->nx; ++I) {
         for (int J = 0; J < phi->scalar->ny; ++J) {

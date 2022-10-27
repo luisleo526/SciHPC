@@ -26,8 +26,9 @@ struct problem_parameters {
     int iter = 0;
     DataType t = 0.0;
     DataType dt = 1.0;
+    DataType dt_old, dt_old2;
     DataType max_CFL = 0.01;
-    DataType stable_CFL = 0.001;
+    DataType stable_CFL = -1.0;
     DataType rdt{};
 
     DataType density_ratio = 1.0;
@@ -46,7 +47,7 @@ struct problem_parameters {
 
     DataType ppe_tol = 1e-4;
     DataType ppe_tol2 = 1e-7;
-    int ppe_max_iter = 1000000;
+    int ppe_max_iter = 100;
     DataType ppe_omega = 1.5;
     int ppe_initer = 10;
 };
