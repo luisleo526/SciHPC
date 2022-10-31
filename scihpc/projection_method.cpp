@@ -696,6 +696,7 @@ void projection_method::fast_pressure_correction(wrapper *pressure, wrapper *lsf
 
     while (error > pressure->params->ppe_tol && iter < 100) {
         iter++;
+        store_tmp(pressure);
         pressure->solvers->mg->full_cycle();
         error = pressure->solvers->mg->at[0]->residual();
         if (iter % 10 == 0) {

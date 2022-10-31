@@ -17,7 +17,7 @@
 int main() {
 
     auto geo = structured_grid(axis{0.0, 5.0, 128},
-                               axis{0.0, 1.5, 128});
+                               axis{0.0, 5.0, 128});
 
     auto phi = wrapper(true, &geo,
                        bc_info{NEUMANN}, bc_info{NEUMANN},
@@ -74,8 +74,8 @@ int main() {
     param->dt = 0.01 * geo.h;
     param->max_CFL = 0.05;
     param->Weber_number = -1.0;
-    param->ppe_tol = 1e-6;
-    param->ppe_initer = 2;
+    param->ppe_tol = 1e-8;
+    param->ppe_initer = 1;
     param->ppe_tol2 = 1e-10;
 
     std::cout << "Reynolds number: " << param->Reynolds_number << std::endl;
@@ -128,7 +128,7 @@ int main() {
         }
 
         instep = 0;
-        while (instep * param->rdt < 2.0 * param->ls_width and param->t > reinit_id * 0.01) {
+        while (instep * param->rdt < 2.0 * param->ls_width and param->t > reinit_id * 20 * param->dt) {
             if (instep == 0) {
                 find_sign(&phi);
                 reinit_id++;
@@ -144,7 +144,7 @@ int main() {
             vtk.add_vector(nvel.vector, "nvel");
             vtk.close();
         }
-    } while (param->t < 5.0);
+    } while (param->t < 10.0);
 
     return 0;
 }

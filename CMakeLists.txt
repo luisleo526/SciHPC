@@ -19,11 +19,12 @@ add_executable(
 #        benchmarks_2d_vortex.cpp
 #        benchmarks_2d_zalesak.cpp
 #        benchmarks_lsf_initialization.cpp
-#        benchmarks_lsf_curvature.cpp
+#        benchmarks_lsf_curvature_2d.cpp
+#        benchmarks_lsf_curvature_3d.cpp
 #        benchmarks_2d_cavity_flows.cpp
-#        benchmarks_2d_dambreak.cpp
+        benchmarks_2d_dambreak.cpp
 #        benchmarks_2d_RayleighTaylorInstability.cpp
-        benchmarks_2d_bubble_rising.cpp
+#        benchmarks_2d_bubble_rising.cpp
 #        benchmarks_2d_multigrid_Poisson_Dirichlet.cpp
 #        benchmarks_2d_multigrid_Poisson_Neumann.cpp
 #        benchmarks_3d_dambreak.cpp
