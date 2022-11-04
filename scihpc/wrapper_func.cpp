@@ -381,7 +381,7 @@ void find_dt(wrapper *vel) {
 
     vel->params->dt_old2 = vel->params->dt_old;
     vel->params->dt_old = vel->params->dt;
-    vel->params->dt = fmin(vel->params->stable_CFL, vel->params->max_CFL) * vel->geo->h;
+    vel->params->dt = fmax(fmin(vel->params->stable_CFL, vel->params->max_CFL), vel->params->min_CFL) * vel->geo->h;
 }
 
 void find_density(wrapper *lsf) {

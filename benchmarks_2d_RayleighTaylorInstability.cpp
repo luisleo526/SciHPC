@@ -77,12 +77,13 @@ int main() {
 
     param->ls_width = 1.5 * geo.h;
     param->rdt = 0.1 * geo.h;
-    param->max_CFL = 0.1;
+    param->max_CFL = 0.01;
+    param->min_CFL = 0.01;
     param->viscosity_ratio = 1.0;
     param->density_ratio = 1.0 / 3.0;
     param->Froude_number = 1.0;
     param->Reynolds_number = 3000.0;
-    param->ppe_tol = 1e-5;
+    param->ppe_tol = 1e-8;
     param->ppe_initer = 1;
 
 
@@ -108,6 +109,7 @@ int main() {
 
     step = 0;
     int pltid = 1;
+    int reinit_id = 1;
     do {
 
         param->iter++;
@@ -126,19 +128,20 @@ int main() {
             std::cout << "----------------------------------------" << std::endl;
             std::cout << " time: " << param->t << std::endl;
             std::cout << " stable CFL: " << param->stable_CFL << std::endl;
-            std::cout << " mass loss ratio (%): " << (1.0 - lsf_mass(&phi) / param->lsf_mass0) * 100 << std::endl;
+            std::cout << " mass loss ratio(%): " << fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) * 100 << std::endl;
             std::cout << " div: " << divergence(&vel) << std::endl;
             std::cout << " l2norm: " << l2norm(&pressure) << std::endl;
-
-            instep = 0;
-            while (instep * param->rdt < 1.5 * param->ls_width and step % 10 == 0) {
-                if (instep == 0) {
-                    find_sign(&phi);
-                }
-                instep++;
-                solver.tvd_rk3(&phi, &nvel, identity_flux, lsf_redistance_lambda);
-            };
         }
+
+        instep = 0;
+        while (instep * param->rdt < 2.0 * param->ls_width and param->t > reinit_id * 15 * param->dt) {
+            if (instep == 0) {
+                find_sign(&phi);
+                reinit_id++;
+            }
+            instep++;
+            solver.tvd_rk3(&phi, &nvel, identity_flux, lsf_redistance_lambda);
+        };
 
         if (param->t >= 0.1 * pltid) {
             vtk.create(pltid++);
@@ -147,7 +150,7 @@ int main() {
             vtk.add_vector(nvel.vector, "nvel");
             vtk.close();
         }
-    } while (param->t < 5.0);
+    } while (param->t < 4.0);
 
     return 0;
 }

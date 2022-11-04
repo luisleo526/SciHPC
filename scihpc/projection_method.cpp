@@ -468,7 +468,7 @@ void projection_method::init_ppe_fpc_coefficients(wrapper *pressure) {
 
     auto rho12 = pressure->params->density_ratio;
 
-#pragma omp parallel for default(none) shared(pressure, rho12) collapse(3)
+#pragma omp parallel for default(none) shared(pressure) collapse(3)
     for (int I = 0; I < pressure->scalar->nx; ++I) {
         for (int J = 0; J < pressure->scalar->ny; ++J) {
             for (int K = 0; K < pressure->scalar->nz; ++K) {
@@ -664,7 +664,7 @@ void projection_method::fast_pressure_correction(wrapper *pressure, wrapper *lsf
     auto dt = pressure->params->dt;
     auto rho12 = pressure->params->density_ratio;
 
-#pragma omp parallel for default(none) shared(pressure, lsf, vel, rho12, dx, dy, dz) collapse(3)
+#pragma omp parallel for default(none) shared(pressure, lsf, vel) collapse(3)
     for (int I = 0; I < lsf->scalar->nx; ++I) {
         for (int J = 0; J < lsf->scalar->ny; ++J) {
             for (int K = 0; K < lsf->scalar->nz; ++K) {
@@ -720,7 +720,7 @@ void projection_method::fast_pressure_correction(wrapper *pressure, wrapper *lsf
     }
     pressure->apply_scalar_bc();
 
-#pragma omp parallel for default(none) shared(vel, pressure, lsf, dt, rho12, dx, dy, dz) collapse(3)
+#pragma omp parallel for default(none) shared(vel, pressure, lsf) collapse(3)
     for (int i = 0; i < lsf->scalar->Nx - 1; ++i) {
         for (int j = 0; j < lsf->scalar->Ny - 1; ++j) {
             for (int k = 0; k < lsf->scalar->Nz; ++k) {

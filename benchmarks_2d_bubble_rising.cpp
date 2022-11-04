@@ -73,12 +73,11 @@ int main() {
     param->Froude_number = 1.0;
     param->ls_width = 1.5 * geo.h;
     param->rdt = 0.5 * geo.h;
-    param->max_CFL = 0.05;
-    param->ppe_tol = 1e-5;
+    param->max_CFL = 0.1;
+    param->min_CFL = 0.01;
+    param->ppe_tol = 1e-8;
     param->ppe_initer = 1;
-    param->ppe_tol2 = 1e-10;
     param->positive_ref = false;
-    param->dt = 0.01 * geo.h;
 
     std::cout << "Reynolds number: " << param->Reynolds_number << std::endl;
     std::cout << "Weber number: " << param->Weber_number << std::endl;
@@ -113,7 +112,7 @@ int main() {
 
         flow_solver.ab_solve(&vel, &nvel, &pressure, &phi);
 
-        if (++step % 1 == 0) {
+        if (++step % 10 == 0) {
             std::cout << "----------------------------------------" << std::endl;
             std::cout << " time: " << param->t << std::endl;
             std::cout << " stable CFL: " << param->stable_CFL << std::endl;
@@ -123,7 +122,7 @@ int main() {
         }
 
         instep = 0;
-        while (instep * param->rdt < 2.0 * param->ls_width and param->t > reinit_id * 0.05) {
+        while (instep * param->rdt < 2.0 * param->ls_width and param->t > reinit_id * 20 * param->dt) {
             if (instep == 0) {
                 find_sign(&phi);
                 reinit_id++;
@@ -132,14 +131,14 @@ int main() {
             solver.tvd_rk3(&phi, &nvel, identity_flux, lsf_redistance_lambda);
         };
 
-        if (param->t > pltid * 0.1) {
+        if (param->t > pltid * 0.25) {
             vtk.create(pltid++);
             vtk.add_scalar(phi.scalar, "phi");
             vtk.add_scalar(pressure.scalar, "pressure");
             vtk.add_vector(nvel.vector, "nvel");
             vtk.close();
         }
-    } while (param->t < 6.0);
+    } while (param->t < 8.0);
 
     return 0;
 }

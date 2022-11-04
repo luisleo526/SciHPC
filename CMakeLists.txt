@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.21.0)
 project(SciHPC)
 
 if(APPLE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -openmp -O3")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -O3")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp -O3")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -O3")
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
@@ -22,8 +22,8 @@ add_executable(
 #        benchmarks_lsf_curvature_2d.cpp
 #        benchmarks_lsf_curvature_3d.cpp
 #        benchmarks_2d_cavity_flows.cpp
-        benchmarks_2d_dambreak.cpp
-#        benchmarks_2d_RayleighTaylorInstability.cpp
+#        benchmarks_2d_dambreak.cpp
+        benchmarks_2d_RayleighTaylorInstability.cpp
 #        benchmarks_2d_bubble_rising.cpp
 #        benchmarks_2d_multigrid_Poisson_Dirichlet.cpp
 #        benchmarks_2d_multigrid_Poisson_Neumann.cpp

@@ -28,6 +28,7 @@ struct problem_parameters {
     DataType dt = 1.0;
     DataType dt_old, dt_old2;
     DataType max_CFL = 0.01;
+    DataType min_CFL = 0.01;
     DataType stable_CFL = -1.0;
     DataType rdt{};
 

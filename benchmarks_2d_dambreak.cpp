@@ -71,12 +71,11 @@ int main() {
 
     param->ls_width = 1.5 * geo.h;
     param->rdt = 0.5 * geo.h;
-    param->dt = 0.01 * geo.h;
-    param->max_CFL = 0.05;
+    param->max_CFL = 0.01;
+    param->min_CFL = 0.01;
     param->Weber_number = -1.0;
     param->ppe_tol = 1e-8;
     param->ppe_initer = 1;
-    param->ppe_tol2 = 1e-10;
 
     std::cout << "Reynolds number: " << param->Reynolds_number << std::endl;
     std::cout << "Weber number: " << param->Weber_number << std::endl;
@@ -107,8 +106,9 @@ int main() {
     int reinit_id = 1;
     do {
 
-//        find_dt(&vel);
+        find_dt(&vel);
         param->t += param->dt;
+        param->iter++;
 
         solver.tvd_rk3(&phi, &nvel, &identity_flux, &convection);
 
