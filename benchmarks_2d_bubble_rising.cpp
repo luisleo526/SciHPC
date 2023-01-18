@@ -72,8 +72,8 @@ int main() {
     param->Weber_number = 100.0;
     param->Froude_number = 1.0;
     param->ls_width = 1.5 * geo.h;
-    param->rdt = 0.5 * geo.h;
-    param->max_CFL = 0.1;
+    param->rdt = 0.25 * geo.h;
+    param->max_CFL = 0.01;
     param->min_CFL = 0.01;
     param->ppe_tol = 1e-8;
     param->ppe_initer = 1;
@@ -97,7 +97,6 @@ int main() {
 
     step = 0;
     int pltid = 1;
-    int reinit_id = 1;
     do {
 
         find_dt(&vel);
@@ -106,9 +105,9 @@ int main() {
 
         solver.tvd_rk3(&phi, &nvel, &identity_flux, &convection);
 
-        do {
+        for (int cnt = 0; cnt < 5; ++cnt) {
             solver.euler(&phi, &nvel, &identity_flux, &mpls);
-        } while (fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) > 1e-10);
+        }
 
         flow_solver.ab_solve(&vel, &nvel, &pressure, &phi);
 
@@ -119,17 +118,16 @@ int main() {
             std::cout << " mass loss ratio(%): " << fabs(1.0 - lsf_mass(&phi) / param->lsf_mass0) * 100 << std::endl;
             std::cout << " div: " << divergence(&vel) << std::endl;
             std::cout << " l2norm: " << l2norm(&pressure) << std::endl;
-        }
 
-        instep = 0;
-        while (instep * param->rdt < 2.0 * param->ls_width and param->t > reinit_id * 20 * param->dt) {
-            if (instep == 0) {
-                find_sign(&phi);
-                reinit_id++;
-            }
-            instep++;
-            solver.tvd_rk3(&phi, &nvel, identity_flux, lsf_redistance_lambda);
-        };
+            instep = 0;
+            while (instep * param->rdt < 2.0 * param->ls_width) {
+                if (instep == 0) {
+                    find_sign(&phi);
+                }
+                instep++;
+                solver.tvd_rk3(&phi, &nvel, identity_flux, lsf_redistance_lambda);
+            };
+        }
 
         if (param->t > pltid * 0.25) {
             vtk.create(pltid++);

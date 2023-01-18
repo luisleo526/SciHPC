@@ -13,6 +13,7 @@ file(GLOB SOURCES "scihpc/*.h" "scihpc/*.cpp")
 
 add_executable(
     SciHPC
+        ${SOURCES}
 #        main.cpp
 #        benchmarks_1d_wave.cpp
 #        benchmarks_1d_IBE.cpp
@@ -23,11 +24,10 @@ add_executable(
 #        benchmarks_lsf_curvature_3d.cpp
 #        benchmarks_2d_cavity_flows.cpp
 #        benchmarks_2d_dambreak.cpp
-        benchmarks_2d_RayleighTaylorInstability.cpp
-#        benchmarks_2d_bubble_rising.cpp
+#        benchmarks_2d_RayleighTaylorInstability.cpp
+        benchmarks_2d_bubble_rising.cpp
 #        benchmarks_2d_multigrid_Poisson_Dirichlet.cpp
 #        benchmarks_2d_multigrid_Poisson_Neumann.cpp
 #        benchmarks_3d_dambreak.cpp
 #        benchmarks_3d_multigrid_Poisson.cpp
-        ${SOURCES}
-        scihpc/simple_bc.cpp scihpc/simple_bc.h)
+)
